@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.GestionClientesController" spacing="10.0">
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   
+   <Label text="Gestión de Clientes" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Barra de búsqueda y filtros -->
+   <HBox spacing="10.0" alignment="CENTER_LEFT">
+      <Label text="Buscar:" />
+      <TextField fx:id="txtBuscar" promptText="Nombre, DNI o teléfono" prefWidth="200.0" />
+      <Button fx:id="btnBuscar" onAction="#handleBuscar" text="Buscar" />
+      <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
+      <Separator orientation="VERTICAL" />
+      <Label text="Filtrar por:" />
+      <ComboBox fx:id="cmbFiltro" promptText="Todos los clientes" prefWidth="150.0">
+         <items>
+            <FXCollections fx:factory="observableArrayList">
+               <String>Todos</String>
+               <String>Activos</String>
+               <String>Inactivos</String>
+               <String>Con préstamos</String>
+               <String>Sin préstamos</String>
+            </FXCollections>
+         </items>
+      </ComboBox>
+      <Button fx:id="btnFiltrar" onAction="#handleFiltrar" text="Filtrar" />
+   </HBox>
+   
+   <!-- Botones de acción -->
+   <HBox spacing="10.0" alignment="CENTER_LEFT">
+      <Button fx:id="btnNuevoCliente" onAction="#handleNuevoCliente" styleClass="primary-button" text="Nuevo Cliente" />
+      <Button fx:id="btnEditarCliente" onAction="#handleEditarCliente" styleClass="secondary-button" text="Editar Cliente" />
+      <Button fx:id="btnVerDetalles" onAction="#handleVerDetalles" styleClass="secondary-button" text="Ver Detalles" />
+      <Button fx:id="btnHistorial" onAction="#handleHistorial" styleClass="secondary-button" text="Ver Historial" />
+      <Button fx:id="btnActualizar" onAction="#handleActualizar" text="Actualizar" />
+   </HBox>
+   
+   <!-- Tabla de clientes -->
+   <TableView fx:id="tblClientes" prefHeight="400.0">
+      <columns>
+         <TableColumn fx:id="colId" text="ID" prefWidth="60.0" />
+         <TableColumn fx:id="colNombre" text="Nombre Completo" prefWidth="200.0" />
+         <TableColumn fx:id="colDni" text="DNI" prefWidth="100.0" />
+         <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120.0" />
+         <TableColumn fx:id="colEmail" text="Email" prefWidth="150.0" />
+         <TableColumn fx:id="colEstado" text="Estado" prefWidth="80.0" />
+         <TableColumn fx:id="colPrestamos" text="Préstamos" prefWidth="80.0" />
+         <TableColumn fx:id="colFechaRegistro" text="Fecha Registro" prefWidth="120.0" />
+      </columns>
+   </TableView>
+   
+   <!-- Información de paginación -->
+   <HBox alignment="CENTER" spacing="10.0">
+      <Label fx:id="lblInfoPaginacion" text="Mostrando 0 de 0 clientes" />
+      <Button fx:id="btnAnterior" onAction="#handleAnterior" text="Anterior" />
+      <Button fx:id="btnSiguiente" onAction="#handleSiguiente" text="Siguiente" />
+   </HBox>
+</VBox>

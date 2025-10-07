@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.admin.AdminMainController">
+   <top>
+      <!-- Barra de menú -->
+      <MenuBar styleClass="menu-bar">
+         <menus>
+            <Menu mnemonicParsing="false" text="Solicitudes">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#handleBandejaSolicitudes" text="Bandeja de Solicitudes" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleNuevaSolicitud" text="Nueva Solicitud" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Pagos">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#handleAdministrarPagos" text="Administrar Pagos" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleValidarCobros" text="Validar Cobros" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Gestión">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarUsuarios" text="Usuarios" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarAsesores" text="Asesores" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarClientes" text="Clientes" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleMovimientosCapital" text="Movimientos de Capital" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Reportes">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#handleReporteClientes" text="Por Cliente" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleReporteAsesores" text="Por Asesor" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleReportePrestamos" text="Por Préstamo" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleReporteConsolidado" text="Consolidado" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleReporteSueldos" text="Sueldos Asesores" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Sistema">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#handleAuditoria" text="Auditoría" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleConfiguracion" text="Configuración" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleLogout" text="Cerrar Sesión" />
+               </items>
+            </Menu>
+         </menus>
+      </MenuBar>
+   </top>
+   
+   <center>
+      <!-- Panel principal -->
+      <VBox spacing="20.0" styleClass="main-container">
+         <children>
+            <!-- Barra de información del usuario -->
+            <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="user-info-bar">
+               <children>
+                  <Text fx:id="txtUsuarioInfo" fill="#2c3e50" styleClass="user-info-text" text="Usuario: Administrador" />
+                  <Text fx:id="txtFechaHoy" fill="#7f8c8d" styleClass="date-info-text" text="Fecha: " />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="btn-secondary" text="Cerrar Sesión" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+               </padding>
+            </HBox>
+            
+            <!-- Dashboard de estadísticas -->
+            <HBox spacing="20.0">
+               <children>
+                  <VBox spacing="10.0" styleClass="dashboard-card">
+                     <children>
+                        <Text styleClass="dashboard-title" text="Solicitudes Pendientes" />
+                        <Text fx:id="txtSolicitudesPendientes" styleClass="dashboard-value" text="0" />
+                        <Text styleClass="dashboard-subtitle" text="Requieren revisión" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox spacing="10.0" styleClass="dashboard-card">
+                     <children>
+                        <Text styleClass="dashboard-title" text="Préstamos Activos" />
+                        <Text fx:id="txtPrestamosActivos" styleClass="dashboard-value" text="0" />
+                        <Text styleClass="dashboard-subtitle" text="En proceso de pago" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox spacing="10.0" styleClass="dashboard-card">
+                     <children>
+                        <Text styleClass="dashboard-title" text="Clientes Morosos" />
+                        <Text fx:id="txtClientesMorosos" styleClass="dashboard-value" text="0" />
+                        <Text styleClass="dashboard-subtitle" text="Requieren seguimiento" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox spacing="10.0" styleClass="dashboard-card">
+                     <children>
+                        <Text styleClass="dashboard-title" text="Recaudación Hoy" />
+                        <Text fx:id="txtRecaudacionHoy" styleClass="dashboard-value" text="S/ 0.00" />
+                        <Text styleClass="dashboard-subtitle" text="Total del día" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets left="20.0" right="20.0" />
+               </padding>
+            </HBox>
+            
+            <!-- Área de contenido principal -->
+            <ScrollPane fitToWidth="true" styleClass="main-content">
+               <content>
+                  <VBox fx:id="contentArea" spacing="20.0">
+                     <children>
+                        <!-- Mensaje de bienvenida por defecto -->
+                        <VBox alignment="CENTER" spacing="20.0" styleClass="panel">
+                           <children>
+                              <Text fill="#2c3e50" styleClass="panel-title" text="Bienvenido al Sistema CrediActiva" />
+                              <Text fill="#7f8c8d" styleClass="info-text" text="Seleccione una opción del menú para comenzar" />
+                              <VBox alignment="CENTER" spacing="15.0">
+                                 <children>
+                                    <Button onAction="#handleBandejaSolicitudes" styleClass="btn-primary" text="Revisar Solicitudes Pendientes" />
+                                    <Button onAction="#handleAdministrarPagos" styleClass="btn-success" text="Administrar Pagos" />
+                                    <Button onAction="#handleReporteConsolidado" styleClass="btn-warning" text="Ver Reportes" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                     </padding>
+                  </VBox>
+               </content>
+            </ScrollPane>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

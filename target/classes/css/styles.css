@@ -1,0 +1,413 @@
+/* Estilos globales para CrediActiva Desktop - Diseño Moderno Celeste y Azul Eléctrico */
+
+.root {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-font-family: "Segoe UI", "Roboto", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Colores del sistema CrediActiva */
+/* Celeste: #87CEEB | Azul eléctrico: #4169E1 | Azul cielo: #00BFFF */
+
+/* Estilos para pantalla de login */
+.login-container {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-border-color: rgba(255,255,255,0.3);
+    -fx-border-width: 2px;
+    -fx-border-radius: 25px;
+    -fx-background-radius: 25px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.4), 30, 0, 0, 10);
+    -fx-padding: 50px 40px;
+    -fx-spacing: 25px;
+    -fx-alignment: center;
+    -fx-min-width: 400px;
+    -fx-max-width: 450px;
+}
+
+.app-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 700;
+    -fx-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
+}
+
+.app-subtitle {
+    -fx-font-size: 18px;
+    -fx-fill: rgba(255,255,255,0.9);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 1);
+}
+
+.logo-placeholder {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 50%;
+    -fx-border-color: rgba(255,255,255,0.4);
+    -fx-border-width: 3px;
+    -fx-border-radius: 50%;
+    -fx-min-width: 80px;
+    -fx-min-height: 80px;
+    -fx-max-width: 80px;
+    -fx-max-height: 80px;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 3);
+}
+
+/* Estilos para campos de formulario */
+.form-field {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 2px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 12px 16px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #2F4F4F;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.1), 5, 0, 0, 2);
+}
+
+.form-field:focused {
+    -fx-border-color: #00BFFF;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,191,255,0.3), 8, 0, 0, 3);
+}
+
+.form-field:hover {
+    -fx-border-color: #87CEEB;
+    -fx-effect: dropshadow(gaussian, rgba(135,206,235,0.2), 6, 0, 0, 2);
+}
+
+/* Estilos para botones */
+.modern-button {
+    -fx-background-color: linear-gradient(135deg, #00BFFF 0%, #4169E1 100%);
+    -fx-text-fill: #0066cc; /* Celeste fuerte para el texto */
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 15px;
+    -fx-border-radius: 15px;
+    -fx-padding: 12px 24px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.3), 8, 0, 0, 3);
+}
+
+.modern-button:hover {
+    -fx-background-color: linear-gradient(135deg, #1E90FF 0%, #5F9EA0 100%);
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.5), 12, 0, 0, 5);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.modern-button:pressed {
+    -fx-background-color: linear-gradient(135deg, #4169E1 0%, #191970 100%);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 6, 0, 0, 2);
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+.quick-action-button {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #5F9EA0 100%);
+    -fx-text-fill: #0066cc; /* Celeste fuerte para el texto */
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(135,206,235,0.3), 6, 0, 0, 2);
+}
+
+.quick-action-button:hover {
+    -fx-background-color: linear-gradient(135deg, #5F9EA0 0%, #4169E1 100%);
+    -fx-effect: dropshadow(gaussian, rgba(135,206,235,0.4), 8, 0, 0, 3);
+}
+
+/* Estilos para tarjetas */
+.modern-card {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(135,206,235,0.3);
+    -fx-border-width: 1px;
+    -fx-border-radius: 20px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.15), 15, 0, 0, 5);
+}
+
+.modern-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.25), 20, 0, 0, 8);
+    -fx-border-color: rgba(135,206,235,0.5);
+}
+
+/* Estilos para paneles */
+.modern-panel {
+    -fx-background-color: rgba(255,255,255,0.9);
+    -fx-background-radius: 15px;
+    -fx-border-color: rgba(135,206,235,0.2);
+    -fx-border-width: 1px;
+    -fx-border-radius: 15px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.1), 10, 0, 0, 3);
+}
+
+/* Estilos para tablas */
+.table-view {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-background-radius: 12px;
+    -fx-border-color: rgba(135,206,235,0.3);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.1), 8, 0, 0, 3);
+}
+
+.table-view .column-header {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 600;
+    -fx-font-size: 13px;
+    -fx-padding: 10px;
+}
+
+.table-view .table-cell {
+    -fx-border-color: transparent;
+    -fx-padding: 8px;
+    -fx-text-fill: #2F4F4F;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: rgba(135,206,235,0.3);
+    -fx-text-fill: #191970;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: rgba(135,206,235,0.1);
+}
+
+/* Estilos para combobox */
+.combo-box {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 2px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 8px 12px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.1), 5, 0, 0, 2);
+}
+
+.combo-box:focused {
+    -fx-border-color: #00BFFF;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,191,255,0.3), 8, 0, 0, 3);
+}
+
+.combo-box:hover {
+    -fx-border-color: #87CEEB;
+    -fx-effect: dropshadow(gaussian, rgba(135,206,235,0.2), 6, 0, 0, 2);
+}
+
+/* Estilos para date picker */
+.date-picker {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 2px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.1), 5, 0, 0, 2);
+}
+
+.date-picker:focused {
+    -fx-border-color: #00BFFF;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,191,255,0.3), 8, 0, 0, 3);
+}
+
+.date-picker:hover {
+    -fx-border-color: #87CEEB;
+    -fx-effect: dropshadow(gaussian, rgba(135,206,235,0.2), 6, 0, 0, 2);
+}
+
+   /* Estilos para etiquetas */
+   .label {
+       -fx-text-fill: #1a365d; /* Azul oscuro para mejor contraste */
+       -fx-font-weight: 600;
+   }
+
+.section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #4169E1;
+    -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.2), 3, 0, 0, 1);
+}
+
+/* Estilos para scroll pane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar {
+    -fx-background-color: rgba(255,255,255,0.8);
+    -fx-border-color: rgba(135,206,235,0.3);
+    -fx-border-width: 1px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+.scroll-pane .scroll-bar .thumb {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-background-radius: 8px;
+}
+
+.scroll-pane .scroll-bar .thumb:hover {
+    -fx-background-color: linear-gradient(135deg, #00BFFF 0%, #1E90FF 100%);
+}
+
+/* Estilos para separadores */
+.separator {
+    -fx-background-color: rgba(135,206,235,0.3);
+    -fx-padding: 5px 0px;
+}
+
+/* Estilos para tooltips */
+.tooltip {
+    -fx-background-color: rgba(25,25,112,0.95);
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-font-size: 12px;
+    -fx-padding: 8px 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 3);
+}
+
+/* Estilos para alertas y estados */
+.success-label {
+    -fx-text-fill: #166534; /* Verde oscuro para mejor contraste */
+    -fx-font-weight: 700;
+}
+
+.warning-label {
+    -fx-text-fill: #b45309; /* Naranja oscuro para mejor legibilidad */
+    -fx-font-weight: 700;
+}
+
+.error-label {
+    -fx-text-fill: #b91c1c; /* Rojo oscuro para mejor contraste */
+    -fx-font-weight: 700;
+}
+
+.info-label {
+    -fx-text-fill: #1e40af; /* Azul oscuro para mejor legibilidad */
+    -fx-font-weight: 700;
+}
+
+/* Estilos para progress bar */
+.progress-bar {
+    -fx-background-color: rgba(255,255,255,0.8);
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(135,206,235,0.3);
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+}
+
+.progress-bar .bar {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-background-radius: 10px;
+}
+
+/* Estilos para checkboxes */
+.check-box {
+    -fx-text-fill: #1a365d; /* Azul oscuro para mejor contraste */
+    -fx-font-weight: 600;
+}
+
+.check-box .box {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 2px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+}
+
+.check-box:selected .box {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-border-color: #00BFFF;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #ffffff;
+}
+
+/* Estilos para radio buttons */
+.radio-button {
+    -fx-text-fill: #1a365d; /* Azul oscuro para mejor contraste */
+    -fx-font-weight: 600;
+}
+
+.radio-button .radio {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.5);
+    -fx-border-width: 2px;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+
+.radio-button:selected .radio {
+    -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
+    -fx-border-color: #00BFFF;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6px;
+}
+
+/* Estilos para menús */
+.menu-bar {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(135,206,235,0.3);
+    -fx-border-width: 0 0 1px 0;
+}
+
+.menu {
+    -fx-text-fill: #2F4F4F;
+    -fx-font-weight: 500;
+}
+
+.menu:hover {
+    -fx-background-color: rgba(135,206,235,0.2);
+}
+
+.menu-item {
+    -fx-text-fill: #2F4F4F;
+    -fx-background-color: rgba(255,255,255,0.95);
+}
+
+.menu-item:hover {
+    -fx-background-color: rgba(135,206,235,0.3);
+    -fx-text-fill: #191970;
+}
+
+/* Animaciones y transiciones */
+.modern-button, .quick-action-button, .modern-card, .form-field, .combo-box, .date-picker {
+    -fx-transition: all 0.3s ease;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .login-container {
+        -fx-min-width: 320px;
+        -fx-max-width: 380px;
+        -fx-padding: 30px 25px;
+    }
+    
+    .app-title {
+        -fx-font-size: 28px;
+    }
+    
+    .modern-button {
+        -fx-font-size: 14px;
+        -fx-padding: 10px 20px;
+    }
+}

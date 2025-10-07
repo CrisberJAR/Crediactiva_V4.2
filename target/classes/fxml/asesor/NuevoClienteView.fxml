@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.NuevoClienteController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Nuevo Cliente" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Información personal -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Información Personal" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Nombres:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtNombres" promptText="Ingrese nombres" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Apellidos:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <TextField fx:id="txtApellidos" promptText="Ingrese apellidos" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="DNI:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <TextField fx:id="txtDni" promptText="Ingrese DNI" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Fecha de Nacimiento:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <DatePicker fx:id="dpFechaNacimiento" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+         
+         <Label text="Sexo:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+         <ComboBox fx:id="cmbSexo" promptText="Seleccionar sexo" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>M</String>
+                  <String>F</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         
+         <Label text="Estado Civil:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+         <ComboBox fx:id="cmbEstadoCivil" promptText="Seleccionar estado civil" GridPane.columnIndex="3" GridPane.rowIndex="2">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>SOLTERO</String>
+                  <String>CASADO</String>
+                  <String>DIVORCIADO</String>
+                  <String>VIUDO</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+      </GridPane>
+   </VBox>
+   
+   <!-- Información de contacto -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Información de Contacto" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Teléfono:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtTelefono" promptText="Ingrese teléfono" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Email:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <TextField fx:id="txtEmail" promptText="Ingrese email" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Dirección:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <TextField fx:id="txtDireccion" promptText="Ingrese dirección" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Información laboral -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Información Laboral" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Ocupación:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtOcupacion" promptText="Ingrese ocupación" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Lugar de Trabajo:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <TextField fx:id="txtLugarTrabajo" promptText="Ingrese lugar de trabajo" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Ingresos Mensuales:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <TextField fx:id="txtIngresosMensuales" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Tiempo en el Trabajo:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <TextField fx:id="txtTiempoTrabajo" promptText="Meses" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Referencias -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Referencias Personales" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Referencia 1 - Nombre:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtRef1Nombre" promptText="Nombre completo" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Referencia 1 - Teléfono:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <TextField fx:id="txtRef1Telefono" promptText="Teléfono" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Referencia 2 - Nombre:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <TextField fx:id="txtRef2Nombre" promptText="Nombre completo" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Referencia 2 - Teléfono:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <TextField fx:id="txtRef2Telefono" promptText="Teléfono" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Documentos requeridos -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Documentos Requeridos" styleClass="section-title" />
+      
+      <VBox spacing="5.0">
+         <CheckBox fx:id="chkDni" text="DNI del cliente" />
+         <CheckBox fx:id="chkComprobanteIngresos" text="Comprobante de ingresos" />
+         <CheckBox fx:id="chkReciboLuz" text="Recibo de luz (últimos 3 meses)" />
+         <CheckBox fx:id="chkReciboAgua" text="Recibo de agua (últimos 3 meses)" />
+         <CheckBox fx:id="chkReferencias" text="Referencias personales" />
+         <CheckBox fx:id="chkOtros" text="Otros documentos" />
+      </VBox>
+   </VBox>
+   
+   <!-- Observaciones -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Observaciones" styleClass="section-title" />
+      <TextArea fx:id="txtObservaciones" promptText="Observaciones adicionales..." prefRowCount="3" />
+   </VBox>
+   
+   <!-- Botones de acción -->
+   <HBox spacing="10.0" alignment="CENTER_RIGHT">
+      <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
+      <Button fx:id="btnGuardarBorrador" onAction="#handleGuardarBorrador" styleClass="secondary-button" text="Guardar Borrador" />
+      <Button fx:id="btnGuardarCliente" onAction="#handleGuardarCliente" styleClass="primary-button" text="Guardar Cliente" />
+   </HBox>
+</VBox>

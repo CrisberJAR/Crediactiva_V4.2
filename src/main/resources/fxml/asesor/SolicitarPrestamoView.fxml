@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.SolicitarPrestamoController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Solicitar Préstamo" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Información del cliente -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Información del Cliente" styleClass="section-title" />
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Label text="Cliente:" prefWidth="100.0" />
+         <ComboBox fx:id="cmbCliente" promptText="Seleccionar cliente" prefWidth="300.0" />
+         <Button fx:id="btnBuscarCliente" onAction="#handleBuscarCliente" text="Buscar" />
+         <Button fx:id="btnNuevoCliente" onAction="#handleNuevoCliente" text="Nuevo Cliente" />
+      </HBox>
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Label text="DNI:" prefWidth="100.0" />
+         <TextField fx:id="txtDniCliente" promptText="Ingrese DNI del cliente" prefWidth="200.0" />
+         <Button fx:id="btnBuscarPorDni" onAction="#handleBuscarPorDni" text="Buscar por DNI" />
+      </HBox>
+   </VBox>
+   
+   <!-- Información del préstamo -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Información del Préstamo" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Monto Solicitado:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtMonto" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Plazo (meses):" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <ComboBox fx:id="cmbPlazo" promptText="Seleccionar plazo" GridPane.columnIndex="3" GridPane.rowIndex="0">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>3</String>
+                  <String>6</String>
+                  <String>9</String>
+                  <String>12</String>
+                  <String>18</String>
+                  <String>24</String>
+                  <String>36</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         
+         <Label text="Tipo de Pago:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <ComboBox fx:id="cmbTipoPago" promptText="Seleccionar tipo" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>MENSUAL</String>
+                  <String>QUINCENAL</String>
+                  <String>SEMANAL</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         
+         <Label text="Fecha de Inicio:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <DatePicker fx:id="dpFechaInicio" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+         
+         <Label text="Propósito:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+         <TextField fx:id="txtProposito" promptText="Descripción del propósito" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="3" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Cálculos del préstamo -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Cálculos del Préstamo" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Tasa de Interés:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <Label fx:id="lblTasaInteres" text="0.00%" styleClass="calculation-label" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Cuota Mensual:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <Label fx:id="lblCuotaMensual" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Total a Pagar:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <Label fx:id="lblTotalPagar" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Intereses Totales:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <Label fx:id="lblInteresesTotales" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Button fx:id="btnCalcular" onAction="#handleCalcular" styleClass="primary-button" text="Calcular Préstamo" />
+         <Button fx:id="btnSimular" onAction="#handleSimular" styleClass="secondary-button" text="Simular" />
+      </HBox>
+   </VBox>
+   
+   <!-- Documentos requeridos -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Documentos Requeridos" styleClass="section-title" />
+      
+      <VBox spacing="5.0">
+         <CheckBox fx:id="chkDni" text="DNI del cliente" />
+         <CheckBox fx:id="chkComprobanteIngresos" text="Comprobante de ingresos" />
+         <CheckBox fx:id="chkReciboLuz" text="Recibo de luz (últimos 3 meses)" />
+         <CheckBox fx:id="chkReciboAgua" text="Recibo de agua (últimos 3 meses)" />
+         <CheckBox fx:id="chkReferencias" text="Referencias personales" />
+         <CheckBox fx:id="chkOtros" text="Otros documentos" />
+      </VBox>
+   </VBox>
+   
+   <!-- Observaciones -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Observaciones" styleClass="section-title" />
+      <TextArea fx:id="txtObservaciones" promptText="Observaciones adicionales..." prefRowCount="3" />
+   </VBox>
+   
+   <!-- Botones de acción -->
+   <HBox spacing="10.0" alignment="CENTER_RIGHT">
+      <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
+      <Button fx:id="btnGuardarBorrador" onAction="#handleGuardarBorrador" styleClass="secondary-button" text="Guardar Borrador" />
+      <Button fx:id="btnEnviarSolicitud" onAction="#handleEnviarSolicitud" styleClass="primary-button" text="Enviar Solicitud" />
+   </HBox>
+</VBox>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.cliente.CronogramasClienteController">
+   <top>
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="15.0" />
+         </padding>
+         
+         <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Button fx:id="btnVolver" onAction="#handleVolver" styleClass="modern-button" text="← Volver" />
+            <Label text="Mis Cronogramas de Pago" styleClass="section-title" />
+         </HBox>
+         
+         <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label text="Seleccionar préstamo:" />
+            <ComboBox fx:id="comboPrestamos" onAction="#handleCambiarPrestamo" prefWidth="200.0" />
+            <Label text="Estado:" />
+            <ComboBox fx:id="comboEstadoFiltro" onAction="#handleFiltrar" prefWidth="120.0" />
+            <Button fx:id="btnActualizar" onAction="#handleActualizar" styleClass="quick-action-button" text="Actualizar" />
+         </HBox>
+      </VBox>
+   </top>
+   
+   <center>
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+         </padding>
+         
+         <!-- Información del préstamo seleccionado -->
+         <VBox fx:id="panelInfoPrestamo" spacing="10.0" styleClass="modern-card">
+            <Label text="Información del Préstamo" styleClass="section-title" />
+            <GridPane hgap="15.0" vgap="10.0">
+               <columnConstraints>
+                  <ColumnConstraints minWidth="150.0" />
+                  <ColumnConstraints />
+                  <ColumnConstraints minWidth="150.0" />
+                  <ColumnConstraints />
+                  <ColumnConstraints minWidth="150.0" />
+                  <ColumnConstraints />
+               </columnConstraints>
+               
+               <Label text="ID Préstamo:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+               <Label fx:id="lblInfoIdPrestamo" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+               
+               <Label text="Monto Total:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+               <Label fx:id="lblInfoMontoTotal" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+               
+               <Label text="Estado:" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+               <Label fx:id="lblInfoEstado" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+               
+               <Label text="Tasa de Interés:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+               <Label fx:id="lblInfoTasaInteres" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+               
+               <Label text="Cuotas Total:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+               <Label fx:id="lblInfoTotalCuotas" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+               
+               <Label text="Cuotas Pagadas:" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+               <Label fx:id="lblInfoCuotasPagadas" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+            </GridPane>
+         </VBox>
+         
+         <!-- Tabla de cronograma -->
+         <TableView fx:id="tablaCronograma" prefHeight="350.0" styleClass="table-view">
+            <columns>
+               <TableColumn fx:id="colNumeroCuota" prefWidth="80.0" text="Cuota" />
+               <TableColumn fx:id="colFechaProgramada" prefWidth="120.0" text="Fecha Programada" />
+               <TableColumn fx:id="colMontoCuota" prefWidth="100.0" text="Monto" />
+               <TableColumn fx:id="colEstadoCuota" prefWidth="100.0" text="Estado" />
+               <TableColumn fx:id="colFechaPagoReal" prefWidth="120.0" text="Fecha Pago Real" />
+               <TableColumn fx:id="colDiasAtraso" prefWidth="80.0" text="Días Atraso" />
+               <TableColumn fx:id="colObservaciones" prefWidth="200.0" text="Observaciones" />
+            </columns>
+         </TableView>
+         
+         <!-- Resumen de pagos -->
+         <HBox spacing="20.0" alignment="CENTER">
+            <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card success">
+               <Label text="Total Pagado" styleClass="stat-label" />
+               <Label fx:id="lblTotalPagado" text="S/ 0.00" styleClass="stat-value" />
+            </VBox>
+            
+            <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card warning">
+               <Label text="Pendiente" styleClass="stat-label" />
+               <Label fx:id="lblTotalPendiente" text="S/ 0.00" styleClass="stat-value" />
+            </VBox>
+            
+            <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card danger">
+               <Label text="Vencido" styleClass="stat-label" />
+               <Label fx:id="lblTotalVencido" text="S/ 0.00" styleClass="stat-value" />
+            </VBox>
+            
+            <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card info">
+               <Label text="Progreso" styleClass="stat-label" />
+               <Label fx:id="lblProgreso" text="0%" styleClass="stat-value" />
+            </VBox>
+         </HBox>
+      </VBox>
+   </center>
+   
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+         </padding>
+         
+         <Label fx:id="lblUltimaActualizacion" text="Última actualización: " />
+      </HBox>
+   </bottom>
+</BorderPane>

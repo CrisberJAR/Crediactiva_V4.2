@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.AsesorMainController">
+   <top>
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         
+         <Label styleClass="title-label" text="CrediActiva - Asesor">
+            <font>
+               <Font size="18.0" />
+            </font>
+         </Label>
+         
+         <!-- Información del asesor -->
+         <HBox spacing="20.0" alignment="CENTER_LEFT">
+            <Label fx:id="lblAsesorInfo" text="Asesor: " />
+            <Label fx:id="lblFechaHoy" text="Fecha: " />
+            <Label fx:id="lblRecaudacionMes" text="Recaudación Mes: S/ 0.00" />
+            <Label fx:id="lblSueldoEstimado" text="Sueldo Estimado: S/ 0.00" />
+         </HBox>
+      </VBox>
+   </top>
+   
+   <center>
+      <SplitPane dividerPositions="0.3" orientation="HORIZONTAL">
+         <!-- Panel izquierdo: Menú de opciones -->
+         <VBox spacing="10.0">
+            <padding>
+               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </padding>
+            
+            <Label text="Opciones del Asesor" styleClass="subtitle-label">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            
+            <Button fx:id="btnDashboard" onAction="#handleDashboard" styleClass="menu-button" text="Dashboard" />
+            <Button fx:id="btnClientes" onAction="#handleClientes" styleClass="menu-button" text="Gestión de Clientes" />
+            <Button fx:id="btnSolicitarPrestamo" onAction="#handleSolicitarPrestamo" styleClass="menu-button" text="Solicitar Préstamo" />
+            <Button fx:id="btnSimulador" onAction="#handleSimulador" styleClass="menu-button" text="Simulador de Crédito" />
+            <Button fx:id="btnRegistrarCobro" onAction="#handleRegistrarCobro" styleClass="menu-button" text="Registrar Cobro" />
+            <Button fx:id="btnCartera" onAction="#handleCartera" styleClass="menu-button" text="Mi Cartera" />
+            <Button fx:id="btnReportes" onAction="#handleReportes" styleClass="menu-button" text="Mis Reportes" />
+            <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="logout-button" text="Cerrar Sesión" />
+         </VBox>
+         
+         <!-- Panel derecho: Contenido dinámico -->
+         <VBox fx:id="contentArea" spacing="10.0">
+            <padding>
+               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </padding>
+            
+            <!-- Dashboard por defecto -->
+            <Label text="Dashboard del Asesor" styleClass="title-label">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Label>
+            
+            <!-- Estadísticas del día -->
+            <GridPane hgap="10.0" vgap="10.0">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                  <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                  <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                  <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="100.0" vgrow="ALWAYS" />
+                  <RowConstraints minHeight="100.0" vgrow="ALWAYS" />
+               </rowConstraints>
+               
+               <!-- Cuotas del día -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                  <Label text="Cuotas del Día" styleClass="stat-label" />
+                  <Label fx:id="lblCuotasDia" text="0" styleClass="stat-value" />
+                  <Button fx:id="btnVerCuotasDia" onAction="#handleVerCuotasDia" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Cuotas vencidas -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                  <Label text="Cuotas Vencidas" styleClass="stat-label" />
+                  <Label fx:id="lblCuotasVencidas" text="0" styleClass="stat-value" />
+                  <Button fx:id="btnVerCuotasVencidas" onAction="#handleVerCuotasVencidas" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Recaudación del día -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                  <Label text="Recaudación del Día" styleClass="stat-label" />
+                  <Label fx:id="lblRecaudacionDia" text="S/ 0.00" styleClass="stat-value" />
+                  <Button fx:id="btnVerRecaudacionDia" onAction="#handleVerRecaudacionDia" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Recaudación del mes -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                  <Label text="Recaudación del Mes" styleClass="stat-label" />
+                  <Label fx:id="lblRecaudacionMesCard" text="S/ 0.00" styleClass="stat-value" />
+                  <Button fx:id="btnVerRecaudacionMes" onAction="#handleVerRecaudacionMes" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Clientes activos -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                  <Label text="Clientes Activos" styleClass="stat-label" />
+                  <Label fx:id="lblClientesActivos" text="0" styleClass="stat-value" />
+                  <Button fx:id="btnVerClientesActivos" onAction="#handleVerClientesActivos" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Préstamos activos -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                  <Label text="Préstamos Activos" styleClass="stat-label" />
+                  <Label fx:id="lblPrestamosActivos" text="0" styleClass="stat-value" />
+                  <Button fx:id="btnVerPrestamosActivos" onAction="#handleVerPrestamosActivos" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Morosidad -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                  <Label text="Morosidad" styleClass="stat-label" />
+                  <Label fx:id="lblMorosidad" text="0%" styleClass="stat-value" />
+                  <Button fx:id="btnVerMorosidad" onAction="#handleVerMorosidad" text="Ver Detalles" />
+               </VBox>
+               
+               <!-- Sueldo estimado -->
+               <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                  <Label text="Sueldo Estimado" styleClass="stat-label" />
+                  <Label fx:id="lblSueldoEstimadoCard" text="S/ 0.00" styleClass="stat-value" />
+                  <Button fx:id="btnVerSueldoEstimado" onAction="#handleVerSueldoEstimado" text="Ver Detalles" />
+               </VBox>
+            </GridPane>
+            
+            <!-- Acciones rápidas -->
+            <VBox spacing="10.0">
+               <Label text="Acciones Rápidas" styleClass="section-title" />
+               <HBox spacing="10.0" alignment="CENTER">
+                  <padding>
+                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                  </padding>
+                  
+                  <Button fx:id="btnNuevoCliente" onAction="#handleNuevoCliente" styleClass="quick-action-button" text="Nuevo Cliente" />
+                  <Button fx:id="btnNuevaSolicitud" onAction="#handleNuevaSolicitud" styleClass="quick-action-button" text="Nueva Solicitud" />
+                  <Button fx:id="btnRegistrarPago" onAction="#handleRegistrarPago" styleClass="quick-action-button" text="Registrar Pago" />
+                  <Button fx:id="btnSimularCredito" onAction="#handleSimularCredito" styleClass="quick-action-button" text="Simular Crédito" />
+               </HBox>
+            </VBox>
+         </VBox>
+      </SplitPane>
+   </center>
+   
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         
+         <Label fx:id="lblUltimaActualizacion" text="Última actualización: " />
+      </HBox>
+   </bottom>
+</BorderPane>

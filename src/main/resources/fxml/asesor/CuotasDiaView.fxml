@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.CuotasDiaController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Cuotas del Día" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Resumen de cuotas del día -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Resumen de Cuotas del Día" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Total Cuotas:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <Label fx:id="lblTotalCuotas" text="0" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Monto Total:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <Label fx:id="lblMontoTotal" text="S/ 0.00" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Cuotas Pagadas:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <Label fx:id="lblCuotasPagadas" text="0" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Cuotas Pendientes:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <Label fx:id="lblCuotasPendientes" text="0" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Filtros -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Filtros" styleClass="section-title" />
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Label text="Buscar:" />
+         <TextField fx:id="txtBuscar" promptText="Nombre, DNI o teléfono" prefWidth="200.0" />
+         <Button fx:id="btnBuscar" onAction="#handleBuscar" text="Buscar" />
+         <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
+         <Separator orientation="VERTICAL" />
+         <Label text="Estado:" />
+         <ComboBox fx:id="cmbEstado" promptText="Todos" prefWidth="150.0">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>Todos</String>
+                  <String>Pendientes</String>
+                  <String>Pagadas</String>
+                  <String>Vencidas</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         <Button fx:id="btnFiltrar" onAction="#handleFiltrar" text="Filtrar" />
+      </HBox>
+   </VBox>
+   
+   <!-- Tabla de cuotas del día -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Cuotas del Día" styleClass="section-title" />
+      
+      <TableView fx:id="tblCuotas" prefHeight="400.0">
+         <columns>
+            <TableColumn fx:id="colIdCuota" text="ID" prefWidth="60.0" />
+            <TableColumn fx:id="colCliente" text="Cliente" prefWidth="200.0" />
+            <TableColumn fx:id="colDni" text="DNI" prefWidth="100.0" />
+            <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120.0" />
+            <TableColumn fx:id="colNumeroCuota" text="Cuota #" prefWidth="80.0" />
+            <TableColumn fx:id="colMontoCuota" text="Monto" prefWidth="100.0" />
+            <TableColumn fx:id="colEstadoCuota" text="Estado" prefWidth="100.0" />
+            <TableColumn fx:id="colFechaVencimiento" text="Fecha Vencimiento" prefWidth="120.0" />
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="150.0" />
+         </columns>
+      </TableView>
+   </VBox>
+   
+   <!-- Acciones -->
+   <HBox spacing="10.0" alignment="CENTER_RIGHT">
+      <Button fx:id="btnActualizar" onAction="#handleActualizar" text="Actualizar" />
+      <Button fx:id="btnRegistrarPago" onAction="#handleRegistrarPago" styleClass="primary-button" text="Registrar Pago" />
+      <Button fx:id="btnContactarCliente" onAction="#handleContactarCliente" styleClass="secondary-button" text="Contactar Cliente" />
+      <Button fx:id="btnExportar" onAction="#handleExportar" text="Exportar" />
+   </HBox>
+</VBox>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.SimuladorController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Simulador de Crédito" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Parámetros de simulación -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Parámetros de Simulación" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Monto del Préstamo:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <TextField fx:id="txtMonto" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Plazo (meses):" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <ComboBox fx:id="cmbPlazo" promptText="Seleccionar plazo" GridPane.columnIndex="3" GridPane.rowIndex="0">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>3</String>
+                  <String>6</String>
+                  <String>9</String>
+                  <String>12</String>
+                  <String>18</String>
+                  <String>24</String>
+                  <String>36</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         
+         <Label text="Tipo de Pago:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <ComboBox fx:id="cmbTipoPago" promptText="Seleccionar tipo" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <items>
+               <FXCollections fx:factory="observableArrayList">
+                  <String>MENSUAL</String>
+                  <String>QUINCENAL</String>
+                  <String>SEMANAL</String>
+               </FXCollections>
+            </items>
+         </ComboBox>
+         
+         <Label text="Tasa de Interés (%):" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <TextField fx:id="txtTasaInteres" promptText="0.00" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Button fx:id="btnCalcular" onAction="#handleCalcular" styleClass="primary-button" text="Calcular Simulación" />
+         <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
+         <Button fx:id="btnGuardarSimulacion" onAction="#handleGuardarSimulacion" styleClass="secondary-button" text="Guardar Simulación" />
+      </HBox>
+   </VBox>
+   
+   <!-- Resultados de la simulación -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Resultados de la Simulación" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Cuota por Período:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <Label fx:id="lblCuotaPeriodo" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Total a Pagar:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <Label fx:id="lblTotalPagar" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Intereses Totales:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <Label fx:id="lblInteresesTotales" text="S/ 0.00" styleClass="calculation-label" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Tasa Efectiva Anual:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <Label fx:id="lblTasaEfectivaAnual" text="0.00%" styleClass="calculation-label" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Cronograma de pagos -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Cronograma de Pagos" styleClass="section-title" />
+      
+      <TableView fx:id="tblCronograma" prefHeight="300.0">
+         <columns>
+            <TableColumn fx:id="colCuota" text="Cuota #" prefWidth="80.0" />
+            <TableColumn fx:id="colFechaPago" text="Fecha de Pago" prefWidth="120.0" />
+            <TableColumn fx:id="colSaldoInicial" text="Saldo Inicial" prefWidth="120.0" />
+            <TableColumn fx:id="colCuotaMonto" text="Cuota" prefWidth="120.0" />
+            <TableColumn fx:id="colInteres" text="Interés" prefWidth="120.0" />
+            <TableColumn fx:id="colAmortizacion" text="Amortización" prefWidth="120.0" />
+            <TableColumn fx:id="colSaldoFinal" text="Saldo Final" prefWidth="120.0" />
+         </columns>
+      </TableView>
+   </VBox>
+   
+   <!-- Gráfico de distribución -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Distribución del Pago" styleClass="section-title" />
+      
+      <HBox spacing="20.0" alignment="CENTER">
+         <VBox alignment="CENTER" spacing="5.0">
+            <Label text="Capital" styleClass="chart-label" />
+            <Label fx:id="lblPorcentajeCapital" text="0%" styleClass="chart-percentage" />
+         </VBox>
+         
+         <VBox alignment="CENTER" spacing="5.0">
+            <Label text="Intereses" styleClass="chart-label" />
+            <Label fx:id="lblPorcentajeIntereses" text="0%" styleClass="chart-percentage" />
+         </VBox>
+      </HBox>
+   </VBox>
+   
+   <!-- Comparación de escenarios -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Comparación de Escenarios" styleClass="section-title" />
+      
+      <TableView fx:id="tblComparacion" prefHeight="200.0">
+         <columns>
+            <TableColumn fx:id="colEscenario" text="Escenario" prefWidth="150.0" />
+            <TableColumn fx:id="colCuotaComparacion" text="Cuota" prefWidth="120.0" />
+            <TableColumn fx:id="colTotalComparacion" text="Total a Pagar" prefWidth="120.0" />
+            <TableColumn fx:id="colInteresesComparacion" text="Intereses" prefWidth="120.0" />
+            <TableColumn fx:id="colAhorroComparacion" text="Ahorro" prefWidth="120.0" />
+         </columns>
+      </TableView>
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Button fx:id="btnCompararEscenarios" onAction="#handleCompararEscenarios" text="Comparar Escenarios" />
+         <Button fx:id="btnExportarSimulacion" onAction="#handleExportarSimulacion" text="Exportar Simulación" />
+      </HBox>
+   </VBox>
+</VBox>

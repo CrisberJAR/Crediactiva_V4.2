@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.ReportesController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Mis Reportes" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Filtros de fecha -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Filtros de Fecha" styleClass="section-title" />
+      
+      <HBox spacing="10.0" alignment="CENTER_LEFT">
+         <Label text="Desde:" />
+         <DatePicker fx:id="dpFechaDesde" />
+         <Label text="Hasta:" />
+         <DatePicker fx:id="dpFechaHasta" />
+         <Button fx:id="btnAplicarFiltro" onAction="#handleAplicarFiltro" text="Aplicar Filtro" />
+         <Button fx:id="btnLimpiarFiltro" onAction="#handleLimpiarFiltro" text="Limpiar" />
+      </HBox>
+   </VBox>
+   
+   <!-- Tipos de reportes -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Tipos de Reportes" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Button fx:id="btnReporteRecaudacion" onAction="#handleReporteRecaudacion" styleClass="report-button" text="Reporte de Recaudación" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <Button fx:id="btnReporteCuotas" onAction="#handleReporteCuotas" styleClass="report-button" text="Reporte de Cuotas" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         <Button fx:id="btnReporteMorosidad" onAction="#handleReporteMorosidad" styleClass="report-button" text="Reporte de Morosidad" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         
+         <Button fx:id="btnReporteClientes" onAction="#handleReporteClientes" styleClass="report-button" text="Reporte de Clientes" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <Button fx:id="btnReportePrestamos" onAction="#handleReportePrestamos" styleClass="report-button" text="Reporte de Préstamos" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         <Button fx:id="btnReporteComisiones" onAction="#handleReporteComisiones" styleClass="report-button" text="Reporte de Comisiones" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Resumen de reportes -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Resumen de Reportes" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints minWidth="200.0" />
+         </columnConstraints>
+         
+         <Label text="Total Recaudado:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+         <Label fx:id="lblTotalRecaudado" text="S/ 0.00" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+         
+         <Label text="Total Cuotas Pagadas:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+         <Label fx:id="lblTotalCuotasPagadas" text="0" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+         
+         <Label text="Cuotas Vencidas:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+         <Label fx:id="lblCuotasVencidas" text="0" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         
+         <Label text="Morosidad:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+         <Label fx:id="lblMorosidad" text="0%" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+      </GridPane>
+   </VBox>
+   
+   <!-- Tabla de reportes generados -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Reportes Generados" styleClass="section-title" />
+      
+      <TableView fx:id="tblReportes" prefHeight="200.0">
+         <columns>
+            <TableColumn fx:id="colTipoReporte" text="Tipo de Reporte" prefWidth="150.0" />
+            <TableColumn fx:id="colFechaGeneracion" text="Fecha Generación" prefWidth="120.0" />
+            <TableColumn fx:id="colPeriodo" text="Período" prefWidth="120.0" />
+            <TableColumn fx:id="colEstado" text="Estado" prefWidth="100.0" />
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="150.0" />
+         </columns>
+      </TableView>
+   </VBox>
+   
+   <!-- Detalles del reporte seleccionado -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Detalles del Reporte" styleClass="section-title" />
+      
+      <TabPane fx:id="tabPaneDetalles" prefHeight="300.0">
+         <tabs>
+            <Tab text="Datos del Reporte">
+               <TableView fx:id="tblDatosReporte" prefHeight="250.0">
+                  <columns>
+                     <TableColumn fx:id="colCampo" text="Campo" prefWidth="200.0" />
+                     <TableColumn fx:id="colValor" text="Valor" prefWidth="200.0" />
+                  </columns>
+               </TableView>
+            </Tab>
+            
+            <Tab text="Gráficos">
+               <VBox spacing="10.0" alignment="CENTER">
+                  <Label text="Gráficos del Reporte" styleClass="section-title" />
+                  <Label text="Los gráficos se mostrarán aquí" />
+                  <!-- TODO: Implementar gráficos -->
+               </VBox>
+            </Tab>
+            
+            <Tab text="Exportar">
+               <VBox spacing="10.0" alignment="CENTER">
+                  <Label text="Opciones de Exportación" styleClass="section-title" />
+                  <HBox spacing="10.0" alignment="CENTER">
+                     <Button fx:id="btnExportarExcel" onAction="#handleExportarExcel" text="Exportar a Excel" />
+                     <Button fx:id="btnExportarPDF" onAction="#handleExportarPDF" text="Exportar a PDF" />
+                     <Button fx:id="btnExportarCSV" onAction="#handleExportarCSV" text="Exportar a CSV" />
+                  </HBox>
+               </VBox>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </VBox>
+   
+   <!-- Acciones -->
+   <HBox spacing="10.0" alignment="CENTER_RIGHT">
+      <Button fx:id="btnActualizar" onAction="#handleActualizar" text="Actualizar" />
+      <Button fx:id="btnGenerarReporteCompleto" onAction="#handleGenerarReporteCompleto" styleClass="primary-button" text="Generar Reporte Completo" />
+      <Button fx:id="btnConfigurarReporte" onAction="#handleConfigurarReporte" styleClass="secondary-button" text="Configurar Reporte" />
+   </HBox>
+</VBox>
