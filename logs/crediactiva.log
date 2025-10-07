@@ -7357,3 +7357,182 @@ javafx.fxml.LoadException: String is not a valid type.
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 2025-10-06 21:40:40 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones cerrado correctamente
 2025-10-06 21:40:40 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva cerrada
+2025-10-06 22:02:33 [main] INFO  pe.crediactiva.app.Main - Iniciando aplicación CrediActiva Desktop v1.0.0
+2025-10-06 22:02:33 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Icono no encontrado, continuando sin icono
+2025-10-06 22:02:33 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Propiedades de base de datos cargadas correctamente
+2025-10-06 22:02:33 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones HikariCP inicializado correctamente
+2025-10-06 22:02:34 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva iniciada correctamente
+2025-10-06 22:02:48 [JavaFX Application Thread] INFO  p.c.app.dao.impl.UsuarioDAOImpl - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:02:48 [JavaFX Application Thread] INFO  p.c.a.service.AuthenticationService - Usuario autenticado exitosamente: 12345678 - ASESOR
+2025-10-06 22:02:48 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:02:48 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario redirigido a pantalla principal: ASESOR
+2025-10-06 22:03:05 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Intentando cargar gestión de clientes...
+2025-10-06 22:03:05 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargados 4 clientes para el asesor 12345678 desde la base de datos
+2025-10-06 22:03:05 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargada gestión de clientes exitosamente
+2025-10-06 22:03:07 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Intentando cargar solicitud de préstamo...
+2025-10-06 22:03:07 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargada solicitud de préstamo exitosamente
+2025-10-06 22:03:09 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargado simulador de crédito con scroll
+2025-10-06 22:03:13 [JavaFX Application Thread] ERROR p.c.a.v.asesor.AsesorMainController - Error al cargar registro de cobro
+javafx.fxml.LoadException: String is not a valid type.
+/C:/Users/USER/OneDrive/Escritorio/proyecto_v4.0/target/classes/fxml/asesor/RegistrarCobroView.fxml:120
+
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.constructLoadException(FXMLLoader.java:2718)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.createElement(FXMLLoader.java:2920)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.processStartElement(FXMLLoader.java:2850)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.loadImpl(FXMLLoader.java:2649)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.loadImpl(FXMLLoader.java:2563)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.load(FXMLLoader.java:2531)
+	at pe.crediactiva.app.view.asesor.AsesorMainController.handleRegistrarCobro(AsesorMainController.java:269)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at com.sun.javafx.reflect.Trampoline.invoke(MethodUtil.java:72)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at javafx.base@21.0.1/com.sun.javafx.reflect.MethodUtil.invoke(MethodUtil.java:270)
+	at javafx.fxml@21.0.1/com.sun.javafx.fxml.MethodHelper.invoke(MethodHelper.java:84)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader$MethodHandler.invoke(FXMLLoader.java:1855)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader$ControllerMethodEventHandler.handle(FXMLLoader.java:1726)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler.dispatchBubblingEvent(CompositeEventHandler.java:86)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:232)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:189)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventDispatcher.dispatchBubblingEvent(CompositeEventDispatcher.java:59)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:58)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEventImpl(EventUtil.java:74)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEvent(EventUtil.java:49)
+	at javafx.base@21.0.1/javafx.event.Event.fireEvent(Event.java:198)
+	at javafx.graphics@21.0.1/javafx.scene.Node.fireEvent(Node.java:8875)
+	at javafx.controls@21.0.1/javafx.scene.control.Button.fire(Button.java:203)
+	at javafx.controls@21.0.1/com.sun.javafx.scene.control.behavior.ButtonBehavior.mouseReleased(ButtonBehavior.java:207)
+	at javafx.controls@21.0.1/com.sun.javafx.scene.control.inputmap.InputMap.handle(InputMap.java:274)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler$NormalEventHandlerRecord.handleBubblingEvent(CompositeEventHandler.java:247)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler.dispatchBubblingEvent(CompositeEventHandler.java:80)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:232)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:189)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventDispatcher.dispatchBubblingEvent(CompositeEventDispatcher.java:59)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:58)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEventImpl(EventUtil.java:74)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEvent(EventUtil.java:54)
+	at javafx.base@21.0.1/javafx.event.Event.fireEvent(Event.java:198)
+	at javafx.graphics@21.0.1/javafx.scene.Scene$MouseHandler.process(Scene.java:3984)
+	at javafx.graphics@21.0.1/javafx.scene.Scene.processMouseEvent(Scene.java:1890)
+	at javafx.graphics@21.0.1/javafx.scene.Scene$ScenePeerListener.mouseEvent(Scene.java:2708)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler$MouseEventNotification.run(GlassViewEventHandler.java:411)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler$MouseEventNotification.run(GlassViewEventHandler.java:301)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler.lambda$handleMouseEvent$2(GlassViewEventHandler.java:450)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.runWithoutRenderLock(QuantumToolkit.java:424)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler.handleMouseEvent(GlassViewEventHandler.java:449)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.View.handleMouseEvent(View.java:551)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.View.notifyMouse(View.java:937)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.win.WinApplication._runLoop(Native Method)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.win.WinApplication.lambda$runLoop$3(WinApplication.java:185)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-10-06 22:03:18 [JavaFX Application Thread] ERROR p.c.a.v.asesor.AsesorMainController - Error al cargar registro de cobro
+javafx.fxml.LoadException: String is not a valid type.
+/C:/Users/USER/OneDrive/Escritorio/proyecto_v4.0/target/classes/fxml/asesor/RegistrarCobroView.fxml:120
+
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.constructLoadException(FXMLLoader.java:2718)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.createElement(FXMLLoader.java:2920)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.processStartElement(FXMLLoader.java:2850)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.loadImpl(FXMLLoader.java:2649)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.loadImpl(FXMLLoader.java:2563)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader.load(FXMLLoader.java:2531)
+	at pe.crediactiva.app.view.asesor.AsesorMainController.handleRegistrarCobro(AsesorMainController.java:269)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at com.sun.javafx.reflect.Trampoline.invoke(MethodUtil.java:72)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at javafx.base@21.0.1/com.sun.javafx.reflect.MethodUtil.invoke(MethodUtil.java:270)
+	at javafx.fxml@21.0.1/com.sun.javafx.fxml.MethodHelper.invoke(MethodHelper.java:84)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader$MethodHandler.invoke(FXMLLoader.java:1855)
+	at javafx.fxml@21.0.1/javafx.fxml.FXMLLoader$ControllerMethodEventHandler.handle(FXMLLoader.java:1726)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler.dispatchBubblingEvent(CompositeEventHandler.java:86)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:232)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:189)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventDispatcher.dispatchBubblingEvent(CompositeEventDispatcher.java:59)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:58)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEventImpl(EventUtil.java:74)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEvent(EventUtil.java:49)
+	at javafx.base@21.0.1/javafx.event.Event.fireEvent(Event.java:198)
+	at javafx.graphics@21.0.1/javafx.scene.Node.fireEvent(Node.java:8875)
+	at javafx.controls@21.0.1/javafx.scene.control.Button.fire(Button.java:203)
+	at javafx.controls@21.0.1/com.sun.javafx.scene.control.behavior.ButtonBehavior.mouseReleased(ButtonBehavior.java:207)
+	at javafx.controls@21.0.1/com.sun.javafx.scene.control.inputmap.InputMap.handle(InputMap.java:274)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler$NormalEventHandlerRecord.handleBubblingEvent(CompositeEventHandler.java:247)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventHandler.dispatchBubblingEvent(CompositeEventHandler.java:80)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:232)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventHandlerManager.dispatchBubblingEvent(EventHandlerManager.java:189)
+	at javafx.base@21.0.1/com.sun.javafx.event.CompositeEventDispatcher.dispatchBubblingEvent(CompositeEventDispatcher.java:59)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:58)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.BasicEventDispatcher.dispatchEvent(BasicEventDispatcher.java:56)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventDispatchChainImpl.dispatchEvent(EventDispatchChainImpl.java:114)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEventImpl(EventUtil.java:74)
+	at javafx.base@21.0.1/com.sun.javafx.event.EventUtil.fireEvent(EventUtil.java:54)
+	at javafx.base@21.0.1/javafx.event.Event.fireEvent(Event.java:198)
+	at javafx.graphics@21.0.1/javafx.scene.Scene$MouseHandler.process(Scene.java:3984)
+	at javafx.graphics@21.0.1/javafx.scene.Scene.processMouseEvent(Scene.java:1890)
+	at javafx.graphics@21.0.1/javafx.scene.Scene$ScenePeerListener.mouseEvent(Scene.java:2708)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler$MouseEventNotification.run(GlassViewEventHandler.java:411)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler$MouseEventNotification.run(GlassViewEventHandler.java:301)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler.lambda$handleMouseEvent$2(GlassViewEventHandler.java:450)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.runWithoutRenderLock(QuantumToolkit.java:424)
+	at javafx.graphics@21.0.1/com.sun.javafx.tk.quantum.GlassViewEventHandler.handleMouseEvent(GlassViewEventHandler.java:449)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.View.handleMouseEvent(View.java:551)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.View.notifyMouse(View.java:937)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.win.WinApplication._runLoop(Native Method)
+	at javafx.graphics@21.0.1/com.sun.glass.ui.win.WinApplication.lambda$runLoop$3(WinApplication.java:185)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-10-06 22:12:55 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones cerrado correctamente
+2025-10-06 22:12:55 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva cerrada
+2025-10-06 22:13:47 [main] INFO  pe.crediactiva.app.Main - Iniciando aplicación CrediActiva Desktop v1.0.0
+2025-10-06 22:13:47 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Icono no encontrado, continuando sin icono
+2025-10-06 22:13:47 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Propiedades de base de datos cargadas correctamente
+2025-10-06 22:13:47 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones HikariCP inicializado correctamente
+2025-10-06 22:13:48 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva iniciada correctamente
+2025-10-06 22:14:05 [JavaFX Application Thread] INFO  p.c.app.dao.impl.UsuarioDAOImpl - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:14:05 [JavaFX Application Thread] INFO  p.c.a.service.AuthenticationService - Usuario autenticado exitosamente: 12345678 - ASESOR
+2025-10-06 22:14:05 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:14:05 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario redirigido a pantalla principal: ASESOR
+2025-10-06 22:14:08 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Intentando cargar registro de cobro...
+2025-10-06 22:14:08 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargado registro de cobro exitosamente
+2025-10-06 22:25:14 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones cerrado correctamente
+2025-10-06 22:25:14 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva cerrada
+2025-10-06 22:27:00 [main] INFO  pe.crediactiva.app.Main - Iniciando aplicación CrediActiva Desktop v1.0.0
+2025-10-06 22:27:00 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Icono no encontrado, continuando sin icono
+2025-10-06 22:27:00 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Propiedades de base de datos cargadas correctamente
+2025-10-06 22:27:00 [JavaFX Application Thread] INFO  p.c.app.config.DatabaseConfig - Pool de conexiones HikariCP inicializado correctamente
+2025-10-06 22:27:01 [JavaFX Application Thread] INFO  pe.crediactiva.app.Main - Aplicación CrediActiva iniciada correctamente
+2025-10-06 22:27:15 [JavaFX Application Thread] INFO  p.c.app.dao.impl.UsuarioDAOImpl - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:27:15 [JavaFX Application Thread] INFO  p.c.a.service.AuthenticationService - Usuario autenticado exitosamente: 12345678 - ASESOR
+2025-10-06 22:27:15 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario autenticado exitosamente: 12345678
+2025-10-06 22:27:16 [JavaFX Application Thread] INFO  p.c.app.view.LoginController - Usuario redirigido a pantalla principal: ASESOR
+2025-10-06 22:27:19 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Intentando cargar registro de cobro...
+2025-10-06 22:27:19 [JavaFX Application Thread] INFO  p.c.a.v.asesor.AsesorMainController - Cargado registro de cobro exitosamente con scroll

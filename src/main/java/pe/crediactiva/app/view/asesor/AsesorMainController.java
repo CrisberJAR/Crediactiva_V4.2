@@ -2,13 +2,11 @@ package pe.crediactiva.app.view.asesor;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.Modality;
-import javafx.scene.Scene;
-import java.time.LocalDate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -17,10 +15,16 @@ import javafx.geometry.Orientation;
 import pe.crediactiva.app.service.AuthenticationService;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
+import pe.crediactiva.app.service.RecaudacionService;
+import pe.crediactiva.app.dao.CronogramaDAO;
+import pe.crediactiva.app.dao.impl.CronogramaDAOImpl;
+import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.view.LoginController;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,11 +90,15 @@ public class AsesorMainController {
     private AuthenticationService authService;
     private PrestamoService prestamoService;
     private ClienteService clienteService;
+    private RecaudacionService recaudacionService;
+    private CronogramaDAO cronogramaDAO;
     
     public AsesorMainController() {
         this.authService = new AuthenticationService();
         this.prestamoService = new PrestamoService();
         this.clienteService = new ClienteService();
+        this.recaudacionService = new RecaudacionService();
+        this.cronogramaDAO = new CronogramaDAOImpl();
     }
     
     public void setPrimaryStage(Stage primaryStage) {
@@ -265,18 +273,28 @@ public class AsesorMainController {
     @FXML
     private void handleRegistrarCobro() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/RegistrarCobroView.fxml"));
-            VBox registrarCobroView = loader.load();
+            logger.info("Intentando cargar registro de cobro...");
+            
+            VBox registrarCobroView = crearRegistrarCobroView();
+            
+            // Crear ScrollPane para hacer scrolleable el contenido
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setContent(registrarCobroView);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             
             // Reemplazar contenido
             contentArea.getChildren().clear();
-            contentArea.getChildren().add(registrarCobroView);
+            contentArea.getChildren().add(scrollPane);
             
-            logger.info("Cargado registro de cobro");
+            logger.info("Cargado registro de cobro exitosamente con scroll");
             
-        } catch (IOException e) {
-            logger.error("Error al cargar registro de cobro", e);
-            mostrarError("Error al cargar el formulario de registro de cobro");
+        } catch (Exception e) {
+            logger.error("Error inesperado al cargar registro de cobro", e);
+            mostrarError("Error inesperado: " + e.getMessage());
         }
     }
     
@@ -583,6 +601,17 @@ public class AsesorMainController {
     private void mostrarError(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+    
+    /**
+     * Muestra un mensaje de advertencia
+     */
+    private void mostrarAdvertencia(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advertencia");
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
@@ -1877,6 +1906,377 @@ public class AsesorMainController {
             logger.error("Error al generar cronograma", e);
             mostrarError("Error al generar cronograma: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Crea la vista de registro de cobro programáticamente
+     */
+    private VBox crearRegistrarCobroView() {
+        VBox root = new VBox(25);
+        root.setPadding(new Insets(25));
+        root.setStyle("-fx-background-color: #f8f9fa;");
+        
+        // Título principal
+        Label titulo = new Label("💰 Registro de Cobros");
+        titulo.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        
+        Label subtitulo = new Label("Registra los cobros realizados a tus clientes siguiendo el flujo de negocio");
+        subtitulo.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d; -fx-padding: 0 0 20 0;");
+        
+        // Panel de información del flujo
+        VBox panelInfo = new VBox(15);
+        panelInfo.setPadding(new Insets(20));
+        panelInfo.setStyle("-fx-background-color: #e8f4fd; -fx-background-radius: 10; -fx-border-color: #3498db; -fx-border-radius: 10;");
+        
+        Label tituloInfo = new Label("📋 Flujo de Registro de Cobros");
+        tituloInfo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        
+        Label info1 = new Label("1️⃣ Selecciona el cliente del cual vas a cobrar");
+        info1.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
+        
+        Label info2 = new Label("2️⃣ Selecciona el préstamo y la cuota específica");
+        info2.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
+        
+        Label info3 = new Label("3️⃣ Registra el monto cobrado y el método de pago");
+        info3.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
+        
+        Label info4 = new Label("4️⃣ El cobro se registra como borrador pendiente de validación");
+        info4.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
+        
+        panelInfo.getChildren().addAll(tituloInfo, info1, info2, info3, info4);
+        
+        // Panel de selección de cliente
+        VBox panelCliente = new VBox(20);
+        panelCliente.setPadding(new Insets(25));
+        panelCliente.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
+        
+        Label tituloCliente = new Label("👤 Selección de Cliente");
+        tituloCliente.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 15 0;");
+        
+        HBox buscarCliente = new HBox(15);
+        buscarCliente.setAlignment(Pos.CENTER_LEFT);
+        
+        Label lblBuscarCliente = new Label("🔍 Buscar cliente:");
+        lblBuscarCliente.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e; -fx-min-width: 120;");
+        
+        TextField txtBuscarCliente = new TextField();
+        txtBuscarCliente.setPromptText("Ingresa DNI del cliente");
+        txtBuscarCliente.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8; -fx-min-width: 200;");
+        
+        Button btnBuscarCliente = new Button("🔍 Buscar");
+        btnBuscarCliente.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8; -fx-cursor: hand;");
+        btnBuscarCliente.setOnMouseEntered(e -> btnBuscarCliente.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8; -fx-cursor: hand;"));
+        btnBuscarCliente.setOnMouseExited(e -> btnBuscarCliente.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-background-radius: 8; -fx-cursor: hand;"));
+        
+        buscarCliente.getChildren().addAll(lblBuscarCliente, txtBuscarCliente, btnBuscarCliente);
+        
+        // Información del cliente seleccionado
+        VBox infoCliente = new VBox(10);
+        infoCliente.setPadding(new Insets(15));
+        infoCliente.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 8; -fx-border-color: #dee2e6; -fx-border-radius: 8;");
+        
+        Label lblClienteInfo = new Label("Cliente: -");
+        lblClienteInfo.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 14px;");
+        
+        Label lblClienteTelefono = new Label("Teléfono: -");
+        lblClienteTelefono.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 13px;");
+        
+        Label lblClienteEmail = new Label("Email: -");
+        lblClienteEmail.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 13px;");
+        
+        infoCliente.getChildren().addAll(lblClienteInfo, lblClienteTelefono, lblClienteEmail);
+        
+        panelCliente.getChildren().addAll(tituloCliente, buscarCliente, infoCliente);
+        
+        // Panel de registro de cobro
+        VBox panelRegistro = new VBox(20);
+        panelRegistro.setPadding(new Insets(25));
+        panelRegistro.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
+        
+        Label tituloRegistro = new Label("💳 Registro de Cobro");
+        tituloRegistro.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 15 0;");
+        
+        GridPane gridRegistro = new GridPane();
+        gridRegistro.setHgap(20);
+        gridRegistro.setVgap(15);
+        
+        // Configurar columnas
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setMinWidth(150);
+        ColumnConstraints col2 = new ColumnConstraints();
+        gridRegistro.getColumnConstraints().addAll(col1, col2);
+        
+        // Campos del formulario
+        Label lblCuota = new Label("📅 Cuota a cobrar:");
+        lblCuota.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
+        ComboBox<String> cmbCuota = new ComboBox<>();
+        cmbCuota.setPromptText("Seleccionar cuota");
+        cmbCuota.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
+        
+        Label lblMonto = new Label("💰 Monto cobrado:");
+        lblMonto.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
+        TextField txtMonto = new TextField();
+        txtMonto.setPromptText("Ej: 45.38");
+        txtMonto.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
+        
+        Label lblFecha = new Label("📆 Fecha de cobro:");
+        lblFecha.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
+        DatePicker dpFecha = new DatePicker();
+        dpFecha.setValue(LocalDate.now());
+        dpFecha.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
+        
+        Label lblMetodo = new Label("💳 Método de pago:");
+        lblMetodo.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
+        ComboBox<String> cmbMetodo = new ComboBox<>();
+        cmbMetodo.getItems().addAll("EFECTIVO", "TRANSFERENCIA", "YAPE", "PLIN", "TARJETA");
+        cmbMetodo.setValue("EFECTIVO");
+        cmbMetodo.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
+        
+        // Agregar campos al grid
+        gridRegistro.add(lblCuota, 0, 0);
+        gridRegistro.add(cmbCuota, 1, 0);
+        gridRegistro.add(lblMonto, 0, 1);
+        gridRegistro.add(txtMonto, 1, 1);
+        gridRegistro.add(lblFecha, 0, 2);
+        gridRegistro.add(dpFecha, 1, 2);
+        gridRegistro.add(lblMetodo, 0, 3);
+        gridRegistro.add(cmbMetodo, 1, 3);
+        
+        // Botones
+        HBox botones = new HBox(15);
+        botones.setAlignment(Pos.CENTER);
+        
+        Button btnRegistrar = new Button("✅ Registrar Cobro");
+        btnRegistrar.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;");
+        btnRegistrar.setOnMouseEntered(e -> btnRegistrar.setStyle("-fx-background-color: #229954; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
+        btnRegistrar.setOnMouseExited(e -> btnRegistrar.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
+        
+        Button btnLimpiar = new Button("🔄 Limpiar");
+        btnLimpiar.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;");
+        btnLimpiar.setOnMouseEntered(e -> btnLimpiar.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
+        btnLimpiar.setOnMouseExited(e -> btnLimpiar.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
+        
+        botones.getChildren().addAll(btnRegistrar, btnLimpiar);
+        
+        panelRegistro.getChildren().addAll(tituloRegistro, gridRegistro, botones);
+        
+        // Panel de advertencia
+        HBox panelAdvertencia = new HBox();
+        panelAdvertencia.setAlignment(Pos.CENTER);
+        panelAdvertencia.setPadding(new Insets(15, 20, 15, 20));
+        panelAdvertencia.setStyle("-fx-background-color: #fff3cd; -fx-background-radius: 10; -fx-border-color: #ffeaa7; -fx-border-radius: 10;");
+        
+        Label lblAdvertencia = new Label("⚠️ Los cobros registrados están pendientes de validación por el administrador.");
+        lblAdvertencia.setStyle("-fx-font-weight: bold; -fx-text-fill: #856404; -fx-font-size: 13px;");
+        
+        panelAdvertencia.getChildren().add(lblAdvertencia);
+        
+        // Variables para almacenar datos del cliente y cuotas (usando arrays para evitar problemas de final)
+        final Cliente[] clienteSeleccionado = {null};
+        final List<Prestamo> prestamosCliente = new ArrayList<>();
+        final List<pe.crediactiva.app.model.Cronograma> cuotasPendientes = new ArrayList<>();
+        
+        // Event handlers
+        btnBuscarCliente.setOnAction(e -> {
+            String dni = txtBuscarCliente.getText().trim();
+            if (dni.isEmpty()) {
+                mostrarAdvertencia("Por favor ingrese el DNI del cliente");
+                return;
+            }
+            
+            try {
+                // Buscar cliente por DNI
+                Optional<Cliente> clienteOpt = clienteService.obtenerClientePorId(Long.parseLong(dni));
+                if (clienteOpt.isPresent()) {
+                    clienteSeleccionado[0] = clienteOpt.get();
+                    
+                    // Verificar que el cliente pertenece al asesor actual
+                    Long idAsesorActual = SessionManager.getInstance().getAsesorId();
+                    if (!clienteSeleccionado[0].getIdAsesor().equals(idAsesorActual)) {
+                        mostrarError("Este cliente no pertenece a tu cartera de clientes");
+                        return;
+                    }
+                    
+                    // Mostrar información del cliente
+                    lblClienteInfo.setText("Cliente: " + clienteSeleccionado[0].getNombre() + " " + clienteSeleccionado[0].getApellido() + " (DNI: " + dni + ")");
+                    lblClienteTelefono.setText("Teléfono: " + clienteSeleccionado[0].getTelefono());
+                    lblClienteEmail.setText("Email: " + clienteSeleccionado[0].getEmail());
+                    
+                    // Cargar préstamos del cliente
+                    prestamosCliente.clear();
+                    prestamosCliente.addAll(prestamoService.obtenerPrestamosPorCliente(clienteSeleccionado[0].getIdCliente()));
+                    
+                    // Cargar cuotas pendientes (ordenadas por fecha - más antigua primero)
+                    cuotasPendientes.clear();
+                    cmbCuota.getItems().clear();
+                    
+                    for (Prestamo prestamo : prestamosCliente) {
+                        if (prestamo.getEstado() == pe.crediactiva.app.model.Prestamo.EstadoPrestamo.ACTIVO) {
+                            List<pe.crediactiva.app.model.Cronograma> cuotasPrestamo = cronogramaDAO.findPendientesByPrestamo(prestamo.getIdPrestamo());
+                            cuotasPendientes.addAll(cuotasPrestamo);
+                        }
+                    }
+                    
+                    // Ordenar cuotas por fecha programada (más antigua primero)
+                    cuotasPendientes.sort((c1, c2) -> c1.getFechaProgramada().compareTo(c2.getFechaProgramada()));
+                    
+                    // Llenar combo con cuotas pendientes
+                    for (pe.crediactiva.app.model.Cronograma cuota : cuotasPendientes) {
+                        String estadoTexto = cuota.getEstadoCuota() == pe.crediactiva.app.model.Cronograma.EstadoCuota.RETRASADA ? " (RETRASADA)" : "";
+                        String texto = String.format("Cuota #%d - S/ %.2f - %s%s", 
+                            cuota.getNumeroCuota(), 
+                            cuota.getMontoCuota(),
+                            cuota.getFechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                            estadoTexto);
+                        cmbCuota.getItems().add(texto);
+                    }
+                    
+                    // Seleccionar automáticamente la cuota más antigua
+                    if (!cuotasPendientes.isEmpty()) {
+                        cmbCuota.setValue(cmbCuota.getItems().get(0));
+                        pe.crediactiva.app.model.Cronograma cuotaMasAntigua = cuotasPendientes.get(0);
+                        txtMonto.setText(String.format("%.2f", cuotaMasAntigua.getMontoCuota()));
+                        
+                        mostrarInfo("Cliente encontrado. Se seleccionó automáticamente la cuota más antigua pendiente.");
+                    } else {
+                        mostrarInfo("Cliente encontrado pero no tiene cuotas pendientes de pago.");
+                    }
+                    
+                } else {
+                    mostrarError("No se encontró un cliente con el DNI: " + dni);
+                }
+                
+            } catch (NumberFormatException ex) {
+                mostrarError("El DNI debe contener solo números");
+            } catch (Exception ex) {
+                logger.error("Error al buscar cliente", ex);
+                mostrarError("Error al buscar cliente: " + ex.getMessage());
+            }
+        });
+        
+        // Event handler para cuando se selecciona una cuota diferente
+        cmbCuota.setOnAction(e -> {
+            if (cmbCuota.getSelectionModel().getSelectedIndex() >= 0 && !cuotasPendientes.isEmpty()) {
+                int indiceSeleccionado = cmbCuota.getSelectionModel().getSelectedIndex();
+                pe.crediactiva.app.model.Cronograma cuotaSeleccionada = cuotasPendientes.get(indiceSeleccionado);
+                txtMonto.setText(String.format("%.2f", cuotaSeleccionada.getMontoCuota()));
+            }
+        });
+        
+        btnRegistrar.setOnAction(e -> {
+            // Validar que se haya seleccionado un cliente
+            if (clienteSeleccionado[0] == null) {
+                mostrarAdvertencia("Por favor busque y seleccione un cliente primero");
+                return;
+            }
+            
+            // Validar que se haya seleccionado una cuota
+            if (cmbCuota.getValue() == null || cmbCuota.getSelectionModel().getSelectedIndex() < 0) {
+                mostrarAdvertencia("Por favor seleccione una cuota para cobrar");
+                return;
+            }
+            
+            // Validar monto
+            String montoStr = txtMonto.getText().trim();
+            if (montoStr.isEmpty()) {
+                mostrarAdvertencia("Por favor ingrese el monto cobrado");
+                return;
+            }
+            
+            try {
+                BigDecimal montoCobrado = new BigDecimal(montoStr);
+                if (montoCobrado.compareTo(BigDecimal.ZERO) <= 0) {
+                    mostrarAdvertencia("El monto debe ser mayor a cero");
+                    return;
+                }
+                
+                // Validar fecha
+                if (dpFecha.getValue() == null) {
+                    mostrarAdvertencia("Por favor seleccione la fecha de cobro");
+                    return;
+                }
+                
+                // Validar método de pago
+                if (cmbMetodo.getValue() == null) {
+                    mostrarAdvertencia("Por favor seleccione el método de pago");
+                    return;
+                }
+                
+                // Obtener la cuota seleccionada
+                int indiceSeleccionado = cmbCuota.getSelectionModel().getSelectedIndex();
+                pe.crediactiva.app.model.Cronograma cuotaSeleccionada = cuotasPendientes.get(indiceSeleccionado);
+                
+                // Registrar el cobro usando el RecaudacionService
+                Long idAsesorActual = SessionManager.getInstance().getAsesorId();
+                boolean cobroRegistrado = recaudacionService.registrarBorrador(
+                    idAsesorActual,
+                    clienteSeleccionado[0].getIdCliente(),
+                    cuotaSeleccionada.getPrestamo().getIdPrestamo(),
+                    montoCobrado
+                );
+                
+                if (cobroRegistrado) {
+                    // Marcar cuota como pagada
+                    boolean cuotaActualizada = cronogramaDAO.marcarComoPagada(
+                        cuotaSeleccionada.getIdCuota(),
+                        dpFecha.getValue()
+                    );
+                    
+                    if (cuotaActualizada) {
+                        mostrarInfo("✅ Cobro registrado exitosamente\\n\\n" +
+                            "📋 Detalles:\\n" +
+                            "• Cliente: " + clienteSeleccionado[0].getNombre() + " " + clienteSeleccionado[0].getApellido() + "\\n" +
+                            "• Cuota #" + cuotaSeleccionada.getNumeroCuota() + "\\n" +
+                            "• Monto: S/ " + String.format("%.2f", montoCobrado) + "\\n" +
+                            "• Fecha: " + dpFecha.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\\n" +
+                            "• Método: " + cmbMetodo.getValue() + "\\n\\n" +
+                            "⚠️ Este cobro está pendiente de validación por el administrador.");
+                        
+                        // Limpiar formulario
+                        txtBuscarCliente.clear();
+                        cmbCuota.getItems().clear();
+                        txtMonto.clear();
+                        dpFecha.setValue(LocalDate.now());
+                        cmbMetodo.setValue("EFECTIVO");
+                        lblClienteInfo.setText("Cliente: -");
+                        lblClienteTelefono.setText("Teléfono: -");
+                        lblClienteEmail.setText("Email: -");
+                        clienteSeleccionado[0] = null;
+                        prestamosCliente.clear();
+                        cuotasPendientes.clear();
+                        
+                    } else {
+                        mostrarError("El cobro se registró pero no se pudo actualizar la cuota. Contacte al administrador.");
+                    }
+                } else {
+                    mostrarError("Error al registrar el cobro en el sistema");
+                }
+                
+            } catch (NumberFormatException ex) {
+                mostrarError("Por favor ingrese un monto válido");
+            } catch (Exception ex) {
+                logger.error("Error al registrar cobro", ex);
+                mostrarError("Error al registrar cobro: " + ex.getMessage());
+            }
+        });
+        
+        btnLimpiar.setOnAction(e -> {
+            txtBuscarCliente.clear();
+            cmbCuota.getItems().clear();
+            txtMonto.clear();
+            dpFecha.setValue(LocalDate.now());
+            cmbMetodo.setValue("EFECTIVO");
+            lblClienteInfo.setText("Cliente: -");
+            lblClienteTelefono.setText("Teléfono: -");
+            lblClienteEmail.setText("Email: -");
+            clienteSeleccionado[0] = null;
+            prestamosCliente.clear();
+            cuotasPendientes.clear();
+        });
+        
+        root.getChildren().addAll(titulo, subtitulo, panelInfo, panelCliente, panelRegistro, panelAdvertencia);
+        
+        return root;
     }
     
 }
