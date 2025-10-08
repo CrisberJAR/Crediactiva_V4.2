@@ -212,6 +212,30 @@ public class RecaudacionService {
             return false;
         }
     }
+    
+    /**
+     * Verifica si existe un borrador pendiente para un préstamo específico
+     */
+    public boolean existeBorradorPendiente(Long idPrestamo) {
+        try {
+            return recaudacionAsesorDAO.existeBorradorPendiente(idPrestamo);
+        } catch (Exception e) {
+            logger.error("Error al verificar borrador pendiente para préstamo: " + idPrestamo, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene el borrador pendiente para un préstamo específico
+     */
+    public Optional<RecaudacionAsesor> obtenerBorradorPendiente(Long idPrestamo) {
+        try {
+            return recaudacionAsesorDAO.obtenerBorradorPendiente(idPrestamo);
+        } catch (Exception e) {
+            logger.error("Error al obtener borrador pendiente para préstamo: " + idPrestamo, e);
+            return Optional.empty();
+        }
+    }
 
     /**
      * Aplica pagos a cuotas específicas
@@ -273,5 +297,17 @@ public class RecaudacionService {
      */
     public BigDecimal obtenerRecaudacionDelMes() {
         return obtenerRecaudacionMensualPorAsesor(null, LocalDate.now().getYear(), LocalDate.now().getMonthValue());
+    }
+    
+    /**
+     * Elimina una recaudación
+     */
+    public boolean eliminarRecaudacion(Long idRecaudacion) {
+        try {
+            return recaudacionAsesorDAO.delete(idRecaudacion);
+        } catch (Exception e) {
+            logger.error("Error al eliminar recaudación: " + idRecaudacion, e);
+            return false;
+        }
     }
 }

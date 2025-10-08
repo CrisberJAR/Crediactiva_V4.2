@@ -64,4 +64,14 @@ public interface RecaudacionAsesorDAO {
      * Marca una recaudación como validada
      */
     boolean marcarComoValidado(Long idRecaudacion);
+    
+    /**
+     * Verifica si existe un borrador pendiente para un préstamo específico
+     */
+    boolean existeBorradorPendiente(Long idPrestamo);
+    
+    /**
+     * Obtiene el borrador pendiente para un préstamo específico
+     */
+    Optional<RecaudacionAsesor> obtenerBorradorPendiente(Long idPrestamo);
 }

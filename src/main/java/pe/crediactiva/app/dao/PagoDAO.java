@@ -69,4 +69,9 @@ public interface PagoDAO {
      * Obtiene pagos por préstamo
      */
     List<Pago> findByPrestamo(Long idPrestamo);
+    
+    /**
+     * Obtiene pagos pendientes de validación
+     */
+    List<Pago> findPendientesValidacion();
 }

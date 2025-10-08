@@ -11,8 +11,13 @@ public class Pago {
     private Long idCuota;
     private Long idCliente;
     private Long idAsesor;
+    private Long idPrestamo;
     private LocalDateTime fechaPago;
+    private LocalDateTime fechaRegistro;
+    private LocalDateTime fechaValidacion;
     private BigDecimal montoPagado;
+    private boolean validado;
+    private String observaciones;
     
     // Campos de relación
     private Cronograma cuota;
@@ -27,6 +32,8 @@ public class Pago {
         this.idAsesor = idAsesor;
         this.montoPagado = montoPagado;
         this.fechaPago = LocalDateTime.now();
+        this.fechaRegistro = LocalDateTime.now();
+        this.validado = false;
     }
     
     // Getters y Setters
@@ -100,6 +107,46 @@ public class Pago {
     
     public void setAsesor(Asesor asesor) {
         this.asesor = asesor;
+    }
+    
+    public Long getIdPrestamo() {
+        return idPrestamo;
+    }
+    
+    public void setIdPrestamo(Long idPrestamo) {
+        this.idPrestamo = idPrestamo;
+    }
+    
+    public LocalDateTime getFechaRegistro() {
+        return fechaRegistro;
+    }
+    
+    public void setFechaRegistro(LocalDateTime fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
+    }
+    
+    public LocalDateTime getFechaValidacion() {
+        return fechaValidacion;
+    }
+    
+    public void setFechaValidacion(LocalDateTime fechaValidacion) {
+        this.fechaValidacion = fechaValidacion;
+    }
+    
+    public boolean isValidado() {
+        return validado;
+    }
+    
+    public void setValidado(boolean validado) {
+        this.validado = validado;
+    }
+    
+    public String getObservaciones() {
+        return observaciones;
+    }
+    
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
     }
     
     @Override

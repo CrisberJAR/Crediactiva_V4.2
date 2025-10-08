@@ -206,8 +206,20 @@ public class AdminMainController {
      */
     @FXML
     private void handleValidarCobros() {
-        // TODO: Implementar validación de cobros
-        showInfo("Funcionalidad de validación de cobros en desarrollo");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin/ValidarCobrosView.fxml"));
+            VBox validarCobrosView = loader.load();
+            
+            // Reemplazar contenido
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(validarCobrosView);
+            
+            logger.info("Cargada validación de cobros");
+            
+        } catch (IOException e) {
+            logger.error("Error al cargar validación de cobros", e);
+            showError("Error al cargar la validación de cobros");
+        }
     }
     
     /**

@@ -279,6 +279,49 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
         }
         return false;
     }
+    
+    @Override
+    public boolean existeBorradorPendiente(Long idPrestamo) {
+        String sql = "SELECT COUNT(*) FROM recaudacion_asesor WHERE id_prestamo = ? AND validado = FALSE";
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idPrestamo);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    return count > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.error("Error al verificar borrador pendiente para préstamo: " + idPrestamo, e);
+        }
+        return false;
+    }
+    
+    @Override
+    public Optional<RecaudacionAsesor> obtenerBorradorPendiente(Long idPrestamo) {
+        String sql = "SELECT * FROM recaudacion_asesor WHERE id_prestamo = ? AND validado = FALSE ORDER BY fecha_registro DESC LIMIT 1";
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idPrestamo);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToRecaudacionAsesor(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.error("Error al obtener borrador pendiente para préstamo: " + idPrestamo, e);
+        }
+        return Optional.empty();
+    }
 
     private RecaudacionAsesor mapResultSetToRecaudacionAsesor(ResultSet rs) throws SQLException {
         RecaudacionAsesor recaudacion = new RecaudacionAsesor();

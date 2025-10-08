@@ -22,6 +22,7 @@ import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.view.LoginController;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
+import pe.crediactiva.app.model.RecaudacionAsesor;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -2013,6 +2014,27 @@ public class AsesorMainController {
         
         panelCliente.getChildren().addAll(tituloCliente, buscarCliente, infoCliente);
         
+        // Panel de selección de préstamo
+        VBox panelPrestamo = new VBox(20);
+        panelPrestamo.setPadding(new Insets(25));
+        panelPrestamo.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
+        
+        Label tituloPrestamo = new Label("🏦 Selección de Préstamo");
+        tituloPrestamo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 15 0;");
+        
+        HBox seleccionPrestamo = new HBox(15);
+        seleccionPrestamo.setAlignment(Pos.CENTER_LEFT);
+        
+        Label lblPrestamo = new Label("📋 Seleccionar préstamo:");
+        lblPrestamo.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e; -fx-min-width: 150;");
+        
+        ComboBox<String> cmbPrestamo = new ComboBox<>();
+        cmbPrestamo.setPromptText("Seleccione un préstamo");
+        cmbPrestamo.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8; -fx-min-width: 300;");
+        
+        seleccionPrestamo.getChildren().addAll(lblPrestamo, cmbPrestamo);
+        panelPrestamo.getChildren().addAll(tituloPrestamo, seleccionPrestamo);
+        
         // Panel de registro de cobro
         VBox panelRegistro = new VBox(20);
         panelRegistro.setPadding(new Insets(25));
@@ -2096,9 +2118,10 @@ public class AsesorMainController {
         
         panelAdvertencia.getChildren().add(lblAdvertencia);
         
-        // Variables para almacenar datos del cliente y cuotas (usando arrays para evitar problemas de final)
+        // Variables para almacenar datos del cliente, préstamos y cuotas (usando arrays para evitar problemas de final)
         final Cliente[] clienteSeleccionado = {null};
         final List<Prestamo> prestamosCliente = new ArrayList<>();
+        final Prestamo[] prestamoSeleccionado = {null};
         final List<pe.crediactiva.app.model.Cronograma> cuotasPendientes = new ArrayList<>();
         
         // Event handlers
@@ -2127,20 +2150,67 @@ public class AsesorMainController {
                     lblClienteTelefono.setText("Teléfono: " + clienteSeleccionado[0].getTelefono());
                     lblClienteEmail.setText("Email: " + clienteSeleccionado[0].getEmail());
                     
-                    // Cargar préstamos del cliente
+                    // Cargar préstamos activos del cliente
                     prestamosCliente.clear();
-                    prestamosCliente.addAll(prestamoService.obtenerPrestamosPorCliente(clienteSeleccionado[0].getIdCliente()));
+                    List<Prestamo> todosPrestamos = prestamoService.obtenerPrestamosPorCliente(clienteSeleccionado[0].getIdCliente());
                     
-                    // Cargar cuotas pendientes (ordenadas por fecha - más antigua primero)
-                    cuotasPendientes.clear();
-                    cmbCuota.getItems().clear();
-                    
-                    for (Prestamo prestamo : prestamosCliente) {
+                    // Filtrar solo préstamos activos
+                    for (Prestamo prestamo : todosPrestamos) {
                         if (prestamo.getEstado() == pe.crediactiva.app.model.Prestamo.EstadoPrestamo.ACTIVO) {
-                            List<pe.crediactiva.app.model.Cronograma> cuotasPrestamo = cronogramaDAO.findPendientesByPrestamo(prestamo.getIdPrestamo());
-                            cuotasPendientes.addAll(cuotasPrestamo);
+                            prestamosCliente.add(prestamo);
                         }
                     }
+                    
+                    // Limpiar y llenar combo de préstamos
+                    cmbPrestamo.getItems().clear();
+                    cmbCuota.getItems().clear();
+                    cuotasPendientes.clear();
+                    prestamoSeleccionado[0] = null;
+                    txtMonto.clear();
+                    
+                    // Llenar combo con préstamos activos
+                    for (Prestamo prestamo : prestamosCliente) {
+                        String fechaTexto = prestamo.getCreadoEn() != null ? 
+                            prestamo.getCreadoEn().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A";
+                        String texto = String.format("Préstamo #%d - S/ %.2f - %s", 
+                            prestamo.getIdPrestamo(),
+                            prestamo.getMontoSolicitado(),
+                            fechaTexto);
+                        cmbPrestamo.getItems().add(texto);
+                    }
+                    
+                    if (!prestamosCliente.isEmpty()) {
+                        mostrarInfo("Cliente encontrado. Seleccione un préstamo para ver las cuotas pendientes.");
+                    } else {
+                        mostrarInfo("Cliente encontrado pero no tiene préstamos activos.");
+                    }
+                    
+                } else {
+                    mostrarError("No se encontró un cliente con el DNI: " + dni);
+                }
+                
+            } catch (NumberFormatException ex) {
+                mostrarError("El DNI debe contener solo números");
+            } catch (Exception ex) {
+                logger.error("Error al buscar cliente", ex);
+                mostrarError("Error al buscar cliente: " + ex.getMessage());
+            }
+        });
+        
+        // Event handler para cuando se selecciona un préstamo
+        cmbPrestamo.setOnAction(e -> {
+            if (cmbPrestamo.getSelectionModel().getSelectedIndex() >= 0 && !prestamosCliente.isEmpty()) {
+                int indiceSeleccionado = cmbPrestamo.getSelectionModel().getSelectedIndex();
+                prestamoSeleccionado[0] = prestamosCliente.get(indiceSeleccionado);
+                
+                // Cargar cuotas pendientes del préstamo seleccionado
+                cuotasPendientes.clear();
+                cmbCuota.getItems().clear();
+                txtMonto.clear();
+                
+                try {
+                    List<pe.crediactiva.app.model.Cronograma> cuotasPrestamo = cronogramaDAO.findPendientesByPrestamo(prestamoSeleccionado[0].getIdPrestamo());
+                    cuotasPendientes.addAll(cuotasPrestamo);
                     
                     // Ordenar cuotas por fecha programada (más antigua primero)
                     cuotasPendientes.sort((c1, c2) -> c1.getFechaProgramada().compareTo(c2.getFechaProgramada()));
@@ -2162,20 +2232,15 @@ public class AsesorMainController {
                         pe.crediactiva.app.model.Cronograma cuotaMasAntigua = cuotasPendientes.get(0);
                         txtMonto.setText(String.format("%.2f", cuotaMasAntigua.getMontoCuota()));
                         
-                        mostrarInfo("Cliente encontrado. Se seleccionó automáticamente la cuota más antigua pendiente.");
+                        mostrarInfo("Préstamo seleccionado. Se seleccionó automáticamente la cuota más antigua pendiente.");
                     } else {
-                        mostrarInfo("Cliente encontrado pero no tiene cuotas pendientes de pago.");
+                        mostrarInfo("Préstamo seleccionado pero no tiene cuotas pendientes.");
                     }
                     
-                } else {
-                    mostrarError("No se encontró un cliente con el DNI: " + dni);
+                } catch (Exception ex) {
+                    logger.error("Error al cargar cuotas del préstamo", ex);
+                    mostrarError("Error al cargar las cuotas del préstamo");
                 }
-                
-            } catch (NumberFormatException ex) {
-                mostrarError("El DNI debe contener solo números");
-            } catch (Exception ex) {
-                logger.error("Error al buscar cliente", ex);
-                mostrarError("Error al buscar cliente: " + ex.getMessage());
             }
         });
         
@@ -2192,6 +2257,12 @@ public class AsesorMainController {
             // Validar que se haya seleccionado un cliente
             if (clienteSeleccionado[0] == null) {
                 mostrarAdvertencia("Por favor busque y seleccione un cliente primero");
+                return;
+            }
+            
+            // Validar que se haya seleccionado un préstamo
+            if (prestamoSeleccionado[0] == null) {
+                mostrarAdvertencia("Por favor seleccione un préstamo primero");
                 return;
             }
             
@@ -2231,48 +2302,74 @@ public class AsesorMainController {
                 int indiceSeleccionado = cmbCuota.getSelectionModel().getSelectedIndex();
                 pe.crediactiva.app.model.Cronograma cuotaSeleccionada = cuotasPendientes.get(indiceSeleccionado);
                 
+                // Verificar si ya existe un borrador pendiente para este préstamo
+                boolean existeBorrador = recaudacionService.existeBorradorPendiente(prestamoSeleccionado[0].getIdPrestamo());
+                if (existeBorrador) {
+                    // Obtener el borrador pendiente para determinar qué cuota está siendo pagada
+                    Optional<RecaudacionAsesor> borradorOpt = recaudacionService.obtenerBorradorPendiente(prestamoSeleccionado[0].getIdPrestamo());
+                    
+                    if (borradorOpt.isPresent()) {
+                        // Determinar qué cuota está siendo pagada en el borrador pendiente
+                        // (asumimos que siempre se paga la cuota más antigua pendiente)
+                        List<pe.crediactiva.app.model.Cronograma> cuotasPrestamo = cronogramaDAO.findPendientesByPrestamo(prestamoSeleccionado[0].getIdPrestamo());
+                        
+                        if (!cuotasPrestamo.isEmpty()) {
+                            // Ordenar cuotas por fecha programada (más antigua primero)
+                            cuotasPrestamo.sort((c1, c2) -> c1.getFechaProgramada().compareTo(c2.getFechaProgramada()));
+                            pe.crediactiva.app.model.Cronograma cuotaMasAntigua = cuotasPrestamo.get(0);
+                            
+                            // Verificar si la cuota seleccionada es la misma que está siendo pagada en el borrador
+                            if (cuotaSeleccionada.getIdCuota().equals(cuotaMasAntigua.getIdCuota())) {
+                                mostrarAdvertencia("⚠️ Ya existe un cobro registrado para la Cuota #" + cuotaMasAntigua.getNumeroCuota() + 
+                                    " que está pendiente de validación.\n\n" +
+                                    "• No se puede registrar otro cobro para esta cuota hasta que el administrador valide o rechace el cobro anterior.\n" +
+                                    "• Puede seleccionar otra cuota diferente si está disponible.\n" +
+                                    "• Por favor espere a que el administrador procese el cobro pendiente de la Cuota #" + cuotaMasAntigua.getNumeroCuota() + ".");
+                                return;
+                            }
+                            // Si la cuota seleccionada es diferente, permitir el registro
+                        }
+                    }
+                }
+                
                 // Registrar el cobro usando el RecaudacionService
                 Long idAsesorActual = SessionManager.getInstance().getAsesorId();
                 boolean cobroRegistrado = recaudacionService.registrarBorrador(
                     idAsesorActual,
                     clienteSeleccionado[0].getIdCliente(),
-                    cuotaSeleccionada.getPrestamo().getIdPrestamo(),
+                    prestamoSeleccionado[0].getIdPrestamo(),
                     montoCobrado
                 );
                 
                 if (cobroRegistrado) {
-                    // Marcar cuota como pagada
-                    boolean cuotaActualizada = cronogramaDAO.marcarComoPagada(
-                        cuotaSeleccionada.getIdCuota(),
-                        dpFecha.getValue()
-                    );
+                    mostrarInfo("✅ Cobro registrado exitosamente como BORRADOR\\n\\n" +
+                        "📋 Detalles del borrador:\\n" +
+                        "• Cliente: " + clienteSeleccionado[0].getNombre() + " " + clienteSeleccionado[0].getApellido() + "\\n" +
+                        "• Préstamo #" + prestamoSeleccionado[0].getIdPrestamo() + "\\n" +
+                        "• Cuota #" + cuotaSeleccionada.getNumeroCuota() + "\\n" +
+                        "• Monto: S/ " + String.format("%.2f", montoCobrado) + "\\n" +
+                        "• Fecha de cobro: " + dpFecha.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\\n" +
+                        "• Método: " + cmbMetodo.getValue() + "\\n\\n" +
+                        "⚠️ IMPORTANTE: Este cobro está PENDIENTE DE VALIDACIÓN\\n" +
+                        "• La cuota seguirá PENDIENTE hasta que el administrador valide\\n" +
+                        "• Solo después de la validación se marcará como PAGADA\\n" +
+                        "• El administrador puede rechazar el cobro si encuentra inconsistencias");
                     
-                    if (cuotaActualizada) {
-                        mostrarInfo("✅ Cobro registrado exitosamente\\n\\n" +
-                            "📋 Detalles:\\n" +
-                            "• Cliente: " + clienteSeleccionado[0].getNombre() + " " + clienteSeleccionado[0].getApellido() + "\\n" +
-                            "• Cuota #" + cuotaSeleccionada.getNumeroCuota() + "\\n" +
-                            "• Monto: S/ " + String.format("%.2f", montoCobrado) + "\\n" +
-                            "• Fecha: " + dpFecha.getValue().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\\n" +
-                            "• Método: " + cmbMetodo.getValue() + "\\n\\n" +
-                            "⚠️ Este cobro está pendiente de validación por el administrador.");
-                        
-                        // Limpiar formulario
-                        txtBuscarCliente.clear();
-                        cmbCuota.getItems().clear();
-                        txtMonto.clear();
-                        dpFecha.setValue(LocalDate.now());
-                        cmbMetodo.setValue("EFECTIVO");
-                        lblClienteInfo.setText("Cliente: -");
-                        lblClienteTelefono.setText("Teléfono: -");
-                        lblClienteEmail.setText("Email: -");
-                        clienteSeleccionado[0] = null;
-                        prestamosCliente.clear();
-                        cuotasPendientes.clear();
-                        
-                    } else {
-                        mostrarError("El cobro se registró pero no se pudo actualizar la cuota. Contacte al administrador.");
-                    }
+                    // Limpiar formulario
+                    txtBuscarCliente.clear();
+                    cmbPrestamo.getItems().clear();
+                    cmbCuota.getItems().clear();
+                    txtMonto.clear();
+                    dpFecha.setValue(LocalDate.now());
+                    cmbMetodo.setValue("EFECTIVO");
+                    lblClienteInfo.setText("Cliente: -");
+                    lblClienteTelefono.setText("Teléfono: -");
+                    lblClienteEmail.setText("Email: -");
+                    clienteSeleccionado[0] = null;
+                    prestamoSeleccionado[0] = null;
+                    prestamosCliente.clear();
+                    cuotasPendientes.clear();
+                    
                 } else {
                     mostrarError("Error al registrar el cobro en el sistema");
                 }
@@ -2287,6 +2384,7 @@ public class AsesorMainController {
         
         btnLimpiar.setOnAction(e -> {
             txtBuscarCliente.clear();
+            cmbPrestamo.getItems().clear();
             cmbCuota.getItems().clear();
             txtMonto.clear();
             dpFecha.setValue(LocalDate.now());
@@ -2295,11 +2393,12 @@ public class AsesorMainController {
             lblClienteTelefono.setText("Teléfono: -");
             lblClienteEmail.setText("Email: -");
             clienteSeleccionado[0] = null;
+            prestamoSeleccionado[0] = null;
             prestamosCliente.clear();
             cuotasPendientes.clear();
         });
         
-        root.getChildren().addAll(titulo, subtitulo, panelInfo, panelCliente, panelRegistro, panelAdvertencia);
+        root.getChildren().addAll(titulo, subtitulo, panelInfo, panelCliente, panelPrestamo, panelRegistro, panelAdvertencia);
         
         return root;
     }

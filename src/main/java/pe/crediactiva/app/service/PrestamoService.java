@@ -8,6 +8,7 @@ import pe.crediactiva.app.dao.impl.CronogramaDAOImpl;
 import pe.crediactiva.app.dao.impl.PrestamoDAOImpl;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Cronograma;
+import pe.crediactiva.app.model.Pago;
 import pe.crediactiva.app.model.Prestamo;
 import pe.crediactiva.app.util.FechaUtil;
 import org.slf4j.Logger;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -425,11 +425,11 @@ public class PrestamoService {
      */
     public double obtenerTotalPagadoPorCliente(Long idCliente) {
         try {
-            // TODO: Implementar en PagoDAO
-            return 0.0;
+            PagoService pagoService = new PagoService();
+            return pagoService.calcularTotalPagadoCliente(idCliente).doubleValue();
         } catch (Exception e) {
             logger.error("Error al obtener total pagado por cliente: " + idCliente, e);
-            throw new RuntimeException("Error al obtener el total pagado del cliente", e);
+            return 0.0;
         }
     }
     
@@ -438,11 +438,25 @@ public class PrestamoService {
      */
     public double obtenerMontoPendientePorCliente(Long idCliente) {
         try {
-            // TODO: Implementar cálculo de monto pendiente
-            return 0.0;
+            List<Prestamo> prestamos = prestamoDAO.findByCliente(idCliente);
+            BigDecimal montoTotalPrestado = BigDecimal.ZERO;
+            BigDecimal montoTotalPagado = BigDecimal.ZERO;
+            
+            for (Prestamo prestamo : prestamos) {
+                montoTotalPrestado = montoTotalPrestado.add(prestamo.getMontoSolicitado());
+                
+                // Obtener total pagado para este cliente
+                PagoService pagoService = new PagoService();
+                BigDecimal totalPagado = pagoService.calcularTotalPagadoCliente(idCliente);
+                montoTotalPagado = totalPagado;
+            }
+            
+            BigDecimal montoPendiente = montoTotalPrestado.subtract(montoTotalPagado);
+            return Math.max(0.0, montoPendiente.doubleValue());
+            
         } catch (Exception e) {
             logger.error("Error al obtener monto pendiente por cliente: " + idCliente, e);
-            throw new RuntimeException("Error al obtener el monto pendiente del cliente", e);
+            return 0.0;
         }
     }
     
@@ -451,11 +465,39 @@ public class PrestamoService {
      */
     public String obtenerUltimoPagoPorCliente(Long idCliente) {
         try {
-            // TODO: Implementar en PagoDAO
+            PagoService pagoService = new PagoService();
+            java.util.Optional<Pago> ultimoPago = pagoService.obtenerUltimoPagoCliente(idCliente);
+            if (ultimoPago.isPresent()) {
+                return FechaUtil.formatearFecha(ultimoPago.get().getFechaPago().toLocalDate());
+            }
             return null;
         } catch (Exception e) {
             logger.error("Error al obtener último pago por cliente: " + idCliente, e);
-            throw new RuntimeException("Error al obtener el último pago del cliente", e);
+            return null;
+        }
+    }
+    
+    /**
+     * Obtiene una cuota por su ID
+     */
+    public Cronograma obtenerCuotaPorId(Long idCuota) {
+        try {
+            return cronogramaDAO.findById(idCuota).orElse(null);
+        } catch (Exception e) {
+            logger.error("Error al obtener cuota por ID: " + idCuota, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Actualiza una cuota
+     */
+    public boolean actualizarCuota(Cronograma cuota) {
+        try {
+            return cronogramaDAO.update(cuota);
+        } catch (Exception e) {
+            logger.error("Error al actualizar cuota: " + cuota.getIdCuota(), e);
+            return false;
         }
     }
     

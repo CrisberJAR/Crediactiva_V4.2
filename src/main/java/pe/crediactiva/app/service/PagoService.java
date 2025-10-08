@@ -80,6 +80,54 @@ public class PagoService {
     }
 
     /**
+     * Registra un pago aplicándolo a una cuota específica con fecha personalizada
+     */
+    public boolean registrarPagoConFecha(Long idCuota, Long idCliente, Long idAsesor, BigDecimal montoPagado, java.time.LocalDate fechaPago) {
+        try {
+            // Verificar que la cuota existe y está pendiente
+            Optional<Cronograma> cuotaOpt = cronogramaDAO.findById(idCuota);
+            if (!cuotaOpt.isPresent()) {
+                logger.warn("Cuota no encontrada: " + idCuota);
+                return false;
+            }
+
+            Cronograma cuota = cuotaOpt.get();
+            if (cuota.getEstadoCuota() != Cronograma.EstadoCuota.PENDIENTE) {
+                logger.warn("La cuota ya está pagada: " + idCuota);
+                return false;
+            }
+
+            // Crear el pago
+            Pago pago = new Pago();
+            pago.setIdCuota(idCuota);
+            pago.setIdCliente(idCliente);
+            pago.setIdAsesor(idAsesor);
+            pago.setFechaPago(fechaPago.atStartOfDay());
+            pago.setMontoPagado(montoPagado);
+
+            boolean success = pagoDAO.create(pago);
+            if (success) {
+                // Marcar la cuota como pagada con la fecha real del cobro
+                cronogramaDAO.marcarComoPagada(idCuota, fechaPago);
+                
+                // Registrar auditoría
+                auditoriaService.registrarAuditoria("pagos", pago.getIdPago().toString(), 
+                    "INSERT", null, pago.toString());
+                
+                auditoriaService.registrarAuditoria("cronograma", idCuota.toString(), 
+                    "UPDATE", "estado_cuota=PENDIENTE", "estado_cuota=PAGADA fecha_pago_real=" + fechaPago);
+                
+                logger.info("Pago registrado exitosamente con fecha real: " + pago.getIdPago() + " - Fecha: " + fechaPago);
+                return true;
+            }
+
+        } catch (Exception e) {
+            logger.error("Error al registrar pago con fecha", e);
+        }
+        return false;
+    }
+
+    /**
      * Aplica un pago a múltiples cuotas (para pagos parciales o adelantos)
      */
     public boolean aplicarPagoAMultiplesCuotas(List<Long> idsCuotas, Long idCliente, Long idAsesor, BigDecimal montoTotal) {
@@ -181,13 +229,79 @@ public class PagoService {
      */
     public BigDecimal calcularTotalPagosAsesor(Long idAsesor, java.time.LocalDate fechaInicio, java.time.LocalDate fechaFin) {
         try {
-            List<Pago> pagos = pagoDAO.findByAsesorAndFecha(idAsesor, fechaInicio, fechaFin);
+            List<Pago> pagos = pagoDAO.findByAsesor(idAsesor);
             return pagos.stream()
+                .filter(p -> !p.getFechaPago().toLocalDate().isBefore(fechaInicio) && 
+                           !p.getFechaPago().toLocalDate().isAfter(fechaFin))
                 .map(Pago::getMontoPagado)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         } catch (Exception e) {
             logger.error("Error al calcular total de pagos del asesor: " + idAsesor, e);
             return BigDecimal.ZERO;
+        }
+    }
+    
+    /**
+     * Obtiene el último pago de un cliente
+     */
+    public Optional<Pago> obtenerUltimoPagoCliente(Long idCliente) {
+        try {
+            List<Pago> pagos = pagoDAO.findByCliente(idCliente);
+            return pagos.stream().findFirst();
+        } catch (Exception e) {
+            logger.error("Error al obtener último pago del cliente: " + idCliente, e);
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Calcula el total pagado por un cliente
+     */
+    public BigDecimal calcularTotalPagadoCliente(Long idCliente) {
+        try {
+            List<Pago> pagos = pagoDAO.findByCliente(idCliente);
+            return pagos.stream()
+                .map(Pago::getMontoPagado)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } catch (Exception e) {
+            logger.error("Error al calcular total pagado del cliente: " + idCliente, e);
+            return BigDecimal.ZERO;
+        }
+    }
+    
+    /**
+     * Obtiene pagos pendientes de validación
+     */
+    public List<Pago> obtenerPagosPendientesValidacion() {
+        try {
+            return pagoDAO.findPendientesValidacion();
+        } catch (Exception e) {
+            logger.error("Error al obtener pagos pendientes de validación", e);
+            return List.of();
+        }
+    }
+    
+    /**
+     * Actualiza un pago existente
+     */
+    public boolean actualizarPago(Pago pago) {
+        try {
+            return pagoDAO.update(pago);
+        } catch (Exception e) {
+            logger.error("Error al actualizar pago: " + pago.getIdPago(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * Elimina un pago
+     */
+    public boolean eliminarPago(Long idPago) {
+        try {
+            return pagoDAO.delete(idPago);
+        } catch (Exception e) {
+            logger.error("Error al eliminar pago: " + idPago, e);
+            return false;
         }
     }
 }

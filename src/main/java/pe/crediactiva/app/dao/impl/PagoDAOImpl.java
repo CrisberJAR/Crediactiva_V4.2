@@ -310,6 +310,27 @@ public class PagoDAOImpl implements PagoDAO {
 
         return pagos;
     }
+    
+    @Override
+    public List<Pago> findPendientesValidacion() {
+        List<Pago> pagos = new ArrayList<>();
+        String sql = "SELECT * FROM pagos WHERE validado = false ORDER BY fecha_registro DESC";
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    pagos.add(mapResultSetToPago(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.error("Error al buscar pagos pendientes de validación", e);
+        }
+
+        return pagos;
+    }
 
     private Pago mapResultSetToPago(ResultSet rs) throws SQLException {
         Pago pago = new Pago();
@@ -317,8 +338,20 @@ public class PagoDAOImpl implements PagoDAO {
         pago.setIdCuota(rs.getLong("id_cuota"));
         pago.setIdCliente(rs.getLong("id_cliente"));
         pago.setIdAsesor(rs.getLong("id_asesor"));
+        pago.setIdPrestamo(rs.getLong("id_prestamo"));
         pago.setFechaPago(rs.getTimestamp("fecha_pago").toLocalDateTime());
+        pago.setFechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime());
         pago.setMontoPagado(rs.getBigDecimal("monto_pagado"));
+        pago.setValidado(rs.getBoolean("validado"));
+        
+        // Campos opcionales
+        if (rs.getTimestamp("fecha_validacion") != null) {
+            pago.setFechaValidacion(rs.getTimestamp("fecha_validacion").toLocalDateTime());
+        }
+        if (rs.getString("observaciones") != null) {
+            pago.setObservaciones(rs.getString("observaciones"));
+        }
+        
         return pago;
     }
 }

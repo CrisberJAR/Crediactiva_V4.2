@@ -60,17 +60,7 @@
          <Button fx:id="btnLimpiar" onAction="#handleLimpiar" text="Limpiar" />
          <Separator orientation="VERTICAL" />
          <Label text="Filtrar por:" />
-         <ComboBox fx:id="cmbFiltro" promptText="Todos los clientes" prefWidth="150.0">
-            <items>
-               <FXCollections fx:factory="observableArrayList">
-                  <String>Todos</String>
-                  <String>Con préstamos activos</String>
-                  <String>Con cuotas vencidas</String>
-                  <String>Al día</String>
-                  <String>Morosos</String>
-               </FXCollections>
-            </items>
-         </ComboBox>
+         <ComboBox fx:id="cmbFiltro" promptText="Todos los clientes" prefWidth="150.0" />
          <Button fx:id="btnFiltrar" onAction="#handleFiltrar" text="Filtrar" />
       </HBox>
    </VBox>

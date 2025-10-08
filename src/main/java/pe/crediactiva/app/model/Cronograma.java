@@ -136,6 +136,11 @@ public class Cronograma {
         this.fechaPagoReal = fechaPagoReal;
     }
     
+    // Método alias para compatibilidad
+    public void setFechaPago(LocalDate fechaPago) {
+        this.fechaPagoReal = fechaPago;
+    }
+    
     public Prestamo getPrestamo() {
         return prestamo;
     }
