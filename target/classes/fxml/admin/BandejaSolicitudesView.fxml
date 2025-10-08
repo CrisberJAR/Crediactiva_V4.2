@@ -5,29 +5,24 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.admin.BandejaSolicitudesController">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="pe.crediactiva.app.view.admin.BandejaSolicitudesController" 
+            prefHeight="700.0" prefWidth="1000.0" minHeight="600.0" minWidth="800.0">
    <top>
       <VBox spacing="10.0">
          <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </padding>
          
-         <Label styleClass="title-label" text="Bandeja de Solicitudes de Préstamo">
+         <Label styleClass="title-label" text="Solicitudes de Préstamo Pendientes">
             <font>
                <Font size="18.0" />
             </font>
          </Label>
          
-         <!-- Filtros -->
          <HBox spacing="10.0" alignment="CENTER_LEFT">
-            <Label text="Filtros:" />
-            <ComboBox fx:id="comboAsesor" promptText="Asesor" prefWidth="150.0" />
-            <ComboBox fx:id="comboEstado" promptText="Estado" prefWidth="150.0" />
-            <ComboBox fx:id="comboEtiqueta" promptText="Etiqueta Cliente" prefWidth="150.0" />
-            <TextField fx:id="txtMontoMin" promptText="Monto Mínimo" prefWidth="120.0" />
-            <TextField fx:id="txtMontoMax" promptText="Monto Máximo" prefWidth="120.0" />
-            <Button fx:id="btnFiltrar" onAction="#handleFiltrar" text="Filtrar" />
-            <Button fx:id="btnLimpiarFiltros" onAction="#handleLimpiarFiltros" text="Limpiar" />
+            <Label text="Haga doble clic en una fila para ver los detalles" />
+            <Button fx:id="btnActualizar" onAction="#handleActualizar" text="Actualizar" />
          </HBox>
       </VBox>
    </top>
@@ -39,64 +34,16 @@
          </padding>
          
          <!-- Tabla de solicitudes -->
-         <TableView fx:id="tablaSolicitudes" prefHeight="400.0">
+         <TableView fx:id="tablaSolicitudes" prefHeight="500.0">
             <columns>
                <TableColumn fx:id="colId" prefWidth="60.0" text="ID" />
-               <TableColumn fx:id="colCliente" prefWidth="120.0" text="Cliente" />
-               <TableColumn fx:id="colAsesor" prefWidth="100.0" text="Asesor" />
-               <TableColumn fx:id="colMonto" prefWidth="100.0" text="Monto" />
-               <TableColumn fx:id="colTasa" prefWidth="80.0" text="Tasa %" />
-               <TableColumn fx:id="colPeriodo" prefWidth="80.0" text="Período" />
-               <TableColumn fx:id="colEstado" prefWidth="100.0" text="Estado" />
-               <TableColumn fx:id="colEtiqueta" prefWidth="100.0" text="Etiqueta" />
-               <TableColumn fx:id="colFecha" prefWidth="100.0" text="Fecha" />
-               <TableColumn fx:id="colObservacion" prefWidth="150.0" text="Observación" />
+               <TableColumn fx:id="colCliente" prefWidth="200.0" text="Cliente" />
+               <TableColumn fx:id="colAsesor" prefWidth="200.0" text="Asesor" />
+               <TableColumn fx:id="colMonto" prefWidth="150.0" text="Monto Solicitado" />
+               <TableColumn fx:id="colObservacion" prefWidth="300.0" text="Motivo/Observación" />
+               <TableColumn fx:id="colFecha" prefWidth="120.0" text="Fecha Solicitud" />
             </columns>
          </TableView>
-         
-         <!-- Información del préstamo seleccionado -->
-         <GridPane hgap="10.0" vgap="10.0">
-            <columnConstraints>
-               <ColumnConstraints hgrow="NEVER" minWidth="100.0" />
-               <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
-               <ColumnConstraints hgrow="NEVER" minWidth="100.0" />
-               <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
-            </columnConstraints>
-            <rowConstraints>
-               <RowConstraints minHeight="30.0" vgrow="NEVER" />
-               <RowConstraints minHeight="30.0" vgrow="NEVER" />
-               <RowConstraints minHeight="30.0" vgrow="NEVER" />
-               <RowConstraints minHeight="30.0" vgrow="NEVER" />
-            </rowConstraints>
-            
-            <Label text="Cliente:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <Label fx:id="lblCliente" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-            <Label text="Asesor:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-            <Label fx:id="lblAsesor" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-            
-            <Label text="Monto Solicitado:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <Label fx:id="lblMontoSolicitado" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label text="Monto Desembolsado:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-            <Label fx:id="lblMontoDesembolsado" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-            
-            <Label text="Tasa de Interés:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <TextField fx:id="txtTasaInteres" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Label text="Período (meses):" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-            <TextField fx:id="txtPeriodo" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-            
-            <Label text="Tipo de Pago:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-            <ComboBox fx:id="comboTipoPago" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <Label text="Observación:" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-            <TextField fx:id="txtObservacion" GridPane.columnIndex="3" GridPane.rowIndex="3" />
-         </GridPane>
-         
-         <!-- Botones de acción -->
-         <HBox spacing="10.0" alignment="CENTER">
-            <Button fx:id="btnAprobar" onAction="#handleAprobar" styleClass="success-button" text="Aprobar y Generar Cronograma" />
-            <Button fx:id="btnRechazar" onAction="#handleRechazar" styleClass="danger-button" text="Rechazar" />
-            <Button fx:id="btnGuardar" onAction="#handleGuardar" styleClass="primary-button" text="Guardar Cambios" />
-            <Button fx:id="btnVerHistorial" onAction="#handleVerHistorial" text="Ver Historial Cliente" />
-         </HBox>
       </VBox>
    </center>
    

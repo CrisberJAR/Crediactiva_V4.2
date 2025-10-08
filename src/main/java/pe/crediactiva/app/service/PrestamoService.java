@@ -99,7 +99,7 @@ public class PrestamoService {
             prestamo.setEstado(Prestamo.EstadoPrestamo.ACTIVO);
             
             // Calcular fecha fin y monto desembolsado
-            prestamo.setFechaFin(calcularFechaFin(fechaInicio, periodoMeses));
+            prestamo.setFechaFin(calcularFechaFin(fechaInicio, periodoMeses, tipoPago));
             BigDecimal capitalRetenido = prestamo.getMontoSolicitado().multiply(new BigDecimal("0.10"));
             prestamo.setMontoDesembolsado(prestamo.getMontoSolicitado().subtract(capitalRetenido));
             
@@ -162,32 +162,24 @@ public class PrestamoService {
     private void generarCronograma(Prestamo prestamo) {
         try {
             BigDecimal montoTotal = calcularMontoTotal(prestamo);
-            BigDecimal cuotaDiaria = calcularCuotaDiaria(prestamo, montoTotal);
+            int numeroCuotas = calcularNumeroCuotas(prestamo.getPeriodoMeses(), prestamo.getTipoPago().name().toLowerCase());
+            BigDecimal montoCuota = montoTotal.divide(new BigDecimal(numeroCuotas), 2, RoundingMode.HALF_UP);
             
             LocalDate fechaActual = prestamo.getFechaInicio();
-            int numeroCuota = 1;
-            int diasHabiles = 0;
             
-            // Generar cuotas hasta completar el período
-            while (diasHabiles < prestamo.getPeriodoMeses() * 26) { // 26 días hábiles por mes
-                // Saltar domingos
-                if (fechaActual.getDayOfWeek().getValue() != 7) {
-                    Cronograma cuota = new Cronograma();
-                    cuota.setIdPrestamo(prestamo.getIdPrestamo());
-                    cuota.setNumeroCuota(numeroCuota);
-                    cuota.setFechaProgramada(fechaActual);
-                    cuota.setMontoCuota(cuotaDiaria);
-                    
-                    cronogramaDAO.create(cuota);
-                    numeroCuota++;
-                    diasHabiles++;
-                }
+            // Generar cuotas según el tipo de pago
+            for (int i = 1; i <= numeroCuotas; i++) {
+                Cronograma cuota = new Cronograma();
+                cuota.setIdPrestamo(prestamo.getIdPrestamo());
+                cuota.setNumeroCuota(i);
+                cuota.setFechaProgramada(calcularFechaPago(fechaActual, i, prestamo.getTipoPago()));
+                cuota.setMontoCuota(montoCuota);
                 
-                fechaActual = fechaActual.plusDays(1);
+                cronogramaDAO.create(cuota);
             }
             
             logger.info("Cronograma generado para préstamo: " + prestamo.getIdPrestamo() + 
-                       " - " + (numeroCuota - 1) + " cuotas");
+                       " - " + numeroCuotas + " cuotas de " + montoCuota + " cada una");
             
         } catch (Exception e) {
             logger.error("Error al generar cronograma para préstamo: " + prestamo.getIdPrestamo(), e);
@@ -205,30 +197,37 @@ public class PrestamoService {
         return prestamo.getMontoSolicitado().add(intereses);
     }
     
-    /**
-     * Calcula el monto de la cuota diaria
-     */
-    private BigDecimal calcularCuotaDiaria(Prestamo prestamo, BigDecimal montoTotal) {
-        int diasHabiles = prestamo.getPeriodoMeses() * 26; // 26 días hábiles por mes
-        return montoTotal.divide(new BigDecimal(diasHabiles), 2, RoundingMode.HALF_UP);
-    }
     
     /**
-     * Calcula la fecha de fin del préstamo
+     * Calcula la fecha de fin del préstamo según el tipo de pago
      */
-    private LocalDate calcularFechaFin(LocalDate fechaInicio, int periodoMeses) {
-        int diasTotales = periodoMeses * 26; // 26 días hábiles por mes
-        LocalDate fechaFin = fechaInicio;
-        int diasHabiles = 0;
-        
-        while (diasHabiles < diasTotales) {
-            if (fechaFin.getDayOfWeek().getValue() != 7) { // No es domingo
-                diasHabiles++;
-            }
-            fechaFin = fechaFin.plusDays(1);
+    private LocalDate calcularFechaFin(LocalDate fechaInicio, int periodoMeses, Prestamo.TipoPago tipoPago) {
+        switch (tipoPago) {
+            case DIARIO:
+                // Para pago diario, calcular días hábiles (excluyendo domingos)
+                int diasHabiles = 0;
+                LocalDate fecha = fechaInicio;
+                int diasTotales = periodoMeses * 26; // 26 días hábiles por mes
+                
+                while (diasHabiles < diasTotales) {
+                    if (fecha.getDayOfWeek().getValue() != 7) { // No es domingo
+                        diasHabiles++;
+                    }
+                    fecha = fecha.plusDays(1);
+                }
+                return fecha.minusDays(1);
+                
+            case SEMANAL:
+                // Para pago semanal, cada 7 días
+                return fechaInicio.plusWeeks(periodoMeses * 4 - 1);
+                
+            case MENSUAL:
+                // Para pago mensual, cada mes
+                return fechaInicio.plusMonths(periodoMeses - 1);
+                
+            default:
+                return fechaInicio.plusDays(periodoMeses * 26 - 1);
         }
-        
-        return fechaFin.minusDays(1); // Retroceder un día
     }
     
     /**
@@ -312,19 +311,21 @@ public class PrestamoService {
     /**
      * Simula un préstamo para mostrar cronograma estimado
      */
-    public Cronograma simularPrestamo(BigDecimal monto, BigDecimal tasaInteres, int periodoMeses) {
+    public Cronograma simularPrestamo(BigDecimal monto, BigDecimal tasaInteres, int periodoMeses, Prestamo.TipoPago tipoPago) {
         try {
             Prestamo prestamoSimulado = new Prestamo();
             prestamoSimulado.setMontoSolicitado(monto);
             prestamoSimulado.setTasaInteres(tasaInteres);
             prestamoSimulado.setPeriodoMeses(periodoMeses);
+            prestamoSimulado.setTipoPago(tipoPago);
             
             BigDecimal montoTotal = calcularMontoTotal(prestamoSimulado);
-            BigDecimal cuotaDiaria = calcularCuotaDiaria(prestamoSimulado, montoTotal);
+            int numeroCuotas = calcularNumeroCuotas(periodoMeses, tipoPago.name().toLowerCase());
+            BigDecimal montoCuota = montoTotal.divide(new BigDecimal(numeroCuotas), 2, RoundingMode.HALF_UP);
             
             Cronograma cuotaSimulada = new Cronograma();
-            cuotaSimulada.setMontoCuota(cuotaDiaria);
-            cuotaSimulada.setFechaProgramada(LocalDate.now().plusDays(1));
+            cuotaSimulada.setMontoCuota(montoCuota);
+            cuotaSimulada.setFechaProgramada(calcularFechaPago(LocalDate.now(), 1, tipoPago));
             
             return cuotaSimulada;
             
@@ -530,6 +531,32 @@ public class PrestamoService {
                 return periodo; // 1 cuota por mes
             default:
                 return periodo * 26;
+        }
+    }
+    
+    /**
+     * Calcula la fecha de pago para una cuota específica según el tipo de pago
+     */
+    private LocalDate calcularFechaPago(LocalDate fechaInicio, int numeroCuota, Prestamo.TipoPago tipoPago) {
+        switch (tipoPago) {
+            case DIARIO:
+                // Para pago diario, saltar domingos
+                LocalDate fecha = fechaInicio.plusDays(numeroCuota - 1);
+                while (fecha.getDayOfWeek().getValue() == 7) { // Si es domingo, avanzar al lunes
+                    fecha = fecha.plusDays(1);
+                }
+                return fecha;
+                
+            case SEMANAL:
+                // Para pago semanal, cada 7 días
+                return fechaInicio.plusWeeks(numeroCuota - 1);
+                
+            case MENSUAL:
+                // Para pago mensual, cada mes
+                return fechaInicio.plusMonths(numeroCuota - 1);
+                
+            default:
+                return fechaInicio.plusDays(numeroCuota - 1);
         }
     }
 }

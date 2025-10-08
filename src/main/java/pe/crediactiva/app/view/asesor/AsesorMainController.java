@@ -1217,10 +1217,19 @@ public class AsesorMainController {
             if (plazoStr.equals("2 meses")) plazoMeses = 2;
             else if (plazoStr.equals("3 meses")) plazoMeses = 3;
             
+            // Obtener tipo de pago
+            String tipoPagoStr = cmbTipoPago.getValue();
+            Prestamo.TipoPago tipoPago = Prestamo.TipoPago.DIARIO;
+            if (tipoPagoStr.equals("Semanal")) tipoPago = Prestamo.TipoPago.SEMANAL;
+            else if (tipoPagoStr.equals("Mensual")) tipoPago = Prestamo.TipoPago.MENSUAL;
+            
+            // Calcular número de cuotas según tipo de pago
+            int numeroCuotas = calcularNumeroCuotas(plazoMeses, tipoPago);
+            
             // Calcular simulación
             double tasaInteres = 18.0; // 18% mensual
             double totalPagar = monto * (1 + (tasaInteres / 100) * plazoMeses);
-            double cuotaMensual = totalPagar / plazoMeses;
+            double cuotaMensual = totalPagar / numeroCuotas;
             
             // Mostrar resultados
             lblCuotaMensual.setText(String.format("Cuota Mensual: S/ %.2f", cuotaMensual));
@@ -1230,6 +1239,22 @@ public class AsesorMainController {
         } catch (Exception e) {
             logger.error("Error al simular préstamo", e);
             mostrarError("Error al simular préstamo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Calcula el número de cuotas según el tipo de pago
+     */
+    private int calcularNumeroCuotas(int periodo, Prestamo.TipoPago tipoPago) {
+        switch (tipoPago) {
+            case DIARIO:
+                return periodo * 26; // 26 días hábiles por mes
+            case SEMANAL:
+                return periodo * 4; // 4 semanas por mes
+            case MENSUAL:
+                return periodo; // 1 cuota por mes
+            default:
+                return periodo * 26;
         }
     }
     

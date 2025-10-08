@@ -3,141 +3,187 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.admin.AdminMainController">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.admin.AdminMainController">
    <top>
-      <!-- Barra de menú -->
-      <MenuBar styleClass="menu-bar">
-         <menus>
-            <Menu mnemonicParsing="false" text="Solicitudes">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleBandejaSolicitudes" text="Bandeja de Solicitudes" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleNuevaSolicitud" text="Nueva Solicitud" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="Pagos">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleAdministrarPagos" text="Administrar Pagos" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleValidarCobros" text="Validar Cobros" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="Gestión">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarUsuarios" text="Usuarios" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarAsesores" text="Asesores" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleGestionarClientes" text="Clientes" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleMovimientosCapital" text="Movimientos de Capital" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="Reportes">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleReporteClientes" text="Por Cliente" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleReporteAsesores" text="Por Asesor" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleReportePrestamos" text="Por Préstamo" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleReporteConsolidado" text="Consolidado" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleReporteSueldos" text="Sueldos Asesores" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="Sistema">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleAuditoria" text="Auditoría" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleConfiguracion" text="Configuración" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleLogout" text="Cerrar Sesión" />
-               </items>
-            </Menu>
-         </menus>
-      </MenuBar>
+      <VBox spacing="15.0" styleClass="modern-card">
+         <padding>
+            <Insets bottom="20.0" left="25.0" right="25.0" top="20.0" />
+         </padding>
+         
+         <HBox alignment="CENTER_LEFT" spacing="15.0">
+            <Label text="👑" styleClass="logo-placeholder" />
+            <Label styleClass="section-title" text="CrediActiva - Panel de Administración" />
+         </HBox>
+         
+         <!-- Información del administrador -->
+         <HBox spacing="25.0" alignment="CENTER_LEFT">
+            <Label fx:id="txtUsuarioInfo" styleClass="info-label" text="Administrador: " />
+            <Label fx:id="txtFechaHoy" styleClass="info-label" text="Fecha: " />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="logout-button" text="🚪 Cerrar Sesión" />
+         </HBox>
+      </VBox>
    </top>
    
    <center>
-      <!-- Panel principal -->
-      <VBox spacing="20.0" styleClass="main-container">
-         <children>
-            <!-- Barra de información del usuario -->
-            <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="user-info-bar">
-               <children>
-                  <Text fx:id="txtUsuarioInfo" fill="#2c3e50" styleClass="user-info-text" text="Usuario: Administrador" />
-                  <Text fx:id="txtFechaHoy" fill="#7f8c8d" styleClass="date-info-text" text="Fecha: " />
-                  <Region HBox.hgrow="ALWAYS" />
-                  <Button fx:id="btnLogout" onAction="#handleLogout" styleClass="btn-secondary" text="Cerrar Sesión" />
-               </children>
-               <padding>
-                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-               </padding>
+      <SplitPane dividerPositions="0.25" orientation="HORIZONTAL">
+         <!-- Panel izquierdo: Menú de opciones -->
+         <ScrollPane fitToWidth="true" fitToHeight="true" styleClass="sidebar-scroll" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
+            <content>
+               <VBox spacing="15.0" styleClass="modern-panel">
+                  <padding>
+                     <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                  </padding>
+            
+            <Label text="📋 Gestión de Solicitudes" styleClass="section-title" />
+            <Button fx:id="btnBandejaSolicitudes" onAction="#handleBandejaSolicitudes" styleClass="quick-action-button" text="📥 Bandeja de Solicitudes" />
+            
+            <Separator />
+            
+            <Label text="💰 Gestión de Pagos" styleClass="section-title" />
+            <Button fx:id="btnAdministrarPagos" onAction="#handleAdministrarPagos" styleClass="quick-action-button" text="💳 Administrar Pagos" />
+            <Button fx:id="btnValidarCobros" onAction="#handleValidarCobros" styleClass="quick-action-button" text="✅ Validar Cobros" />
+            
+            <Separator />
+            
+            <Label text="👥 Gestión de Usuarios" styleClass="section-title" />
+            <Button fx:id="btnGestionarUsuarios" onAction="#handleGestionarUsuarios" styleClass="quick-action-button" text="👤 Usuarios" />
+            <Button fx:id="btnGestionarAsesores" onAction="#handleGestionarAsesores" styleClass="quick-action-button" text="🎯 Asesores" />
+            <Button fx:id="btnGestionarClientes" onAction="#handleGestionarClientes" styleClass="quick-action-button" text="👥 Clientes" />
+            <Button fx:id="btnMovimientosCapital" onAction="#handleMovimientosCapital" styleClass="quick-action-button" text="💼 Movimientos de Capital" />
+            
+            <Separator />
+            
+            <Label text="📊 Reportes y Análisis" styleClass="section-title" />
+            <Button fx:id="btnReporteClientes" onAction="#handleReporteClientes" styleClass="quick-action-button" text="📈 Por Cliente" />
+            <Button fx:id="btnReporteAsesores" onAction="#handleReporteAsesores" styleClass="quick-action-button" text="📊 Por Asesor" />
+            <Button fx:id="btnReportePrestamos" onAction="#handleReportePrestamos" styleClass="quick-action-button" text="💳 Por Préstamo" />
+            <Button fx:id="btnReporteConsolidado" onAction="#handleReporteConsolidado" styleClass="modern-button" text="📋 Reporte Consolidado" />
+            <Button fx:id="btnReporteSueldos" onAction="#handleReporteSueldos" styleClass="quick-action-button" text="💰 Sueldos Asesores" />
+            
+            <Separator />
+            
+            <Label text="⚙️ Sistema" styleClass="section-title" />
+            <Button fx:id="btnAuditoria" onAction="#handleAuditoria" styleClass="quick-action-button" text="🔍 Auditoría" />
+            <Button fx:id="btnConfiguracion" onAction="#handleConfiguracion" styleClass="quick-action-button" text="⚙️ Configuración" />
+               </VBox>
+            </content>
+         </ScrollPane>
+         
+         <!-- Panel derecho: Contenido dinámico -->
+         <VBox spacing="10.0" styleClass="main-content">
+            <padding>
+               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </padding>
+            
+            <!-- Botón para volver al dashboard - Fuera del contenido principal -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="navigation-bar">
+               <Button fx:id="btnVolverDashboard" onAction="#handleVolverDashboard" styleClass="navigation-button" text="🏠 Volver al Dashboard" />
+               <Region HBox.hgrow="ALWAYS" />
             </HBox>
             
-            <!-- Dashboard de estadísticas -->
-            <HBox spacing="20.0">
-               <children>
-                  <VBox spacing="10.0" styleClass="dashboard-card">
-                     <children>
-                        <Text styleClass="dashboard-title" text="Solicitudes Pendientes" />
-                        <Text fx:id="txtSolicitudesPendientes" styleClass="dashboard-value" text="0" />
-                        <Text styleClass="dashboard-subtitle" text="Requieren revisión" />
-                     </children>
-                  </VBox>
-                  
-                  <VBox spacing="10.0" styleClass="dashboard-card">
-                     <children>
-                        <Text styleClass="dashboard-title" text="Préstamos Activos" />
-                        <Text fx:id="txtPrestamosActivos" styleClass="dashboard-value" text="0" />
-                        <Text styleClass="dashboard-subtitle" text="En proceso de pago" />
-                     </children>
-                  </VBox>
-                  
-                  <VBox spacing="10.0" styleClass="dashboard-card">
-                     <children>
-                        <Text styleClass="dashboard-title" text="Clientes Morosos" />
-                        <Text fx:id="txtClientesMorosos" styleClass="dashboard-value" text="0" />
-                        <Text styleClass="dashboard-subtitle" text="Requieren seguimiento" />
-                     </children>
-                  </VBox>
-                  
-                  <VBox spacing="10.0" styleClass="dashboard-card">
-                     <children>
-                        <Text styleClass="dashboard-title" text="Recaudación Hoy" />
-                        <Text fx:id="txtRecaudacionHoy" styleClass="dashboard-value" text="S/ 0.00" />
-                        <Text styleClass="dashboard-subtitle" text="Total del día" />
-                     </children>
-                  </VBox>
-               </children>
-               <padding>
-                  <Insets left="20.0" right="20.0" />
-               </padding>
-            </HBox>
+            <!-- Área de contenido dinámico -->
+            <VBox fx:id="contentArea" spacing="10.0">
             
-            <!-- Área de contenido principal -->
-            <ScrollPane fitToWidth="true" styleClass="main-content">
-               <content>
-                  <VBox fx:id="contentArea" spacing="20.0">
-                     <children>
-                        <!-- Mensaje de bienvenida por defecto -->
-                        <VBox alignment="CENTER" spacing="20.0" styleClass="panel">
-                           <children>
-                              <Text fill="#2c3e50" styleClass="panel-title" text="Bienvenido al Sistema CrediActiva" />
-                              <Text fill="#7f8c8d" styleClass="info-text" text="Seleccione una opción del menú para comenzar" />
-                              <VBox alignment="CENTER" spacing="15.0">
-                                 <children>
-                                    <Button onAction="#handleBandejaSolicitudes" styleClass="btn-primary" text="Revisar Solicitudes Pendientes" />
-                                    <Button onAction="#handleAdministrarPagos" styleClass="btn-success" text="Administrar Pagos" />
-                                    <Button onAction="#handleReporteConsolidado" styleClass="btn-warning" text="Ver Reportes" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </VBox>
-                     </children>
-                     <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                     </padding>
+            <!-- Dashboard compacto -->
+            <VBox spacing="15.0" styleClass="dashboard-compact">
+               <Label text="Dashboard Administrativo" styleClass="title-label" />
+               
+               <!-- Estadísticas en 2 filas compactas -->
+               <GridPane hgap="10.0" vgap="10.0">
+                  <columnConstraints>
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                     <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+                  </columnConstraints>
+                  <rowConstraints>
+                     <RowConstraints minHeight="80.0" vgrow="NEVER" />
+                     <RowConstraints minHeight="80.0" vgrow="NEVER" />
+                  </rowConstraints>
+                  
+                  <!-- Fila 1: Métricas principales -->
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                     <Label text="📥" styleClass="stat-icon-small" />
+                     <Label text="Solicitudes" styleClass="stat-label-small" />
+                     <Label fx:id="txtSolicitudesPendientes" text="0" styleClass="stat-value-small" />
                   </VBox>
-               </content>
-            </ScrollPane>
-         </children>
-      </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                     <Label text="💳" styleClass="stat-icon-small" />
+                     <Label text="Préstamos" styleClass="stat-label-small" />
+                     <Label fx:id="txtPrestamosActivos" text="0" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                     <Label text="⚠️" styleClass="stat-icon-small" />
+                     <Label text="Morosos" styleClass="stat-label-small" />
+                     <Label fx:id="txtClientesMorosos" text="0" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                     <Label text="💰" styleClass="stat-icon-small" />
+                     <Label text="Recaudación" styleClass="stat-label-small" />
+                     <Label fx:id="txtRecaudacionHoy" text="S/ 0.00" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <!-- Fila 2: Métricas secundarias -->
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                     <Label text="👥" styleClass="stat-icon-small" />
+                     <Label text="Clientes" styleClass="stat-label-small" />
+                     <Label fx:id="txtTotalClientes" text="0" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <Label text="🎯" styleClass="stat-icon-small" />
+                     <Label text="Asesores" styleClass="stat-label-small" />
+                     <Label fx:id="txtTotalAsesores" text="0" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                     <Label text="🏦" styleClass="stat-icon-small" />
+                     <Label text="Capital" styleClass="stat-label-small" />
+                     <Label fx:id="txtCapitalTotal" text="S/ 0.00" styleClass="stat-value-small" />
+                  </VBox>
+                  
+                  <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card-compact" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                     <Label text="🕒" styleClass="stat-icon-small" />
+                     <Label text="Actualizado" styleClass="stat-label-small" />
+                     <Label fx:id="txtUltimaActualizacion" text="--" styleClass="stat-value-small" />
+                  </VBox>
+               </GridPane>
+               
+               <!-- Acciones rápidas compactas -->
+               <VBox spacing="10.0">
+                  <Label text="🚀 Acciones Rápidas" styleClass="section-title-small" />
+                  <HBox spacing="10.0" alignment="CENTER">
+                     <Button fx:id="btnRevisarSolicitudes" onAction="#handleBandejaSolicitudes" styleClass="quick-action-button-small" text="📥 Solicitudes" />
+                     <Button fx:id="btnAdministrarPagosRapido" onAction="#handleAdministrarPagos" styleClass="quick-action-button-small" text="💳 Pagos" />
+                     <Button fx:id="btnVerReportes" onAction="#handleReporteConsolidado" styleClass="quick-action-button-small" text="📊 Reportes" />
+                     <Button fx:id="btnGestionarUsuariosRapido" onAction="#handleGestionarUsuarios" styleClass="quick-action-button-small" text="👥 Usuarios" />
+                  </HBox>
+               </VBox>
+               
+               <!-- Mensaje de bienvenida compacto -->
+               <VBox alignment="CENTER" spacing="10.0" styleClass="welcome-panel-compact">
+                  <Label text="👑 Bienvenido al Panel de Administración" styleClass="welcome-title-small" />
+                  <Label text="Seleccione una opción del menú lateral para comenzar" styleClass="welcome-subtitle-small" />
+               </VBox>
+            </VBox>
+            </VBox>
+         </VBox>
+      </SplitPane>
    </center>
+   
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         
+         <Label fx:id="lblUltimaActualizacion" text="Última actualización: " />
+      </HBox>
+   </bottom>
 </BorderPane>

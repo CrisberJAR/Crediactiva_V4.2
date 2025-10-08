@@ -2,51 +2,54 @@ package pe.crediactiva.app.view.admin;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pe.crediactiva.app.model.Asesor;
+import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
+import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
-import pe.crediactiva.app.service.AuditoriaService;
+import pe.crediactiva.app.service.AsesorService;
 
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
  * Controlador para la bandeja de solicitudes de préstamo
+ * Versión simplificada - solo muestra la lista de préstamos pendientes
  */
 public class BandejaSolicitudesController implements Initializable {
     
     private static final Logger logger = LoggerFactory.getLogger(BandejaSolicitudesController.class);
     
-    @FXML
-    private ComboBox<String> comboAsesor;
+    // Servicios
+    private final PrestamoService prestamoService;
+    private final ClienteService clienteService;
+    private final AsesorService asesorService;
     
-    @FXML
-    private ComboBox<String> comboEstado;
+    // Cache para nombres
+    private final Map<Long, String> clienteNombresCache;
+    private final Map<Long, String> asesorNombresCache;
     
-    @FXML
-    private ComboBox<String> comboEtiqueta;
+    // Lista de solicitudes
+    private final ObservableList<Prestamo> solicitudes;
     
-    @FXML
-    private TextField txtMontoMin;
-    
-    @FXML
-    private TextField txtMontoMax;
-    
-    @FXML
-    private Button btnFiltrar;
-    
-    @FXML
-    private Button btnLimpiarFiltros;
-    
+    // Componentes de la interfaz
     @FXML
     private TableView<Prestamo> tablaSolicitudes;
     
@@ -60,77 +63,30 @@ public class BandejaSolicitudesController implements Initializable {
     private TableColumn<Prestamo, String> colAsesor;
     
     @FXML
-    private TableColumn<Prestamo, Double> colMonto;
-    
-    @FXML
-    private TableColumn<Prestamo, Double> colTasa;
-    
-    @FXML
-    private TableColumn<Prestamo, Integer> colPeriodo;
-    
-    @FXML
-    private TableColumn<Prestamo, String> colEstado;
-    
-    @FXML
-    private TableColumn<Prestamo, String> colEtiqueta;
-    
-    @FXML
-    private TableColumn<Prestamo, String> colFecha;
+    private TableColumn<Prestamo, String> colMonto;
     
     @FXML
     private TableColumn<Prestamo, String> colObservacion;
     
     @FXML
-    private Label lblCliente;
-    
-    @FXML
-    private Label lblAsesor;
-    
-    @FXML
-    private Label lblMontoSolicitado;
-    
-    @FXML
-    private Label lblMontoDesembolsado;
-    
-    @FXML
-    private TextField txtTasaInteres;
-    
-    @FXML
-    private TextField txtPeriodo;
-    
-    @FXML
-    private ComboBox<String> comboTipoPago;
-    
-    @FXML
-    private TextField txtObservacion;
-    
-    @FXML
-    private Button btnAprobar;
-    
-    @FXML
-    private Button btnRechazar;
-    
-    @FXML
-    private Button btnGuardar;
-    
-    @FXML
-    private Button btnVerHistorial;
+    private TableColumn<Prestamo, String> colFecha;
     
     @FXML
     private Label lblTotalSolicitudes;
     
     @FXML
-    private Label lblSolicitudesPendientes;
+    private Button btnActualizar;
     
-    private PrestamoService prestamoService;
-    private AuditoriaService auditoriaService;
-    private ObservableList<Prestamo> solicitudes;
-    private Prestamo solicitudSeleccionada;
-    
+    /**
+     * Constructor
+     */
     public BandejaSolicitudesController() {
         this.prestamoService = new PrestamoService();
-        this.auditoriaService = new AuditoriaService();
+        this.clienteService = new ClienteService();
+        this.asesorService = new AsesorService();
         this.solicitudes = FXCollections.observableArrayList();
+        this.clienteNombresCache = new HashMap<>();
+        this.asesorNombresCache = new HashMap<>();
     }
     
     @Override
@@ -139,14 +95,8 @@ public class BandejaSolicitudesController implements Initializable {
             // Configurar tabla
             configurarTabla();
             
-            // Configurar combos
-            configurarCombos();
-            
             // Cargar datos iniciales
             cargarSolicitudes();
-            
-            // Configurar eventos
-            configurarEventos();
             
             logger.info("Bandeja de solicitudes inicializada correctamente");
             
@@ -162,86 +112,52 @@ public class BandejaSolicitudesController implements Initializable {
     private void configurarTabla() {
         // Configurar columnas
         colId.setCellValueFactory(new PropertyValueFactory<>("idPrestamo"));
+        
+        // Columna de Cliente - con nombres reales desde cache
         colCliente.setCellValueFactory(cellData -> {
-            // TODO: Obtener nombre del cliente desde el servicio
-            return new javafx.beans.property.SimpleStringProperty("Cliente " + cellData.getValue().getIdCliente());
+            Long idCliente = cellData.getValue().getIdCliente();
+            String nombreCliente = obtenerNombreCliente(idCliente);
+            return new javafx.beans.property.SimpleStringProperty(nombreCliente);
         });
+        
+        // Columna de Asesor - con nombres reales desde cache
         colAsesor.setCellValueFactory(cellData -> {
-            // TODO: Obtener nombre del asesor desde el servicio
-            return new javafx.beans.property.SimpleStringProperty("Asesor " + cellData.getValue().getIdAsesor());
+            Long idAsesor = cellData.getValue().getIdAsesor();
+            String nombreAsesor = obtenerNombreAsesor(idAsesor);
+            return new javafx.beans.property.SimpleStringProperty(nombreAsesor);
         });
-        colMonto.setCellValueFactory(new PropertyValueFactory<>("montoSolicitado"));
-        colTasa.setCellValueFactory(new PropertyValueFactory<>("tasaInteres"));
-        colPeriodo.setCellValueFactory(new PropertyValueFactory<>("periodoMeses"));
-        colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
-        colEtiqueta.setCellValueFactory(new PropertyValueFactory<>("etiqueta"));
+        
+        // Columna de Monto con formato
+        colMonto.setCellValueFactory(cellData -> {
+            java.math.BigDecimal monto = cellData.getValue().getMontoSolicitado();
+            if (monto != null) {
+                return new javafx.beans.property.SimpleStringProperty(String.format("S/ %.2f", monto));
+            }
+            return new javafx.beans.property.SimpleStringProperty("N/A");
+        });
+        
+        // Columna de Observación/Motivo
+        colObservacion.setCellValueFactory(cellData -> {
+            String observacion = cellData.getValue().getObservacion();
+            return new javafx.beans.property.SimpleStringProperty(observacion != null ? observacion : "Sin observaciones");
+        });
+        
+        // Columna de Fecha
         colFecha.setCellValueFactory(cellData -> {
-            LocalDate fecha = cellData.getValue().getCreadoEn().toLocalDate();
-            return new javafx.beans.property.SimpleStringProperty(fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        });
-        colObservacion.setCellValueFactory(new PropertyValueFactory<>("observacion"));
-        
-        // Configurar selección
-        tablaSolicitudes.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                mostrarDetallesSolicitud(newSelection);
+            if (cellData.getValue().getCreadoEn() != null) {
+                LocalDate fecha = cellData.getValue().getCreadoEn().toLocalDate();
+                return new javafx.beans.property.SimpleStringProperty(fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             }
-        });
-    }
-    
-    /**
-     * Configura los combos de filtros
-     */
-    private void configurarCombos() {
-        // Estados
-        comboEstado.setItems(FXCollections.observableArrayList(
-            "TODOS", "pendiente", "activo", "suspendido", "finalizado", "rechazado"
-        ));
-        comboEstado.setValue("TODOS");
-        
-        // Etiquetas
-        comboEtiqueta.setItems(FXCollections.observableArrayList(
-            "TODAS", "excelente", "deficiente", "peligroso"
-        ));
-        comboEtiqueta.setValue("TODAS");
-        
-        // Tipos de pago
-        comboTipoPago.setItems(FXCollections.observableArrayList(
-            "diario", "semanal", "mensual"
-        ));
-        comboTipoPago.setValue("diario");
-        
-        // TODO: Cargar asesores desde la base de datos
-        comboAsesor.setItems(FXCollections.observableArrayList("TODOS"));
-        comboAsesor.setValue("TODOS");
-    }
-    
-    /**
-     * Configura eventos de la interfaz
-     */
-    private void configurarEventos() {
-        // Validar campos numéricos
-        txtTasaInteres.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.matches("\\d*\\.?\\d*")) {
-                txtTasaInteres.setText(oldVal);
-            }
+            return new javafx.beans.property.SimpleStringProperty("N/A");
         });
         
-        txtPeriodo.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.matches("\\d*")) {
-                txtPeriodo.setText(oldVal);
-            }
-        });
-        
-        txtMontoMin.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.matches("\\d*\\.?\\d*")) {
-                txtMontoMin.setText(oldVal);
-            }
-        });
-        
-        txtMontoMax.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.matches("\\d*\\.?\\d*")) {
-                txtMontoMax.setText(oldVal);
+        // Configurar doble clic para abrir ventana de detalles
+        tablaSolicitudes.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) { // Doble clic
+                Prestamo prestamoSeleccionado = tablaSolicitudes.getSelectionModel().getSelectedItem();
+                if (prestamoSeleccionado != null) {
+                    abrirVentanaDetalles(prestamoSeleccionado);
+                }
             }
         });
     }
@@ -251,18 +167,34 @@ public class BandejaSolicitudesController implements Initializable {
      */
     private void cargarSolicitudes() {
         try {
+            // Obtener préstamos pendientes directamente de la base de datos
             List<Prestamo> prestamos = prestamoService.obtenerPrestamosPendientes();
+            
+            // Limpiar lista actual
             solicitudes.clear();
             solicitudes.addAll(prestamos);
             
+            // Cachear nombres de clientes y asesores para mostrar nombres reales
+            cargarNombresEnCache(prestamos);
+            
+            // Asignar datos a la tabla
             tablaSolicitudes.setItems(solicitudes);
+            
+            // Actualizar contadores
             actualizarContadores();
             
-            logger.info("Cargadas " + prestamos.size() + " solicitudes");
+            logger.info("Cargadas " + prestamos.size() + " solicitudes pendientes desde la base de datos");
+            
+            // Mostrar mensaje si no hay solicitudes
+            if (prestamos.isEmpty()) {
+                mostrarInfo("✅ No hay solicitudes de préstamo pendientes en este momento.\n\n" +
+                           "📋 Las solicitudes aparecerán aquí cuando los asesores registren nuevas solicitudes de préstamo.\n" +
+                           "🔄 La tabla se actualiza automáticamente después de aprobar o rechazar préstamos.");
+            }
             
         } catch (Exception e) {
-            logger.error("Error al cargar solicitudes", e);
-            mostrarError("Error al cargar las solicitudes");
+            logger.error("Error al cargar solicitudes pendientes", e);
+            mostrarError("Error al cargar las solicitudes: " + e.getMessage());
         }
     }
     
@@ -271,263 +203,57 @@ public class BandejaSolicitudesController implements Initializable {
      */
     private void actualizarContadores() {
         int total = solicitudes.size();
-        int pendientes = (int) solicitudes.stream()
-            .filter(p -> "pendiente".equals(p.getEstado()))
-            .count();
-        
-        lblTotalSolicitudes.setText("Total: " + total + " solicitudes");
-        lblSolicitudesPendientes.setText("Pendientes: " + pendientes);
+        lblTotalSolicitudes.setText("Total de solicitudes: " + total);
     }
     
     /**
-     * Muestra los detalles de la solicitud seleccionada
+     * Cachea los nombres de clientes y asesores
      */
-    private void mostrarDetallesSolicitud(Prestamo prestamo) {
+    private void cargarNombresEnCache(List<Prestamo> prestamos) {
         try {
-            solicitudSeleccionada = prestamo;
-            
-            // Mostrar información básica
-            lblCliente.setText("Cliente " + prestamo.getIdCliente());
-            lblAsesor.setText("Asesor " + prestamo.getIdAsesor());
-            lblMontoSolicitado.setText(String.format("S/ %.2f", prestamo.getMontoSolicitado()));
-            
-            // Calcular monto desembolsado (90% del solicitado)
-            double montoDesembolsado = prestamo.getMontoSolicitado().doubleValue() * 0.9;
-            lblMontoDesembolsado.setText(String.format("S/ %.2f", montoDesembolsado));
-            
-            // Mostrar campos editables
-            txtTasaInteres.setText(String.valueOf(prestamo.getTasaInteres()));
-            txtPeriodo.setText(String.valueOf(prestamo.getPeriodoMeses()));
-            comboTipoPago.setValue(prestamo.getTipoPago().name().toLowerCase());
-            txtObservacion.setText(prestamo.getObservacion());
-            
-            // Habilitar botones según el estado
-            boolean esPendiente = "pendiente".equals(prestamo.getEstado());
-            btnAprobar.setDisable(!esPendiente);
-            btnRechazar.setDisable(!esPendiente);
-            btnGuardar.setDisable(!esPendiente);
-            
-        } catch (Exception e) {
-            logger.error("Error al mostrar detalles de la solicitud", e);
-        }
-    }
-    
-    /**
-     * Maneja el filtrado de solicitudes
-     */
-    @FXML
-    private void handleFiltrar(ActionEvent event) {
-        try {
-            // TODO: Implementar filtrado
-            mostrarInfo("Funcionalidad de filtrado en desarrollo");
-            
-        } catch (Exception e) {
-            logger.error("Error al filtrar solicitudes", e);
-            mostrarError("Error al filtrar las solicitudes");
-        }
-    }
-    
-    /**
-     * Limpia los filtros aplicados
-     */
-    @FXML
-    private void handleLimpiarFiltros(ActionEvent event) {
-        try {
-            comboAsesor.setValue("TODOS");
-            comboEstado.setValue("TODOS");
-            comboEtiqueta.setValue("TODAS");
-            txtMontoMin.clear();
-            txtMontoMax.clear();
-            
-            cargarSolicitudes();
-            
-        } catch (Exception e) {
-            logger.error("Error al limpiar filtros", e);
-            mostrarError("Error al limpiar los filtros");
-        }
-    }
-    
-    /**
-     * Maneja la aprobación de una solicitud
-     */
-    @FXML
-    private void handleAprobar(ActionEvent event) {
-        if (solicitudSeleccionada == null) {
-            mostrarError("Seleccione una solicitud para aprobar");
-            return;
-        }
-        
-        try {
-            // Validar campos obligatorios
-            if (txtTasaInteres.getText().trim().isEmpty() || txtPeriodo.getText().trim().isEmpty()) {
-                mostrarError("Debe completar la tasa de interés y el período");
-                return;
-            }
-            
-            double tasaInteres = Double.parseDouble(txtTasaInteres.getText());
-            int periodo = Integer.parseInt(txtPeriodo.getText());
-            
-            if (tasaInteres < 0 || tasaInteres > 30) {
-                mostrarError("La tasa de interés debe estar entre 0% y 30%");
-                return;
-            }
-            
-            if (periodo < 1 || periodo > 12) {
-                mostrarError("El período debe estar entre 1 y 12 meses");
-                return;
-            }
-            
-            // Actualizar la solicitud
-            solicitudSeleccionada.setTasaInteres(new java.math.BigDecimal(tasaInteres));
-            solicitudSeleccionada.setPeriodoMeses(periodo);
-            solicitudSeleccionada.setTipoPago(Prestamo.TipoPago.valueOf(comboTipoPago.getValue().toUpperCase()));
-            solicitudSeleccionada.setObservacion(txtObservacion.getText());
-            
-            // Aprobar y generar cronograma
-            prestamoService.aprobarPrestamo(solicitudSeleccionada.getIdPrestamo(), 
-                new java.math.BigDecimal(tasaInteres), periodo, 
-                Prestamo.TipoPago.valueOf(comboTipoPago.getValue().toUpperCase()), 
-                java.time.LocalDate.now().plusDays(1));
-            
-            // Registrar auditoría
-            auditoriaService.registrarAuditoria(
-                solicitudSeleccionada.getIdPrestamo().toString(),
-                "prestamos",
-                "update",
-                "estado: pendiente",
-                "estado: activo"
-            );
-            
-            mostrarInfo("Préstamo aprobado y cronograma generado correctamente");
-            cargarSolicitudes();
-            
-        } catch (Exception e) {
-            logger.error("Error al aprobar solicitud", e);
-            mostrarError("Error al aprobar la solicitud: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Maneja el rechazo de una solicitud
-     */
-    @FXML
-    private void handleRechazar(ActionEvent event) {
-        if (solicitudSeleccionada == null) {
-            mostrarError("Seleccione una solicitud para rechazar");
-            return;
-        }
-        
-        try {
-            // Mostrar diálogo para motivo de rechazo
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Rechazar Solicitud");
-            dialog.setHeaderText("Motivo del rechazo");
-            dialog.setContentText("Ingrese el motivo del rechazo:");
-            
-            dialog.showAndWait().ifPresent(motivo -> {
-                try {
-                        // Rechazar la solicitud
-                        prestamoService.rechazarPrestamo(solicitudSeleccionada.getIdPrestamo(), motivo);
-                    
-                    // Registrar auditoría
-                    auditoriaService.registrarAuditoria(
-                        solicitudSeleccionada.getIdPrestamo().toString(),
-                        "prestamos",
-                        "update",
-                        "estado: pendiente",
-                        "estado: rechazado - motivo: " + motivo
-                    );
-                    
-                    mostrarInfo("Solicitud rechazada correctamente");
-                    cargarSolicitudes();
-                    
-                } catch (Exception e) {
-                    logger.error("Error al rechazar solicitud", e);
-                    mostrarError("Error al rechazar la solicitud: " + e.getMessage());
+            for (Prestamo prestamo : prestamos) {
+                // Cachear nombre del cliente
+                if (!clienteNombresCache.containsKey(prestamo.getIdCliente())) {
+                    Optional<Cliente> clienteOpt = clienteService.obtenerClientePorId(prestamo.getIdCliente());
+                    if (clienteOpt.isPresent()) {
+                        Cliente cliente = clienteOpt.get();
+                        String nombreCompleto = cliente.getNombreCompleto();
+                        clienteNombresCache.put(prestamo.getIdCliente(), nombreCompleto);
+                    }
                 }
-            });
+                
+                // Cachear nombre del asesor
+                if (!asesorNombresCache.containsKey(prestamo.getIdAsesor())) {
+                    Optional<Asesor> asesorOpt = asesorService.obtenerAsesorPorId(prestamo.getIdAsesor());
+                    if (asesorOpt.isPresent()) {
+                        Asesor asesor = asesorOpt.get();
+                        String nombreCompleto = asesor.getNombreCompleto();
+                        asesorNombresCache.put(prestamo.getIdAsesor(), nombreCompleto);
+                    } else {
+                        asesorNombresCache.put(prestamo.getIdAsesor(), "Asesor #" + prestamo.getIdAsesor());
+                    }
+                }
+            }
+            
+            logger.info("Cache de nombres cargado: " + clienteNombresCache.size() + " clientes, " + asesorNombresCache.size() + " asesores");
             
         } catch (Exception e) {
-            logger.error("Error al rechazar solicitud", e);
-            mostrarError("Error al rechazar la solicitud");
+            logger.error("Error al cargar nombres en cache", e);
         }
     }
     
     /**
-     * Maneja el guardado de cambios en una solicitud
+     * Obtiene el nombre del cliente desde el cache
      */
-    @FXML
-    private void handleGuardar(ActionEvent event) {
-        if (solicitudSeleccionada == null) {
-            mostrarError("Seleccione una solicitud para editar");
-            return;
-        }
-        
-        try {
-            // Validar campos obligatorios
-            if (txtTasaInteres.getText().trim().isEmpty() || txtPeriodo.getText().trim().isEmpty()) {
-                mostrarError("Debe completar la tasa de interés y el período");
-                return;
-            }
-            
-            double tasaInteres = Double.parseDouble(txtTasaInteres.getText());
-            int periodo = Integer.parseInt(txtPeriodo.getText());
-            
-            if (tasaInteres < 0 || tasaInteres > 30) {
-                mostrarError("La tasa de interés debe estar entre 0% y 30%");
-                return;
-            }
-            
-            if (periodo < 1 || periodo > 12) {
-                mostrarError("El período debe estar entre 1 y 12 meses");
-                return;
-            }
-            
-            // Actualizar la solicitud
-            solicitudSeleccionada.setTasaInteres(new java.math.BigDecimal(tasaInteres));
-            solicitudSeleccionada.setPeriodoMeses(periodo);
-            solicitudSeleccionada.setTipoPago(Prestamo.TipoPago.valueOf(comboTipoPago.getValue().toUpperCase()));
-            solicitudSeleccionada.setObservacion(txtObservacion.getText());
-            
-            // Guardar cambios
-            prestamoService.actualizarPrestamo(solicitudSeleccionada);
-            
-            // Registrar auditoría
-            auditoriaService.registrarAuditoria(
-                solicitudSeleccionada.getIdPrestamo().toString(),
-                "prestamos",
-                "update",
-                "tasa: " + solicitudSeleccionada.getTasaInteres() + ", periodo: " + solicitudSeleccionada.getPeriodoMeses(),
-                "tasa: " + tasaInteres + ", periodo: " + periodo
-            );
-            
-            mostrarInfo("Cambios guardados correctamente");
-            cargarSolicitudes();
-            
-        } catch (Exception e) {
-            logger.error("Error al guardar cambios", e);
-            mostrarError("Error al guardar los cambios: " + e.getMessage());
-        }
+    private String obtenerNombreCliente(Long idCliente) {
+        return clienteNombresCache.getOrDefault(idCliente, "Cliente #" + idCliente);
     }
     
     /**
-     * Maneja la visualización del historial del cliente
+     * Obtiene el nombre del asesor desde el cache
      */
-    @FXML
-    private void handleVerHistorial(ActionEvent event) {
-        if (solicitudSeleccionada == null) {
-            mostrarError("Seleccione una solicitud para ver el historial");
-            return;
-        }
-        
-        try {
-            // TODO: Implementar visualización del historial del cliente
-            mostrarInfo("Funcionalidad de historial del cliente en desarrollo");
-            
-        } catch (Exception e) {
-            logger.error("Error al mostrar historial del cliente", e);
-            mostrarError("Error al mostrar el historial del cliente");
-        }
+    private String obtenerNombreAsesor(Long idAsesor) {
+        return asesorNombresCache.getOrDefault(idAsesor, "Asesor #" + idAsesor);
     }
     
     /**
@@ -539,6 +265,61 @@ public class BandejaSolicitudesController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Abre la ventana de detalles del préstamo
+     */
+    private void abrirVentanaDetalles(Prestamo prestamo) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin/DetallePrestamoView.fxml"));
+            Scene scene = new Scene(loader.load());
+            
+            // Obtener el controlador y cargar los datos
+            DetallePrestamoController controller = loader.getController();
+            controller.cargarPrestamo(prestamo);
+            
+            // Crear y configurar la ventana
+            Stage detalleStage = new Stage();
+            detalleStage.setTitle("Detalle de Préstamo - ID: " + prestamo.getIdPrestamo());
+            detalleStage.setScene(scene);
+            detalleStage.initModality(Modality.APPLICATION_MODAL);
+            detalleStage.setResizable(true);
+            
+            // Mostrar la ventana
+            detalleStage.showAndWait();
+            
+            // Refrescar la tabla después de cerrar la ventana de detalles
+            cargarSolicitudes();
+            
+            // Mostrar mensaje de confirmación de actualización
+            mostrarInfo("🔄 Tabla actualizada correctamente.\n\n" +
+                       "📊 Se han recargado las solicitudes pendientes desde la base de datos.\n" +
+                       "✅ Los préstamos aprobados o rechazados ya no aparecen en la lista.");
+            
+            logger.info("Ventana de detalles abierta para préstamo ID: " + prestamo.getIdPrestamo());
+            
+        } catch (IOException e) {
+            logger.error("Error al abrir ventana de detalles", e);
+            mostrarError("Error al abrir la ventana de detalles: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error inesperado al abrir ventana de detalles", e);
+            mostrarError("Error inesperado al abrir la ventana de detalles");
+        }
+    }
+    
+    /**
+     * Maneja el botón de actualizar
+     */
+    @FXML
+    private void handleActualizar() {
+        try {
+            cargarSolicitudes();
+            mostrarInfo("Datos actualizados correctamente");
+        } catch (Exception e) {
+            logger.error("Error al actualizar datos", e);
+            mostrarError("Error al actualizar los datos");
+        }
     }
     
     /**
