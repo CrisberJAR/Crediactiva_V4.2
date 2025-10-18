@@ -11,9 +11,11 @@ public class RecaudacionAsesor {
     private Long idAsesor;
     private Long idCliente;
     private Long idPrestamo;
+    private Long idCuota;
     private LocalDateTime fechaRegistro;
     private BigDecimal montoRegistrado;
     private boolean validado;
+    private String observaciones;
     
     // Campos de relación
     private Asesor asesor;
@@ -29,6 +31,16 @@ public class RecaudacionAsesor {
         this.idAsesor = idAsesor;
         this.idCliente = idCliente;
         this.idPrestamo = idPrestamo;
+        this.montoRegistrado = montoRegistrado;
+        this.fechaRegistro = LocalDateTime.now();
+    }
+    
+    public RecaudacionAsesor(Long idAsesor, Long idCliente, Long idPrestamo, Long idCuota, BigDecimal montoRegistrado) {
+        this();
+        this.idAsesor = idAsesor;
+        this.idCliente = idCliente;
+        this.idPrestamo = idPrestamo;
+        this.idCuota = idCuota;
         this.montoRegistrado = montoRegistrado;
         this.fechaRegistro = LocalDateTime.now();
     }
@@ -88,6 +100,22 @@ public class RecaudacionAsesor {
     
     public void setValidado(boolean validado) {
         this.validado = validado;
+    }
+    
+    public Long getIdCuota() {
+        return idCuota;
+    }
+    
+    public void setIdCuota(Long idCuota) {
+        this.idCuota = idCuota;
+    }
+    
+    public String getObservaciones() {
+        return observaciones;
+    }
+    
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
     }
     
     public Asesor getAsesor() {

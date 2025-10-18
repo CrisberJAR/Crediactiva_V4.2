@@ -1,8 +1,10 @@
 package pe.crediactiva.app.service;
 
 import pe.crediactiva.app.dao.RecaudacionAsesorDAO;
+import pe.crediactiva.app.dao.CronogramaDAO;
 import pe.crediactiva.app.dao.impl.RecaudacionAsesorDAOImpl;
 import pe.crediactiva.app.model.RecaudacionAsesor;
+import pe.crediactiva.app.model.Cronograma;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +22,12 @@ public class RecaudacionService {
     private static final Logger logger = LoggerFactory.getLogger(RecaudacionService.class);
 
     private final RecaudacionAsesorDAO recaudacionAsesorDAO;
+    private final CronogramaDAO cronogramaDAO;
     private final AuditoriaService auditoriaService;
 
     public RecaudacionService() {
         this.recaudacionAsesorDAO = new RecaudacionAsesorDAOImpl();
+        this.cronogramaDAO = new pe.crediactiva.app.dao.impl.CronogramaDAOImpl();
         this.auditoriaService = new AuditoriaService();
     }
 
@@ -307,6 +311,71 @@ public class RecaudacionService {
             return recaudacionAsesorDAO.delete(idRecaudacion);
         } catch (Exception e) {
             logger.error("Error al eliminar recaudación: " + idRecaudacion, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Registra un borrador de recaudación para una cuota específica
+     * NOTA: Como la tabla no tiene campo id_cuota, se registra por préstamo
+     * pero con información adicional en observaciones para identificar la cuota
+     */
+    public boolean registrarBorradorParaCuota(Long idAsesor, Long idCliente, Long idPrestamo, 
+                                            BigDecimal monto, Long idCuota, LocalDate fechaPago, 
+                                            String metodoPago, String referencia, String observaciones) {
+        try {
+            RecaudacionAsesor recaudacion = new RecaudacionAsesor();
+            recaudacion.setIdAsesor(idAsesor);
+            recaudacion.setIdCliente(idCliente);
+            recaudacion.setIdPrestamo(idPrestamo);
+            recaudacion.setIdCuota(idCuota); // Agregar el ID de la cuota específica
+            recaudacion.setFechaRegistro(LocalDateTime.now());
+            recaudacion.setMontoRegistrado(monto);
+            recaudacion.setValidado(false);
+            
+            // Crear observaciones detalladas que incluyan la información adicional
+            StringBuilder observacionesDetalladas = new StringBuilder();
+            observacionesDetalladas.append("Fecha Pago: ").append(fechaPago).append(" | ");
+            observacionesDetalladas.append("Método: ").append(metodoPago);
+            if (referencia != null && !referencia.trim().isEmpty()) {
+                observacionesDetalladas.append(" | Ref: ").append(referencia);
+            }
+            if (observaciones != null && !observaciones.trim().isEmpty()) {
+                observacionesDetalladas.append(" | Obs: ").append(observaciones);
+            }
+            
+            recaudacion.setObservaciones(observacionesDetalladas.toString());
+            
+            logger.info("Registrando recaudación para cuota específica - ID Cuota: {}, Monto: {}, Observaciones: {}", 
+                       idCuota, monto, observacionesDetalladas.toString());
+
+            boolean success = recaudacionAsesorDAO.create(recaudacion);
+            if (success) {
+                auditoriaService.registrarAuditoria("recaudacion_asesor", 
+                    recaudacion.getIdRecaudacion().toString(), 
+                    "INSERT", null, "Recaudación para cuota ID: " + idCuota + " - " + recaudacion.toString());
+            }
+            return success;
+        } catch (Exception e) {
+            logger.error("Error al registrar borrador de recaudación para cuota: " + idCuota, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica si ya existe una recaudación pendiente para una cuota específica
+     * Ahora es mucho más simple usando el campo validacion_asesor en cronograma
+     */
+    public boolean existeRecaudacionPendienteParaCuota(Long idPrestamo, Long idCuota) {
+        try {
+            // Buscar la cuota y verificar su estado de validación
+            Optional<Cronograma> cuotaOpt = cronogramaDAO.findById(idCuota);
+            if (cuotaOpt.isPresent()) {
+                return cuotaOpt.get().isValidacionAsesor();
+            }
+            return false;
+        } catch (Exception e) {
+            logger.error("Error al verificar recaudación pendiente para cuota: " + idCuota, e);
             return false;
         }
     }

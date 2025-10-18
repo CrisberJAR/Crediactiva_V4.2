@@ -86,6 +86,16 @@ public interface CronogramaDAO {
     List<Cronograma> findPendientesByCliente(Long idCliente);
     
     /**
+     * Obtiene cuotas disponibles para recaudación (sin validación de asesor)
+     */
+    List<Cronograma> findDisponiblesParaRecaudacion(Long idPrestamo);
+    
+    /**
+     * Marca una cuota como validada por el asesor (para evitar duplicados)
+     */
+    boolean marcarValidacionAsesor(Long idCuota, boolean validado);
+    
+    /**
      * Obtiene cuotas vencidas por cliente
      */
     List<Cronograma> findVencidasByCliente(Long idCliente);

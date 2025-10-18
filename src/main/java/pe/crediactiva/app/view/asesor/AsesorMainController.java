@@ -274,24 +274,16 @@ public class AsesorMainController {
     @FXML
     private void handleRegistrarCobro() {
         try {
-            logger.info("Intentando cargar registro de cobro...");
-            
-            VBox registrarCobroView = crearRegistrarCobroView();
-            
-            // Crear ScrollPane para hacer scrolleable el contenido
-            ScrollPane scrollPane = new ScrollPane();
-            scrollPane.setContent(registrarCobroView);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
-            scrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            
-            // Reemplazar contenido
+            logger.info("Cargando vista FXML de registro de cobro...");
+
+            javafx.scene.Node registrarCobro = javafx.fxml.FXMLLoader.load(
+                    getClass().getResource("/fxml/asesor/RegistrarCobroView.fxml")
+            );
+
             contentArea.getChildren().clear();
-            contentArea.getChildren().add(scrollPane);
+            contentArea.getChildren().add(registrarCobro);
             
-            logger.info("Cargado registro de cobro exitosamente con scroll");
+            logger.info("Registro de cobro cargado desde FXML");
             
         } catch (Exception e) {
             logger.error("Error inesperado al cargar registro de cobro", e);
@@ -1949,27 +1941,6 @@ public class AsesorMainController {
         Label subtitulo = new Label("Registra los cobros realizados a tus clientes siguiendo el flujo de negocio");
         subtitulo.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d; -fx-padding: 0 0 20 0;");
         
-        // Panel de información del flujo
-        VBox panelInfo = new VBox(15);
-        panelInfo.setPadding(new Insets(20));
-        panelInfo.setStyle("-fx-background-color: #e8f4fd; -fx-background-radius: 10; -fx-border-color: #3498db; -fx-border-radius: 10;");
-        
-        Label tituloInfo = new Label("📋 Flujo de Registro de Cobros");
-        tituloInfo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-        
-        Label info1 = new Label("1️⃣ Selecciona el cliente del cual vas a cobrar");
-        info1.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
-        
-        Label info2 = new Label("2️⃣ Selecciona el préstamo y la cuota específica");
-        info2.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
-        
-        Label info3 = new Label("3️⃣ Registra el monto cobrado y el método de pago");
-        info3.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
-        
-        Label info4 = new Label("4️⃣ El cobro se registra como borrador pendiente de validación");
-        info4.setStyle("-fx-text-fill: #2c3e50; -fx-font-size: 13px;");
-        
-        panelInfo.getChildren().addAll(tituloInfo, info1, info2, info3, info4);
         
         // Panel de selección de cliente
         VBox panelCliente = new VBox(20);
@@ -2398,7 +2369,7 @@ public class AsesorMainController {
             cuotasPendientes.clear();
         });
         
-        root.getChildren().addAll(titulo, subtitulo, panelInfo, panelCliente, panelPrestamo, panelRegistro, panelAdvertencia);
+        root.getChildren().addAll(titulo, subtitulo, panelCliente, panelPrestamo, panelRegistro, panelAdvertencia);
         
         return root;
     }

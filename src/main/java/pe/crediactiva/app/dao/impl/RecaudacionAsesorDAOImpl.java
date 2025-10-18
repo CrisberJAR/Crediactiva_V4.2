@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,8 +43,8 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
 
     @Override
     public boolean create(RecaudacionAsesor recaudacion) {
-        String sql = "INSERT INTO recaudacion_asesor (id_asesor, id_cliente, id_prestamo, fecha_registro, monto_registrado, validado) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO recaudacion_asesor (id_asesor, id_cliente, id_prestamo, id_cuota, fecha_registro, monto_registrado, validado, observaciones) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -53,9 +52,11 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
             stmt.setLong(1, recaudacion.getIdAsesor());
             stmt.setLong(2, recaudacion.getIdCliente());
             stmt.setLong(3, recaudacion.getIdPrestamo());
-            stmt.setTimestamp(4, Timestamp.valueOf(recaudacion.getFechaRegistro()));
-            stmt.setBigDecimal(5, recaudacion.getMontoRegistrado());
-            stmt.setBoolean(6, recaudacion.isValidado());
+            stmt.setObject(4, recaudacion.getIdCuota()); // Puede ser NULL
+            stmt.setTimestamp(5, Timestamp.valueOf(recaudacion.getFechaRegistro()));
+            stmt.setBigDecimal(6, recaudacion.getMontoRegistrado());
+            stmt.setBoolean(7, recaudacion.isValidado());
+            stmt.setString(8, recaudacion.getObservaciones());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -77,8 +78,8 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
 
     @Override
     public boolean update(RecaudacionAsesor recaudacion) {
-        String sql = "UPDATE recaudacion_asesor SET id_asesor = ?, id_cliente = ?, id_prestamo = ?, " +
-                    "fecha_registro = ?, monto_registrado = ?, validado = ? WHERE id_recaudacion = ?";
+        String sql = "UPDATE recaudacion_asesor SET id_asesor = ?, id_cliente = ?, id_prestamo = ?, id_cuota = ?, " +
+                    "fecha_registro = ?, monto_registrado = ?, validado = ?, observaciones = ? WHERE id_recaudacion = ?";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -86,10 +87,12 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
             stmt.setLong(1, recaudacion.getIdAsesor());
             stmt.setLong(2, recaudacion.getIdCliente());
             stmt.setLong(3, recaudacion.getIdPrestamo());
-            stmt.setTimestamp(4, Timestamp.valueOf(recaudacion.getFechaRegistro()));
-            stmt.setBigDecimal(5, recaudacion.getMontoRegistrado());
-            stmt.setBoolean(6, recaudacion.isValidado());
-            stmt.setLong(7, recaudacion.getIdRecaudacion());
+            stmt.setObject(4, recaudacion.getIdCuota()); // Puede ser NULL
+            stmt.setTimestamp(5, Timestamp.valueOf(recaudacion.getFechaRegistro()));
+            stmt.setBigDecimal(6, recaudacion.getMontoRegistrado());
+            stmt.setBoolean(7, recaudacion.isValidado());
+            stmt.setString(8, recaudacion.getObservaciones());
+            stmt.setLong(9, recaudacion.getIdRecaudacion());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -322,6 +325,31 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
         }
         return Optional.empty();
     }
+    
+    /**
+     * Verifica si existe una recaudación pendiente para una cuota específica
+     */
+    public boolean existeRecaudacionPendienteParaCuota(Long idPrestamo, Long idCuota) {
+        String sql = "SELECT COUNT(*) FROM recaudacion_asesor WHERE id_prestamo = ? AND id_cuota = ? AND validado = FALSE";
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, idPrestamo);
+            stmt.setLong(2, idCuota);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    return count > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            logger.error("Error al verificar recaudación pendiente para cuota: " + idCuota, e);
+        }
+        return false;
+    }
 
     private RecaudacionAsesor mapResultSetToRecaudacionAsesor(ResultSet rs) throws SQLException {
         RecaudacionAsesor recaudacion = new RecaudacionAsesor();
@@ -329,9 +357,22 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
         recaudacion.setIdAsesor(rs.getLong("id_asesor"));
         recaudacion.setIdCliente(rs.getLong("id_cliente"));
         recaudacion.setIdPrestamo(rs.getLong("id_prestamo"));
+        
+        // Manejar id_cuota que puede ser NULL
+        Long idCuota = rs.getLong("id_cuota");
+        if (rs.wasNull()) {
+            idCuota = null;
+        }
+        recaudacion.setIdCuota(idCuota);
+        
         recaudacion.setFechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime());
         recaudacion.setMontoRegistrado(rs.getBigDecimal("monto_registrado"));
         recaudacion.setValidado(rs.getBoolean("validado"));
+        
+        // Manejar observaciones que puede ser NULL
+        String observaciones = rs.getString("observaciones");
+        recaudacion.setObservaciones(observaciones);
+        
         return recaudacion;
     }
 }

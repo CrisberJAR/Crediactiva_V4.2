@@ -4,12 +4,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Cronograma;
 import pe.crediactiva.app.model.Prestamo;
 import pe.crediactiva.app.service.ClienteService;
-import pe.crediactiva.app.service.PagoService;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.RecaudacionService;
 import pe.crediactiva.app.config.SessionManager;
@@ -23,6 +23,37 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Clase wrapper para Cronograma con funcionalidad de selección
+ */
+class CronogramaSeleccionable {
+    private final Cronograma cronograma;
+    private final javafx.beans.property.BooleanProperty seleccionado;
+    
+    public CronogramaSeleccionable(Cronograma cronograma) {
+        this.cronograma = cronograma;
+        this.seleccionado = new javafx.beans.property.SimpleBooleanProperty(false);
+    }
+    
+    public Cronograma getCronograma() {
+        return cronograma;
+    }
+    
+    public javafx.beans.property.BooleanProperty seleccionadoProperty() {
+        return seleccionado;
+    }
+    
+    public boolean isSeleccionado() {
+        return seleccionado.get();
+    }
+    
+    public void setSeleccionado(boolean seleccionado) {
+        this.seleccionado.set(seleccionado);
+    }
+}
 
 /**
  * Controlador para el registro de cobros del asesor
@@ -71,31 +102,28 @@ public class RegistrarCobroController {
     private TableColumn<Prestamo, String> colFechaInicioPrestamo;
     
     @FXML
-    private TableView<Cronograma> tblCuotas;
+    private TableView<CronogramaSeleccionable> tblCuotas;
     
     @FXML
-    private TableColumn<Cronograma, Integer> colIdCuota;
+    private TableColumn<CronogramaSeleccionable, Integer> colIdCuota;
     
     @FXML
-    private TableColumn<Cronograma, Integer> colNumeroCuota;
+    private TableColumn<CronogramaSeleccionable, Integer> colNumeroCuota;
     
     @FXML
-    private TableColumn<Cronograma, String> colFechaVencimiento;
+    private TableColumn<CronogramaSeleccionable, String> colFechaVencimiento;
     
     @FXML
-    private TableColumn<Cronograma, String> colMontoCuota;
+    private TableColumn<CronogramaSeleccionable, String> colMontoCuota;
     
     @FXML
-    private TableColumn<Cronograma, String> colEstadoCuota;
+    private TableColumn<CronogramaSeleccionable, String> colEstadoCuota;
     
     @FXML
-    private TableColumn<Cronograma, String> colDiasVencido;
+    private TableColumn<CronogramaSeleccionable, String> colDiasVencido;
     
     @FXML
-    private ComboBox<Cronograma> cmbCuotaPagar;
-    
-    @FXML
-    private TextField txtMontoPagar;
+    private TableColumn<CronogramaSeleccionable, Boolean> colSeleccionar;
     
     @FXML
     private DatePicker dpFechaPago;
@@ -110,36 +138,46 @@ public class RegistrarCobroController {
     private TextField txtObservaciones;
     
     @FXML
-    private Label lblMontoCuota;
+    private Button btnSeleccionarTodas;
     
     @FXML
-    private Label lblMontoPagar;
+    private Button btnDeseleccionarTodas;
     
     @FXML
-    private Label lblCambio;
+    private Label lblCuotasSeleccionadas;
     
     @FXML
-    private Label lblNuevoSaldo;
+    private Label lblMontoTotal;
+    
+    @FXML
+    private Label lblCantidadCuotas;
+    
+    @FXML
+    private Label lblMontoTotalResumen;
+    
+    @FXML
+    private Button btnAceptar;
+    
+    @FXML
+    private Button btnCancelar;
     
     private ClienteService clienteService;
     private PrestamoService prestamoService;
-    private PagoService pagoService;
     private RecaudacionService recaudacionService;
     private CronogramaDAO cronogramaDAO;
     private Cliente clienteSeleccionado;
     private Prestamo prestamoSeleccionado;
     private Long idAsesorActual;
     private ObservableList<Prestamo> prestamos;
-    private ObservableList<Cronograma> cuotas;
+    private ObservableList<CronogramaSeleccionable> cuotasSeleccionables;
     
     public RegistrarCobroController() {
         this.clienteService = new ClienteService();
         this.prestamoService = new PrestamoService();
-        this.pagoService = new PagoService();
         this.recaudacionService = new RecaudacionService();
         this.cronogramaDAO = new CronogramaDAOImpl();
         this.prestamos = FXCollections.observableArrayList();
-        this.cuotas = FXCollections.observableArrayList();
+        this.cuotasSeleccionables = FXCollections.observableArrayList();
         
         // Obtener ID del asesor actual desde la sesión
         this.idAsesorActual = SessionManager.getInstance().getAsesorId();
@@ -188,37 +226,7 @@ public class RegistrarCobroController {
             }
         });
         
-        // Configurar combo de cuota a pagar
-        cmbCuotaPagar.setCellFactory(listView -> new ListCell<Cronograma>() {
-            @Override
-            protected void updateItem(Cronograma cuota, boolean empty) {
-                super.updateItem(cuota, empty);
-                if (empty || cuota == null) {
-                    setText(null);
-                } else {
-                    setText("Cuota #" + cuota.getNumeroCuota() + " - S/ " + String.format("%.2f", cuota.getMontoCuota()));
-                }
-            }
-        });
         
-        cmbCuotaPagar.setButtonCell(new ListCell<Cronograma>() {
-            @Override
-            protected void updateItem(Cronograma cuota, boolean empty) {
-                super.updateItem(cuota, empty);
-                if (empty || cuota == null) {
-                    setText(null);
-                } else {
-                    setText("Cuota #" + cuota.getNumeroCuota() + " - S/ " + String.format("%.2f", cuota.getMontoCuota()));
-                }
-            }
-        });
-        
-        // Configurar validación de monto
-        txtMontoPagar.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*\\.?\\d*")) {
-                txtMontoPagar.setText(oldValue);
-            }
-        });
         
         // Configurar combo de método de pago
         cmbMetodoPago.getItems().addAll("EFECTIVO", "TRANSFERENCIA", "YAPE", "PLIN", "TARJETA");
@@ -256,22 +264,47 @@ public class RegistrarCobroController {
         tblPrestamos.setItems(prestamos);
         
         // Configurar tabla de cuotas
-        colIdCuota.setCellValueFactory(new PropertyValueFactory<>("idCronograma"));
-        colNumeroCuota.setCellValueFactory(new PropertyValueFactory<>("numeroCuota"));
+        tblCuotas.setEditable(true);
+        colSeleccionar.setEditable(true);
+        colSeleccionar.setCellValueFactory(cellData -> cellData.getValue().seleccionadoProperty());
+        colSeleccionar.setCellFactory(column -> {
+            CheckBoxTableCell<CronogramaSeleccionable, Boolean> cell = new CheckBoxTableCell<>(index -> {
+                if (index < 0 || index >= tblCuotas.getItems().size()) {
+                    return new javafx.beans.property.SimpleBooleanProperty(false);
+                }
+                return tblCuotas.getItems().get(index).seleccionadoProperty();
+            });
+            cell.setEditable(true);
+            return cell;
+        });
+        
+        colIdCuota.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue().getCronograma();
+            return new javafx.beans.property.SimpleIntegerProperty(cuota.getIdCuota().intValue()).asObject();
+        });
+        
+        colNumeroCuota.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue().getCronograma();
+            return new javafx.beans.property.SimpleIntegerProperty(cuota.getNumeroCuota()).asObject();
+        });
+        
         colFechaVencimiento.setCellValueFactory(cellData -> {
-            Cronograma cuota = cellData.getValue();
+            Cronograma cuota = cellData.getValue().getCronograma();
             return new javafx.beans.property.SimpleStringProperty(FechaUtil.formatearFecha(cuota.getFechaProgramada()));
         });
+        
         colMontoCuota.setCellValueFactory(cellData -> {
-            Cronograma cuota = cellData.getValue();
+            Cronograma cuota = cellData.getValue().getCronograma();
             return new javafx.beans.property.SimpleStringProperty("S/ " + String.format("%.2f", cuota.getMontoCuota()));
         });
+        
         colEstadoCuota.setCellValueFactory(cellData -> {
-            Cronograma cuota = cellData.getValue();
+            Cronograma cuota = cellData.getValue().getCronograma();
             return new javafx.beans.property.SimpleStringProperty(cuota.getEstadoCuota().toString());
         });
+        
         colDiasVencido.setCellValueFactory(cellData -> {
-            Cronograma cuota = cellData.getValue();
+            Cronograma cuota = cellData.getValue().getCronograma();
             if (cuota.getEstadoCuota() == Cronograma.EstadoCuota.RETRASADA) {
                 long diasVencido = ChronoUnit.DAYS.between(cuota.getFechaProgramada(), LocalDate.now());
                 return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasVencido));
@@ -280,7 +313,17 @@ public class RegistrarCobroController {
             }
         });
         
-        tblCuotas.setItems(cuotas);
+        tblCuotas.setItems(cuotasSeleccionables);
+        
+        // Listener para actualizar cálculos cuando cambia la selección
+        cuotasSeleccionables.addListener((javafx.collections.ListChangeListener<CronogramaSeleccionable>) change -> {
+            while (change.next()) {
+                if (change.wasUpdated()) {
+                    actualizarCalculos();
+                    logger.info("Lista de cuotas actualizada");
+                }
+            }
+        });
     }
     
     /**
@@ -390,22 +433,23 @@ public class RegistrarCobroController {
      */
     private void cargarCuotasPrestamo(Prestamo prestamo) {
         try {
-            // Obtener cronograma del préstamo
-            List<Cronograma> cuotasPrestamo = cronogramaDAO.findByPrestamo(prestamo.getIdPrestamo());
-            cuotas.clear();
-            cuotas.addAll(cuotasPrestamo);
+            // Obtener cuotas disponibles para recaudación (filtra automáticamente por validacion_asesor)
+            List<Cronograma> cuotasDisponibles = cronogramaDAO.findDisponiblesParaRecaudacion(prestamo.getIdPrestamo());
+            cuotasSeleccionables.clear();
             
-            // Actualizar combo de cuotas a pagar (solo pendientes y retrasadas)
-            ObservableList<Cronograma> cuotasPendientes = FXCollections.observableArrayList();
-            for (Cronograma cuota : cuotasPrestamo) {
-                if (cuota.getEstadoCuota() == Cronograma.EstadoCuota.PENDIENTE || 
-                    cuota.getEstadoCuota() == Cronograma.EstadoCuota.RETRASADA) {
-                    cuotasPendientes.add(cuota);
-                }
+            // Convertir a CronogramaSeleccionable
+            for (Cronograma cuota : cuotasDisponibles) {
+                CronogramaSeleccionable cuotaSeleccionable = new CronogramaSeleccionable(cuota);
+                cuotaSeleccionable.seleccionadoProperty().addListener((obs, oldVal, newVal) -> {
+                    logger.info("=== LISTENER ACTIVADO ===");
+                    logger.info("Cuota ID: {} - Cambio: {} -> {}", cuota.getIdCuota(), oldVal, newVal);
+                    actualizarCalculos();
+                });
+                cuotasSeleccionables.add(cuotaSeleccionable);
             }
-            cmbCuotaPagar.setItems(cuotasPendientes);
             
-            logger.info("Cargadas " + cuotasPrestamo.size() + " cuotas para el préstamo: " + prestamo.getIdPrestamo());
+            actualizarCalculos();
+            logger.info("Cargadas " + cuotasSeleccionables.size() + " cuotas para el préstamo: " + prestamo.getIdPrestamo());
             
         } catch (Exception e) {
             logger.error("Error al cargar cuotas del préstamo", e);
@@ -414,53 +458,51 @@ public class RegistrarCobroController {
     }
     
     /**
-     * Maneja el cálculo del pago
+     * Actualiza los cálculos basados en las cuotas seleccionadas
+     */
+    private void actualizarCalculos() {
+        List<CronogramaSeleccionable> cuotasSeleccionadas = cuotasSeleccionables.stream()
+                .filter(CronogramaSeleccionable::isSeleccionado)
+                .collect(Collectors.toList());
+        
+        int cantidadCuotas = cuotasSeleccionadas.size();
+        BigDecimal montoTotal = cuotasSeleccionadas.stream()
+                .map(cs -> cs.getCronograma().getMontoCuota())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        lblCuotasSeleccionadas.setText("Cuotas seleccionadas: " + cantidadCuotas);
+        lblMontoTotal.setText("S/ " + String.format("%.2f", montoTotal));
+        lblCantidadCuotas.setText(String.valueOf(cantidadCuotas));
+        lblMontoTotalResumen.setText("S/ " + String.format("%.2f", montoTotal));
+    }
+    
+    
+    /**
+     * Maneja la selección de todas las cuotas
      */
     @FXML
-    private void handleCalcular() {
-        if (cmbCuotaPagar.getValue() == null) {
-            mostrarAdvertencia("Por favor seleccione una cuota para pagar");
-            return;
-        }
-        
-        try {
-            Cronograma cuotaSeleccionada = cmbCuotaPagar.getValue();
-            BigDecimal montoCuota = cuotaSeleccionada.getMontoCuota();
-            
-            lblMontoCuota.setText("S/ " + String.format("%.2f", montoCuota));
-            
-            String montoPagarStr = txtMontoPagar.getText().trim();
-            if (montoPagarStr.isEmpty()) {
-                txtMontoPagar.setText(String.format("%.2f", montoCuota));
-                lblMontoPagar.setText("S/ " + String.format("%.2f", montoCuota));
-                lblCambio.setText("S/ 0.00");
-            } else {
-                BigDecimal montoPagar = new BigDecimal(montoPagarStr);
-                lblMontoPagar.setText("S/ " + String.format("%.2f", montoPagar));
-                
-                if (montoPagar.compareTo(montoCuota) >= 0) {
-                    BigDecimal cambio = montoPagar.subtract(montoCuota);
-                    lblCambio.setText("S/ " + String.format("%.2f", cambio));
-                } else {
-                    lblCambio.setText("Pago insuficiente");
-                }
-            }
-            
-            // Calcular nuevo saldo (simplificado)
-            BigDecimal saldoActual = prestamoSeleccionado.getMontoSolicitado(); // TODO: Calcular saldo real
-            BigDecimal nuevoSaldo = saldoActual.subtract(montoCuota);
-            lblNuevoSaldo.setText("S/ " + String.format("%.2f", nuevoSaldo));
-            
-        } catch (NumberFormatException e) {
-            mostrarAdvertencia("Por favor ingrese un monto válido");
-        } catch (Exception e) {
-            logger.error("Error al calcular pago", e);
-            mostrarError("Error al calcular el pago");
-        }
+    private void handleSeleccionarTodas() {
+        cuotasSeleccionables.forEach(cs -> cs.setSeleccionado(true));
     }
     
     /**
-     * Maneja el registro del cobro (siguiendo el flujo de negocio)
+     * Maneja la deselección de todas las cuotas
+     */
+    @FXML
+    private void handleDeseleccionarTodas() {
+        cuotasSeleccionables.forEach(cs -> cs.setSeleccionado(false));
+    }
+    
+    /**
+     * Maneja el cálculo del pago (ahora solo actualiza el cambio)
+     */
+    @FXML
+    private void handleCalcular() {
+        actualizarCalculos();
+    }
+    
+    /**
+     * Maneja el registro del cobro (siguiendo el flujo de negocio correcto)
      */
     @FXML
     private void handleRegistrarPago() {
@@ -469,63 +511,117 @@ public class RegistrarCobroController {
         }
         
         try {
-            Cronograma cuotaSeleccionada = cmbCuotaPagar.getValue();
-            BigDecimal montoPagar = new BigDecimal(txtMontoPagar.getText());
+            List<CronogramaSeleccionable> cuotasSeleccionadas = cuotasSeleccionables.stream()
+                    .filter(CronogramaSeleccionable::isSeleccionado)
+                    .collect(Collectors.toList());
+            
             LocalDate fechaPago = dpFechaPago.getValue();
             String metodoPago = cmbMetodoPago.getValue();
             String referencia = txtReferencia.getText().trim();
             String observaciones = txtObservaciones.getText().trim();
             
-            // PASO 1: Registrar en tabla recaudacion_asesor (borrador)
-            boolean recaudacionRegistrada = recaudacionService.registrarBorrador(
-                idAsesorActual,                    // ID del asesor actual
-                clienteSeleccionado.getIdCliente(), // ID del cliente
-                prestamoSeleccionado.getIdPrestamo(), // ID del préstamo
-                montoPagar                         // Monto cobrado
-            );
+            int cobrosRegistrados = 0;
+            int cobrosFallidos = 0;
+            StringBuilder detalles = new StringBuilder();
             
-            if (!recaudacionRegistrada) {
-                mostrarError("Error al registrar el cobro en el sistema");
-                return;
+            // Procesar cada cuota seleccionada
+            for (CronogramaSeleccionable cuotaSeleccionable : cuotasSeleccionadas) {
+                Cronograma cuota = cuotaSeleccionable.getCronograma();
+                BigDecimal montoCuota = cuota.getMontoCuota();
+                
+                try {
+                    // PASO 1: Verificar si ya existe un registro para esta cuota específica
+                    if (existeRecaudacionParaCuota(cuota.getIdCuota())) {
+                        logger.warn("Ya existe una recaudación registrada para la cuota: " + cuota.getIdCuota());
+                        cobrosFallidos++;
+                        detalles.append("• Cuota #").append(cuota.getNumeroCuota())
+                               .append(" - Ya registrada (duplicada)\n");
+                        continue;
+                    }
+                    
+                    // PASO 2: Registrar en tabla recaudacion_asesor (borrador con validado = 0)
+                    boolean recaudacionRegistrada = recaudacionService.registrarBorradorParaCuota(
+                        idAsesorActual,                    // ID del asesor actual
+                        clienteSeleccionado.getIdCliente(), // ID del cliente
+                        prestamoSeleccionado.getIdPrestamo(), // ID del préstamo
+                        montoCuota,                        // Monto cobrado
+                        cuota.getIdCuota(),                // ID de la cuota específica
+                        fechaPago,                         // Fecha de pago
+                        metodoPago,                        // Método de pago
+                        referencia,                        // Referencia
+                        observaciones                      // Observaciones
+                    );
+                    
+                    if (recaudacionRegistrada) {
+                        // Marcar la cuota como validada por el asesor (evita duplicados)
+                        cronogramaDAO.marcarValidacionAsesor(cuota.getIdCuota(), true);
+                        
+                        // NO marcar la cuota como pagada - solo cuando el admin valide
+                        cuotaSeleccionable.setSeleccionado(false); // Deseleccionar
+                        cobrosRegistrados++;
+                        
+                        detalles.append("• Cuota #").append(cuota.getNumeroCuota())
+                               .append(" - S/ ").append(String.format("%.2f", montoCuota)).append(" (Pendiente validación)\n");
+                        
+                        logger.info("Recaudación registrada para cuota: " + cuota.getIdCuota() + 
+                                   " - Monto: " + montoCuota);
+                    } else {
+                        cobrosFallidos++;
+                        logger.warn("No se pudo registrar recaudación para cuota: " + cuota.getIdCuota());
+                    }
+                    
+                } catch (Exception e) {
+                    cobrosFallidos++;
+                    logger.error("Error al procesar cuota " + cuota.getIdCuota(), e);
+                }
             }
             
-            // PASO 2: Actualizar el estado de la cuota en el cronograma
-            boolean cuotaActualizada = cronogramaDAO.marcarComoPagada(
-                cuotaSeleccionada.getIdCuota(), 
-                fechaPago
-            );
+            // Refrescar la tabla
+            tblCuotas.refresh();
             
-            if (!cuotaActualizada) {
-                logger.warn("Recaudación registrada pero no se pudo actualizar la cuota: " + cuotaSeleccionada.getIdCuota());
-                mostrarAdvertencia("Cobro registrado pero no se pudo actualizar el estado de la cuota. Contacte al administrador.");
-            } else {
-                // Actualizar el estado localmente para reflejar el cambio
-                cuotaSeleccionada.setEstadoCuota(Cronograma.EstadoCuota.PAGADA);
-                cuotaSeleccionada.setFechaPagoReal(fechaPago);
-                
-                // Refrescar la tabla de cuotas
-                tblCuotas.refresh();
-                
-                mostrarInfo("✅ Cobro registrado exitosamente\n\n" +
-                    "📋 Detalles del cobro:\n" +
+            // Mostrar resultado
+            if (cobrosRegistrados > 0) {
+                mostrarInfo("✅ Cobros registrados exitosamente\n\n" +
+                    "📋 Resumen:\n" +
                     "• Cliente: " + clienteSeleccionado.getNombre() + " " + clienteSeleccionado.getApellido() + "\n" +
-                    "• Cuota #" + cuotaSeleccionada.getNumeroCuota() + "\n" +
-                    "• Monto: S/ " + String.format("%.2f", montoPagar) + "\n" +
+                    "• Cuotas procesadas: " + cobrosRegistrados + "\n" +
                     "• Fecha: " + FechaUtil.formatearFecha(fechaPago) + "\n" +
                     "• Método: " + metodoPago + "\n\n" +
-                    "⚠️ Nota: Este cobro está pendiente de validación por el administrador.");
+                    "📋 Detalles de cuotas:\n" + detalles.toString() +
+                    (cobrosFallidos > 0 ? "\n⚠️ " + cobrosFallidos + " cuotas no se pudieron procesar." : "") +
+                    "\n\n⚠️ IMPORTANTE: Estas recaudaciones están registradas con validado = 0.\n" +
+                    "Las cuotas se marcarán como pagadas SOLO cuando el administrador valide (validado = 1).");
+                
+                logger.info("Cobros registrados exitosamente - Cliente: " + clienteSeleccionado.getIdCliente() + 
+                           ", Cuotas: " + cobrosRegistrados + ", Fallidas: " + cobrosFallidos);
+                
+                // Limpiar formulario después del registro exitoso
+                limpiarFormulario();
+            } else {
+                mostrarError("No se pudo registrar ningún cobro. Contacte al administrador.");
             }
             
-            // Limpiar formulario después del registro exitoso
-            limpiarFormulario();
-            
-            logger.info("Cobro registrado exitosamente - Cliente: " + clienteSeleccionado.getIdCliente() + 
-                       ", Cuota: " + cuotaSeleccionada.getNumeroCuota() + 
-                       ", Monto: " + montoPagar);
-            
         } catch (Exception e) {
-            logger.error("Error al registrar cobro", e);
-            mostrarError("Error al registrar el cobro: " + e.getMessage());
+            logger.error("Error al registrar cobros", e);
+            mostrarError("Error al registrar los cobros: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Verifica si ya existe una recaudación para la cuota específica
+     * Ahora es mucho más simple usando el campo validacion_asesor
+     */
+    private boolean existeRecaudacionParaCuota(Long idCuota) {
+        try {
+            // Buscar la cuota y verificar su estado de validación
+            Optional<Cronograma> cuotaOpt = cronogramaDAO.findById(idCuota);
+            if (cuotaOpt.isPresent()) {
+                return cuotaOpt.get().isValidacionAsesor();
+            }
+            return false;
+        } catch (Exception e) {
+            logger.error("Error al verificar recaudación existente para cuota: " + idCuota, e);
+            return false;
         }
     }
     
@@ -545,24 +641,25 @@ public class RegistrarCobroController {
             return false;
         }
         
-        // Validar que se haya seleccionado una cuota
-        if (cmbCuotaPagar.getValue() == null) {
-            mostrarAdvertencia("Por favor seleccione una cuota para cobrar");
+        // Validar que se hayan seleccionado cuotas
+        List<CronogramaSeleccionable> cuotasSeleccionadas = cuotasSeleccionables.stream()
+                .filter(CronogramaSeleccionable::isSeleccionado)
+                .collect(Collectors.toList());
+        
+        if (cuotasSeleccionadas.isEmpty()) {
+            mostrarAdvertencia("Por favor seleccione al menos una cuota para cobrar");
             return false;
         }
         
-        // Validar que la cuota no esté ya pagada
-        Cronograma cuotaSeleccionada = cmbCuotaPagar.getValue();
-        if (cuotaSeleccionada.getEstadoCuota() == Cronograma.EstadoCuota.PAGADA) {
-            mostrarAdvertencia("Esta cuota ya está pagada");
-            return false;
+        // Validar que las cuotas no estén ya pagadas
+        for (CronogramaSeleccionable cuotaSeleccionable : cuotasSeleccionadas) {
+            Cronograma cuota = cuotaSeleccionable.getCronograma();
+            if (cuota.getEstadoCuota() == Cronograma.EstadoCuota.PAGADA) {
+                mostrarAdvertencia("La cuota #" + cuota.getNumeroCuota() + " ya está pagada");
+                return false;
+            }
         }
         
-        // Validar monto
-        if (txtMontoPagar.getText().trim().isEmpty()) {
-            mostrarAdvertencia("Por favor ingrese el monto a cobrar");
-            return false;
-        }
         
         // Validar fecha de pago
         if (dpFechaPago.getValue() == null) {
@@ -576,32 +673,6 @@ public class RegistrarCobroController {
             return false;
         }
         
-        try {
-            BigDecimal montoPagar = new BigDecimal(txtMontoPagar.getText());
-            if (montoPagar.compareTo(BigDecimal.ZERO) <= 0) {
-                mostrarAdvertencia("El monto debe ser mayor a cero");
-                return false;
-            }
-            
-            // Validar que el monto coincida con el monto de la cuota (con tolerancia)
-            BigDecimal montoCuota = cuotaSeleccionada.getMontoCuota();
-            BigDecimal diferencia = montoPagar.subtract(montoCuota).abs();
-            if (diferencia.compareTo(new BigDecimal("0.01")) > 0) {
-                int respuesta = mostrarConfirmacion(
-                    "⚠️ Monto no coincide\n\n" +
-                    "Monto de la cuota: S/ " + String.format("%.2f", montoCuota) + "\n" +
-                    "Monto a cobrar: S/ " + String.format("%.2f", montoPagar) + "\n\n" +
-                    "¿Desea continuar con este monto?"
-                );
-                if (respuesta != 1) {
-                    return false;
-                }
-            }
-            
-        } catch (NumberFormatException e) {
-            mostrarAdvertencia("Por favor ingrese un monto válido");
-            return false;
-        }
         
         return true;
     }
@@ -641,22 +712,6 @@ public class RegistrarCobroController {
         }
     }
     
-    /**
-     * Maneja la selección de cuota
-     */
-    @FXML
-    private void handleSeleccionarCuota() {
-        Cronograma cuota = cmbCuotaPagar.getValue();
-        if (cuota != null) {
-            // Auto-completar el monto con el monto de la cuota
-            txtMontoPagar.setText(String.format("%.2f", cuota.getMontoCuota()));
-            
-            // Calcular automáticamente
-            handleCalcular();
-            
-            logger.info("Cuota seleccionada: #" + cuota.getNumeroCuota() + " - S/ " + cuota.getMontoCuota());
-        }
-    }
     
     /**
      * Limpia todos los campos del formulario
@@ -673,21 +728,19 @@ public class RegistrarCobroController {
         
         // Limpiar tablas
         prestamos.clear();
-        cuotas.clear();
-        cmbCuotaPagar.getItems().clear();
+        cuotasSeleccionables.clear();
         
         // Limpiar información del pago
-        txtMontoPagar.clear();
         dpFechaPago.setValue(LocalDate.now());
         cmbMetodoPago.setValue("EFECTIVO");
         txtReferencia.clear();
         txtObservaciones.clear();
         
         // Limpiar resumen
-        lblMontoCuota.setText("S/ 0.00");
-        lblMontoPagar.setText("S/ 0.00");
-        lblCambio.setText("S/ 0.00");
-        lblNuevoSaldo.setText("S/ 0.00");
+        lblCuotasSeleccionadas.setText("Cuotas seleccionadas: 0");
+        lblMontoTotal.setText("S/ 0.00");
+        lblCantidadCuotas.setText("0");
+        lblMontoTotalResumen.setText("S/ 0.00");
         
         clienteSeleccionado = null;
         prestamoSeleccionado = null;
@@ -745,5 +798,128 @@ public class RegistrarCobroController {
         } else {
             return 0; // No
         }
+    }
+    
+    /**
+     * Maneja el botón Aceptar - Registra las cuotas seleccionadas
+     */
+    @FXML
+    private void handleAceptar() {
+        try {
+            // Validar datos básicos
+            if (cmbCliente.getValue() == null) {
+                mostrarAlerta("Error", "Debe seleccionar un cliente", Alert.AlertType.ERROR);
+                return;
+            }
+            
+            if (tblPrestamos.getSelectionModel().getSelectedItem() == null) {
+                mostrarAlerta("Error", "Debe seleccionar un préstamo", Alert.AlertType.ERROR);
+                return;
+            }
+            
+            List<CronogramaSeleccionable> cuotasSeleccionadas = cuotasSeleccionables.stream()
+                    .filter(CronogramaSeleccionable::isSeleccionado)
+                    .collect(Collectors.toList());
+            
+            if (cuotasSeleccionadas.isEmpty()) {
+                mostrarAlerta("Error", "Debe seleccionar al menos una cuota", Alert.AlertType.ERROR);
+                return;
+            }
+            
+            if (cmbMetodoPago.getValue() == null) {
+                mostrarAlerta("Error", "Debe seleccionar un método de pago", Alert.AlertType.ERROR);
+                return;
+            }
+            
+            // Obtener datos del formulario
+            Cliente cliente = cmbCliente.getValue();
+            Prestamo prestamo = tblPrestamos.getSelectionModel().getSelectedItem();
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            String metodoPago = cmbMetodoPago.getValue();
+            String referencia = txtReferencia.getText().trim();
+            String observaciones = txtObservaciones.getText().trim();
+            LocalDate fechaPago = dpFechaPago.getValue() != null ? dpFechaPago.getValue() : LocalDate.now();
+            
+            int recaudacionesRegistradas = 0;
+            int errores = 0;
+            
+            // Registrar cada cuota seleccionada
+            for (CronogramaSeleccionable cuotaSeleccionable : cuotasSeleccionadas) {
+                Cronograma cuota = cuotaSeleccionable.getCronograma();
+                
+                try {
+                    // Verificar si ya existe recaudación para esta cuota
+                    if (existeRecaudacionParaCuota(cuota.getIdCuota())) {
+                        logger.warn("Ya existe recaudación pendiente para la cuota: {}", cuota.getIdCuota());
+                        errores++;
+                        continue;
+                    }
+                    
+                    // Registrar en recaudacion_asesor con validado = 0
+                    boolean recaudacionRegistrada = recaudacionService.registrarBorradorParaCuota(
+                        idAsesor, cliente.getIdCliente(), prestamo.getIdPrestamo(), 
+                        cuota.getMontoCuota(), cuota.getIdCuota(), fechaPago, metodoPago, referencia, observaciones
+                    );
+                    
+                    if (recaudacionRegistrada) {
+                        // Marcar validacion_asesor = 1 en cronograma
+                        cronogramaDAO.marcarValidacionAsesor(cuota.getIdCuota(), true);
+                        recaudacionesRegistradas++;
+                        logger.info("Recaudación registrada para cuota {} del préstamo {}", 
+                                  cuota.getIdCuota(), prestamo.getIdPrestamo());
+                    } else {
+                        errores++;
+                        logger.error("Error al registrar recaudación para cuota {}", cuota.getIdCuota());
+                    }
+                    
+                } catch (Exception e) {
+                    logger.error("Error al procesar cuota {}: {}", cuota.getIdCuota(), e.getMessage());
+                    errores++;
+                }
+            }
+            
+            // Mostrar resultado
+            if (recaudacionesRegistradas > 0) {
+                String mensaje = String.format(
+                    "✅ Registro exitoso!\n\n" +
+                    "• Cuotas procesadas: %d\n" +
+                    "• Registros creados: %d\n" +
+                    "• Errores: %d\n\n" +
+                    "Los registros están pendientes de validación por el administrador.",
+                    cuotasSeleccionadas.size(), recaudacionesRegistradas, errores
+                );
+                
+                mostrarAlerta("Registro Exitoso", mensaje, Alert.AlertType.INFORMATION);
+                
+                // Refrescar datos
+                cargarCuotasPrestamo(prestamo);
+                actualizarCalculos();
+            } else {
+                mostrarAlerta("Error", "No se pudo registrar ninguna recaudación", Alert.AlertType.ERROR);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error al procesar registro de cobro: {}", e.getMessage(), e);
+            mostrarAlerta("Error", "Error interno al procesar el registro", Alert.AlertType.ERROR);
+        }
+    }
+    
+    /**
+     * Maneja el botón Cancelar
+     */
+    @FXML
+    private void handleCancelar() {
+        limpiarFormulario();
+    }
+    
+    /**
+     * Muestra una alerta con el mensaje especificado
+     */
+    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
+        Alert alert = new Alert(tipo);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 }

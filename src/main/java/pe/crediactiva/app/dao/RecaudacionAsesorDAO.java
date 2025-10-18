@@ -74,4 +74,9 @@ public interface RecaudacionAsesorDAO {
      * Obtiene el borrador pendiente para un préstamo específico
      */
     Optional<RecaudacionAsesor> obtenerBorradorPendiente(Long idPrestamo);
+    
+    /**
+     * Verifica si existe una recaudación pendiente para una cuota específica
+     */
+    boolean existeRecaudacionPendienteParaCuota(Long idPrestamo, Long idCuota);
 }

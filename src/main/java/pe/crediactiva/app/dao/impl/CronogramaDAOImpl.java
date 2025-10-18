@@ -381,6 +381,10 @@ public class CronogramaDAOImpl implements CronogramaDAO {
             cronograma.setFechaPagoReal(fechaPagoReal.toLocalDate());
         }
         
+        // Mapear el campo validacion_asesor
+        int validacionAsesor = rs.getInt("validacion_asesor");
+        cronograma.setValidacionAsesor(validacionAsesor == 1);
+        
         // Crear el préstamo básico
         Prestamo prestamo = new Prestamo();
         prestamo.setIdPrestamo(rs.getLong("id_prestamo"));
@@ -478,5 +482,54 @@ public class CronogramaDAOImpl implements CronogramaDAO {
     @Override
     public List<Cronograma> findByPrestamoId(Long idPrestamo) {
         return findByPrestamo(idPrestamo);
+    }
+    
+    @Override
+    public List<Cronograma> findDisponiblesParaRecaudacion(Long idPrestamo) {
+        String sql = "SELECT c.*, p.id_cliente, p.id_asesor " +
+                    "FROM cronograma c " +
+                    "JOIN prestamos p ON c.id_prestamo = p.id_prestamo " +
+                    "WHERE c.id_prestamo = ? " +
+                    "AND c.estado_cuota IN ('pendiente', 'retrasada') " +
+                    "AND (c.validacion_asesor = 0 OR c.validacion_asesor IS NULL) " +
+                    "ORDER BY c.numero_cuota";
+        
+        List<Cronograma> cuotas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, idPrestamo);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    cuotas.add(mapResultSetToCronograma(rs));
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al buscar cuotas disponibles para recaudación: " + idPrestamo, e);
+        }
+        
+        return cuotas;
+    }
+    
+    @Override
+    public boolean marcarValidacionAsesor(Long idCuota, boolean validado) {
+        String sql = "UPDATE cronograma SET validacion_asesor = ? WHERE id_cuota = ?";
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, validado ? 1 : 0);
+            stmt.setLong(2, idCuota);
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            logger.error("Error al marcar validación asesor para cuota: " + idCuota, e);
+            return false;
+        }
     }
 }

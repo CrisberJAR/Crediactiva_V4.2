@@ -15,6 +15,7 @@ public class Cronograma {
     private EstadoCuota estadoCuota;
     private LocalDate fechaPagoReal;
     private boolean seleccionado;
+    private boolean validacionAsesor;
     
     // Campos de relación
     private Prestamo prestamo;
@@ -37,6 +38,7 @@ public class Cronograma {
     
     public Cronograma() {
         this.estadoCuota = EstadoCuota.PENDIENTE;
+        this.validacionAsesor = false;
     }
     
     public Cronograma(Long idPrestamo, int numeroCuota, LocalDate fechaProgramada, BigDecimal montoCuota) {
@@ -155,6 +157,14 @@ public class Cronograma {
     
     public void setSeleccionado(boolean seleccionado) {
         this.seleccionado = seleccionado;
+    }
+    
+    public boolean isValidacionAsesor() {
+        return validacionAsesor;
+    }
+    
+    public void setValidacionAsesor(boolean validacionAsesor) {
+        this.validacionAsesor = validacionAsesor;
     }
     
     @Override

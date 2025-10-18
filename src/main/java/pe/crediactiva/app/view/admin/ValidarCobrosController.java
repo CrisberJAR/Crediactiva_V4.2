@@ -98,6 +98,7 @@ public class ValidarCobrosController implements Initializable {
     private PrestamoService prestamoService;
     private PagoService pagoService;
     private AuditoriaService auditoriaService;
+    private pe.crediactiva.app.dao.CronogramaDAO cronogramaDAO;
     
     private ObservableList<RecaudacionAsesor> cobrosPendientes;
     private RecaudacionAsesor cobroSeleccionado;
@@ -109,6 +110,7 @@ public class ValidarCobrosController implements Initializable {
         this.prestamoService = new PrestamoService();
         this.pagoService = new PagoService();
         this.auditoriaService = new AuditoriaService();
+        this.cronogramaDAO = new pe.crediactiva.app.dao.impl.CronogramaDAOImpl();
         this.cobrosPendientes = FXCollections.observableArrayList();
     }
     
@@ -289,8 +291,8 @@ public class ValidarCobrosController implements Initializable {
             // Información del préstamo
             lblPrestamoDetalle.setText(recaudacion.getIdPrestamo() != null ? recaudacion.getIdPrestamo().toString() : "-");
             
-            // Obtener número de cuota pendiente
-            String numeroCuota = obtenerNumeroCuotaPendiente(recaudacion.getIdPrestamo());
+            // Obtener número de cuota específica registrada
+            String numeroCuota = obtenerNumeroCuotaRegistrada(recaudacion);
             lblNumeroCuotaDetalle.setText(numeroCuota);
             
             // Obtener saldo pendiente del préstamo
@@ -360,7 +362,7 @@ public class ValidarCobrosController implements Initializable {
     }
     
     /**
-     * Obtiene el número de la próxima cuota pendiente del préstamo
+     * Obtiene el número de la cuota específica registrada en la recaudación
      */
     private String obtenerNumeroCuotaPendiente(Long idPrestamo) {
         try {
@@ -389,6 +391,31 @@ public class ValidarCobrosController implements Initializable {
         } catch (Exception e) {
             logger.error("Error al obtener número de cuota pendiente para préstamo: " + idPrestamo, e);
             return "-";
+        }
+    }
+    
+    /**
+     * Obtiene el número de la cuota específica registrada en la recaudación
+     */
+    private String obtenerNumeroCuotaRegistrada(RecaudacionAsesor recaudacion) {
+        try {
+            if (recaudacion.getIdCuota() == null) {
+                // Si no hay id_cuota específico, usar el método anterior como fallback
+                return obtenerNumeroCuotaPendiente(recaudacion.getIdPrestamo());
+            }
+            
+            // Obtener la cuota específica por su ID
+            Optional<Cronograma> cuotaOpt = cronogramaDAO.findById(recaudacion.getIdCuota());
+            if (cuotaOpt.isPresent()) {
+                return String.valueOf(cuotaOpt.get().getNumeroCuota());
+            }
+            
+            // Si no se encuentra la cuota específica, usar fallback
+            return obtenerNumeroCuotaPendiente(recaudacion.getIdPrestamo());
+            
+        } catch (Exception e) {
+            logger.error("Error al obtener número de cuota registrada para recaudación: " + recaudacion.getIdRecaudacion(), e);
+            return obtenerNumeroCuotaPendiente(recaudacion.getIdPrestamo());
         }
     }
     
@@ -617,14 +644,16 @@ public class ValidarCobrosController implements Initializable {
      */
     private boolean validarCobro(RecaudacionAsesor recaudacion, String observaciones) {
         try {
-            // Obtener la cuota pendiente que se está pagando
-            Long idCuota = obtenerCuotaPendienteId(recaudacion.getIdPrestamo());
+            // Usar el idCuota específico de la recaudación (no buscar la primera cuota pendiente)
+            Long idCuota = recaudacion.getIdCuota();
             
             if (idCuota == null) {
-                logger.error("No se encontró cuota pendiente para el préstamo: " + recaudacion.getIdPrestamo());
-                mostrarError("No se encontró cuota pendiente para este préstamo");
+                logger.error("La recaudación no tiene idCuota específico: " + recaudacion.getIdRecaudacion());
+                mostrarError("No se puede identificar la cuota específica a pagar");
                 return false;
             }
+            
+            logger.info("Validando cobro para cuota específica ID: " + idCuota);
             
             // Obtener la fecha real del cobro registrado por el asesor
             LocalDate fechaRealCobro = recaudacion.getFechaRegistro().toLocalDate();
@@ -679,6 +708,18 @@ public class ValidarCobrosController implements Initializable {
             boolean success = recaudacionService.eliminarRecaudacion(recaudacion.getIdRecaudacion());
             
             if (success) {
+                // IMPORTANTE: Marcar validacion_asesor = 0 en cronograma para que la cuota vuelva a estar disponible
+                if (recaudacion.getIdCuota() != null) {
+                    boolean cronogramaActualizado = cronogramaDAO.marcarValidacionAsesor(recaudacion.getIdCuota(), false);
+                    if (cronogramaActualizado) {
+                        logger.info("Campo validacion_asesor actualizado a 0 para cuota: " + recaudacion.getIdCuota());
+                    } else {
+                        logger.warn("No se pudo actualizar validacion_asesor para cuota: " + recaudacion.getIdCuota());
+                    }
+                } else {
+                    logger.warn("Recaudación sin idCuota, no se puede actualizar cronograma: " + recaudacion.getIdRecaudacion());
+                }
+                
                 // Registrar auditoría
                 auditoriaService.registrarAuditoria(
                     "recaudacion_asesor",
