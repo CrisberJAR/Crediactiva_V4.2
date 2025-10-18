@@ -158,6 +158,7 @@ public class PrestamoService {
     
     /**
      * Genera el cronograma de pagos para un préstamo
+     * NOTA: El cronograma inicia un día después de la fecha de solicitud del préstamo
      */
     private void generarCronograma(Prestamo prestamo) {
         try {
@@ -165,21 +166,23 @@ public class PrestamoService {
             int numeroCuotas = calcularNumeroCuotas(prestamo.getPeriodoMeses(), prestamo.getTipoPago().name().toLowerCase());
             BigDecimal montoCuota = montoTotal.divide(new BigDecimal(numeroCuotas), 2, RoundingMode.HALF_UP);
             
-            LocalDate fechaActual = prestamo.getFechaInicio();
+            // IMPORTANTE: El cronograma inicia un día después de la fecha de solicitud
+            LocalDate fechaInicioCronograma = prestamo.getFechaInicio().plusDays(1);
             
             // Generar cuotas según el tipo de pago
             for (int i = 1; i <= numeroCuotas; i++) {
                 Cronograma cuota = new Cronograma();
                 cuota.setIdPrestamo(prestamo.getIdPrestamo());
                 cuota.setNumeroCuota(i);
-                cuota.setFechaProgramada(calcularFechaPago(fechaActual, i, prestamo.getTipoPago()));
+                cuota.setFechaProgramada(calcularFechaPago(fechaInicioCronograma, i, prestamo.getTipoPago()));
                 cuota.setMontoCuota(montoCuota);
                 
                 cronogramaDAO.create(cuota);
             }
             
             logger.info("Cronograma generado para préstamo: " + prestamo.getIdPrestamo() + 
-                       " - " + numeroCuotas + " cuotas de " + montoCuota + " cada una");
+                       " - " + numeroCuotas + " cuotas de " + montoCuota + " cada una" +
+                       " - Inicia el: " + fechaInicioCronograma);
             
         } catch (Exception e) {
             logger.error("Error al generar cronograma para préstamo: " + prestamo.getIdPrestamo(), e);
@@ -503,6 +506,7 @@ public class PrestamoService {
     
     /**
      * Genera preview del cronograma sin guardar
+     * NOTA: El cronograma inicia un día después de la fecha de solicitud del préstamo
      */
     public List<Cronograma> generarCronogramaPreview(double montoTotal, int periodo, String tipoPago, LocalDate fechaInicio) {
         try {
@@ -510,21 +514,20 @@ public class PrestamoService {
             int numeroCuotas = calcularNumeroCuotas(periodo, tipoPago);
             double montoCuota = montoTotal / numeroCuotas;
             
-            LocalDate fechaActual = fechaInicio;
+            // IMPORTANTE: El cronograma inicia un día después de la fecha de solicitud
+            LocalDate fechaInicioCronograma = fechaInicio.plusDays(1);
+            
             for (int i = 1; i <= numeroCuotas; i++) {
-                // Avanzar hasta el siguiente día hábil
-                while (FechaUtil.isDomingo(fechaActual)) {
-                    fechaActual = fechaActual.plusDays(1);
-                }
+                // Calcular fecha usando la misma lógica que el método principal
+                LocalDate fechaPago = calcularFechaPagoPreview(fechaInicioCronograma, i, tipoPago);
                 
                 Cronograma cuota = new Cronograma();
                 cuota.setNumeroCuota(i);
-                cuota.setFechaProgramada(fechaActual);
+                cuota.setFechaProgramada(fechaPago);
                 cuota.setMontoCuota(new BigDecimal(montoCuota));
                 cuota.setEstadoCuota(Cronograma.EstadoCuota.PENDIENTE);
                 
                 cronograma.add(cuota);
-                fechaActual = fechaActual.plusDays(1);
             }
             
             return cronograma;
@@ -532,6 +535,39 @@ public class PrestamoService {
         } catch (Exception e) {
             logger.error("Error al generar preview del cronograma", e);
             throw new RuntimeException("Error al generar el preview del cronograma", e);
+        }
+    }
+    
+    /**
+     * Calcula la fecha de pago para preview del cronograma
+     * NOTA: Para pago diario, cada cuota debe tener una fecha única, saltando domingos
+     */
+    private LocalDate calcularFechaPagoPreview(LocalDate fechaInicio, int numeroCuota, String tipoPago) {
+        switch (tipoPago.toLowerCase()) {
+            case "diario":
+                // Para pago diario, calcular fecha secuencial saltando domingos
+                LocalDate fecha = fechaInicio;
+                
+                // Avanzar (numeroCuota - 1) días hábiles
+                for (int i = 1; i < numeroCuota; i++) {
+                    fecha = fecha.plusDays(1);
+                    // Si cae en domingo, avanzar al lunes
+                    while (fecha.getDayOfWeek().getValue() == 7) {
+                        fecha = fecha.plusDays(1);
+                    }
+                }
+                return fecha;
+                
+            case "semanal":
+                // Para pago semanal, cada 7 días
+                return fechaInicio.plusWeeks(numeroCuota - 1);
+                
+            case "mensual":
+                // Para pago mensual, cada mes
+                return fechaInicio.plusMonths(numeroCuota - 1);
+                
+            default:
+                return fechaInicio.plusDays(numeroCuota - 1);
         }
     }
     
@@ -578,14 +614,21 @@ public class PrestamoService {
     
     /**
      * Calcula la fecha de pago para una cuota específica según el tipo de pago
+     * NOTA: Para pago diario, cada cuota debe tener una fecha única, saltando domingos
      */
     private LocalDate calcularFechaPago(LocalDate fechaInicio, int numeroCuota, Prestamo.TipoPago tipoPago) {
         switch (tipoPago) {
             case DIARIO:
-                // Para pago diario, saltar domingos
-                LocalDate fecha = fechaInicio.plusDays(numeroCuota - 1);
-                while (fecha.getDayOfWeek().getValue() == 7) { // Si es domingo, avanzar al lunes
+                // Para pago diario, calcular fecha secuencial saltando domingos
+                LocalDate fecha = fechaInicio;
+                
+                // Avanzar (numeroCuota - 1) días hábiles
+                for (int i = 1; i < numeroCuota; i++) {
                     fecha = fecha.plusDays(1);
+                    // Si cae en domingo, avanzar al lunes
+                    while (fecha.getDayOfWeek().getValue() == 7) {
+                        fecha = fecha.plusDays(1);
+                    }
                 }
                 return fecha;
                 
