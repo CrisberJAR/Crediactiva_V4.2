@@ -27,13 +27,13 @@
 .app-title {
     -fx-font-size: 36px;
     -fx-font-weight: 700;
-    -fx-fill: #ffffff;
+    -fx-fill: #2503e6;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
 }
 
 .app-subtitle {
     -fx-font-size: 18px;
-    -fx-fill: rgba(255,255,255,0.9);
+    -fx-fill: rgba(15, 11, 240, 0.9);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 1);
 }
 
@@ -78,7 +78,7 @@
 /* Estilos para botones */
 .modern-button {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #1607eb;
     -fx-font-size: 16px;
     -fx-font-weight: 700;
     -fx-background-radius: 15px;
@@ -104,7 +104,7 @@
 
 .quick-action-button {
     -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #5F9EA0 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #0921f7;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
     -fx-background-radius: 12px;
@@ -158,7 +158,7 @@
 
 .table-view .column-header {
     -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #1404f1;
     -fx-font-weight: 600;
     -fx-font-size: 13px;
     -fx-padding: 10px;
@@ -271,7 +271,7 @@
 /* Estilos para tooltips */
 .tooltip {
     -fx-background-color: rgba(25,25,112,0.95);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #080ce9;
     -fx-background-radius: 8px;
     -fx-border-color: rgba(135,206,235,0.5);
     -fx-border-width: 1px;
@@ -482,7 +482,7 @@
 
 .quick-action-button:hover {
     -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(34, 12, 235);
     -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.3), 10, 0, 0, 3);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -490,7 +490,7 @@
 
 .modern-button {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #190ae7;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 12 20;
@@ -508,7 +508,7 @@
 
 .logout-button {
     -fx-background-color: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #1b0cec;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 10 15;
@@ -579,13 +579,13 @@
 .welcome-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(9, 50, 235);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
 }
 
 .welcome-subtitle {
     -fx-font-size: 16px;
-    -fx-text-fill: rgba(255,255,255,0.9);
+    -fx-text-fill: rgba(24, 10, 223, 0.9);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 1);
 }
 
@@ -706,7 +706,7 @@
 
 .quick-action-button-small:hover {
     -fx-background-color: linear-gradient(135deg, #87CEEB 0%, #4169E1 100%);
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(24, 4, 211);
     -fx-effect: dropshadow(gaussian, rgba(65,105,225,0.3), 6, 0, 0, 2);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -726,13 +726,13 @@
 .welcome-title-small {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: rgb(53, 10, 211);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 3, 0, 0, 1);
 }
 
 .welcome-subtitle-small {
     -fx-font-size: 12px;
-    -fx-text-fill: rgba(255,255,255,0.9);
+    -fx-text-fill: rgba(17, 21, 236, 0.9);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1);
 }
 
@@ -805,7 +805,7 @@
 /* Botón de navegación */
 .navigation-button {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #0d10e0;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 10 20;
@@ -899,7 +899,7 @@
 
 .menu-button:hover {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #1808f0;
     -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 10, 0, 0, 3);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -907,7 +907,7 @@
 
 .menu-button:selected {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #0c10f5;
     -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.5), 12, 0, 0, 4);
     -fx-border-color: #3b82f6;
 }
@@ -915,7 +915,7 @@
 /* Botón de logout especial */
 .logout-button {
     -fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #1c0cf1;
     -fx-font-weight: 700;
     -fx-font-size: 14px;
     -fx-padding: 15 20;
@@ -984,7 +984,7 @@
 
 .stat-button {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #130ff8;
     -fx-font-weight: 600;
     -fx-font-size: 12px;
     -fx-padding: 8 16;
@@ -1013,7 +1013,7 @@
 
 .quick-action-button {
     -fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #0e0ae9;
     -fx-font-weight: 600;
     -fx-font-size: 14px;
     -fx-padding: 12 24;

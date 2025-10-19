@@ -191,7 +191,7 @@ public class SimuladorClienteController implements Initializable {
         dateFechaInicio.setValue(LocalDate.now().plusDays(1));
         comboPeriodo.setValue(1);
         comboTipoPago.setValue(Prestamo.TipoPago.DIARIO);
-        txtTasaInteres.setText("18.00");
+        txtTasaInteres.setText("14.40");
     }
     
     /**
@@ -455,7 +455,7 @@ public class SimuladorClienteController implements Initializable {
     @FXML
     private void handleLimpiar() {
         txtMonto.clear();
-        txtTasaInteres.setText("18.00");
+        txtTasaInteres.setText("14.40");
         comboPeriodo.setValue(1);
         comboTipoPago.setValue(Prestamo.TipoPago.DIARIO);
         dateFechaInicio.setValue(LocalDate.now().plusDays(1));

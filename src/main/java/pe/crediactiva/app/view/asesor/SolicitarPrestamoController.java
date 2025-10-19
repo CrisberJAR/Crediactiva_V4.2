@@ -83,7 +83,7 @@ public class SolicitarPrestamoController {
     
     // Tasas de interés por plazo
     private static final double TASA_3_MESES = 0.15;
-    private static final double TASA_6_MESES = 0.18;
+    private static final double TASA_6_MESES = 0.144;
     private static final double TASA_9_MESES = 0.20;
     private static final double TASA_12_MESES = 0.22;
     private static final double TASA_18_MESES = 0.25;

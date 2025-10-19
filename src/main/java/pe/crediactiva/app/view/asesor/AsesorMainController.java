@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.Scene;
+import javafx.scene.Parent;
 import javafx.stage.Stage;
 import javafx.stage.Modality;
 import javafx.collections.FXCollections;
@@ -143,38 +144,91 @@ public class AsesorMainController {
         try {
             // Cuotas del día
             int cuotasDia = prestamoService.obtenerCuotasDelDia().size();
-            lblCuotasDia.setText(String.valueOf(cuotasDia));
+            actualizarLabelDashboard("lblCuotasDia", String.valueOf(cuotasDia));
             
             // Cuotas vencidas
             int cuotasVencidas = prestamoService.obtenerCuotasVencidas().size();
-            lblCuotasVencidas.setText(String.valueOf(cuotasVencidas));
+            actualizarLabelDashboard("lblCuotasVencidas", String.valueOf(cuotasVencidas));
             
             // Recaudación del día
             // TODO: Implementar recaudación
-            lblRecaudacionDia.setText("S/ 0.00");
-            lblRecaudacionMes.setText("Recaudación Mes: S/ 0.00");
-            lblRecaudacionMesCard.setText("S/ 0.00");
+            actualizarLabelDashboard("lblRecaudacionDia", "S/ 0.00");
+            if (lblRecaudacionMes != null) {
+                lblRecaudacionMes.setText("Recaudación Mes: S/ 0.00");
+            }
+            actualizarLabelDashboard("lblRecaudacionMesCard", "S/ 0.00");
             
             // Sueldo estimado (10% de la recaudación del mes)
             double sueldoEstimado = 0.0;
-            lblSueldoEstimado.setText("Sueldo Estimado: S/ 0.00");
-            lblSueldoEstimadoCard.setText("S/ " + String.format("%.2f", sueldoEstimado));
+            if (lblSueldoEstimado != null) {
+                lblSueldoEstimado.setText("Sueldo Estimado: S/ 0.00");
+            }
+            actualizarLabelDashboard("lblSueldoEstimadoCard", "S/ " + String.format("%.2f", sueldoEstimado));
             
             // Clientes activos
             int clientesActivos = 0; // TODO: Implementar en ClienteService
-            lblClientesActivos.setText(String.valueOf(clientesActivos));
+            actualizarLabelDashboard("lblClientesActivos", String.valueOf(clientesActivos));
             
             // Préstamos activos
             int prestamosActivos = prestamoService.obtenerPrestamosActivos().size();
-            lblPrestamosActivos.setText(String.valueOf(prestamosActivos));
+            actualizarLabelDashboard("lblPrestamosActivos", String.valueOf(prestamosActivos));
             
             // Morosidad (porcentaje de cuotas vencidas)
             double morosidad = prestamoService.calcularMorosidad();
-            lblMorosidad.setText(String.format("%.1f%%", morosidad));
+            actualizarLabelDashboard("lblMorosidad", String.format("%.1f%%", morosidad));
             
         } catch (Exception e) {
             logger.error("Error al cargar estadísticas del dashboard", e);
         }
+    }
+    
+    /**
+     * Actualiza un label del dashboard por su ID
+     */
+    private void actualizarLabelDashboard(String id, String texto) {
+        try {
+            // Buscar el label en el contentArea
+            Label label = buscarLabelPorId(contentArea, id);
+            if (label != null) {
+                label.setText(texto);
+            }
+        } catch (Exception e) {
+            logger.warn("No se pudo actualizar el label con ID: " + id, e);
+        }
+    }
+    
+    /**
+     * Busca un label por su ID en un contenedor
+     */
+    private Label buscarLabelPorId(Parent contenedor, String id) {
+        if (contenedor instanceof VBox) {
+            VBox vbox = (VBox) contenedor;
+            for (javafx.scene.Node nodo : vbox.getChildren()) {
+                if (nodo.getId() != null && nodo.getId().equals(id) && nodo instanceof Label) {
+                    return (Label) nodo;
+                }
+                if (nodo instanceof Parent) {
+                    Label encontrado = buscarLabelPorId((Parent) nodo, id);
+                    if (encontrado != null) {
+                        return encontrado;
+                    }
+                }
+            }
+        } else if (contenedor instanceof GridPane) {
+            GridPane grid = (GridPane) contenedor;
+            for (javafx.scene.Node nodo : grid.getChildren()) {
+                if (nodo.getId() != null && nodo.getId().equals(id) && nodo instanceof Label) {
+                    return (Label) nodo;
+                }
+                if (nodo instanceof Parent) {
+                    Label encontrado = buscarLabelPorId((Parent) nodo, id);
+                    if (encontrado != null) {
+                        return encontrado;
+                    }
+                }
+            }
+        }
+        return null;
     }
     
     /**
@@ -183,16 +237,162 @@ public class AsesorMainController {
     @FXML
     private void handleDashboard() {
         try {
+            logger.info("Intentando cargar dashboard...");
+            
+            VBox dashboardView = crearDashboardView();
+            
+            // Reemplazar contenido
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(dashboardView);
+            
             // Recargar estadísticas
             cargarEstadisticasDashboard();
             
-            // Mostrar mensaje de actualización
-            mostrarInfo("Dashboard actualizado");
+            logger.info("Dashboard cargado exitosamente");
             
         } catch (Exception e) {
-            logger.error("Error al actualizar dashboard", e);
-            mostrarError("Error al actualizar el dashboard");
+            logger.error("Error al cargar dashboard", e);
+            mostrarError("Error al cargar el dashboard");
         }
+    }
+    
+    /**
+     * Crea la vista del dashboard
+     */
+    private VBox crearDashboardView() {
+        VBox dashboard = new VBox(20);
+        dashboard.setPadding(new Insets(25));
+        
+        // Título del dashboard
+        Label titulo = new Label("📊 Dashboard del Asesor");
+        titulo.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;");
+        
+        // Estadísticas del día en grid moderno
+        GridPane gridEstadisticas = new GridPane();
+        gridEstadisticas.setHgap(20);
+        gridEstadisticas.setVgap(20);
+        
+        // Configurar columnas
+        for (int i = 0; i < 4; i++) {
+            ColumnConstraints col = new ColumnConstraints();
+            col.setHgrow(Priority.ALWAYS);
+            col.setMinWidth(200);
+            gridEstadisticas.getColumnConstraints().add(col);
+        }
+        
+        // Configurar filas
+        for (int i = 0; i < 2; i++) {
+            RowConstraints row = new RowConstraints();
+            row.setMinHeight(140);
+            row.setVgrow(Priority.ALWAYS);
+            gridEstadisticas.getRowConstraints().add(row);
+        }
+        
+        // Cuotas del día
+        VBox cuotasDia = crearTarjetaEstadistica("📅", "Cuotas del Día", "0", "Ver Detalles");
+        cuotasDia.getChildren().get(2).setId("lblCuotasDia");
+        ((Button)cuotasDia.getChildren().get(3)).setOnAction(e -> handleVerCuotasDia());
+        gridEstadisticas.add(cuotasDia, 0, 0);
+        
+        // Cuotas vencidas
+        VBox cuotasVencidas = crearTarjetaEstadistica("⚠️", "Cuotas Vencidas", "0", "Ver Detalles");
+        cuotasVencidas.getChildren().get(2).setId("lblCuotasVencidas");
+        ((Button)cuotasVencidas.getChildren().get(3)).setOnAction(e -> handleVerCuotasVencidas());
+        gridEstadisticas.add(cuotasVencidas, 1, 0);
+        
+        // Recaudación del día
+        VBox recaudacionDia = crearTarjetaEstadistica("💰", "Recaudación del Día", "S/ 0.00", "Ver Detalles");
+        recaudacionDia.getChildren().get(2).setId("lblRecaudacionDia");
+        ((Button)recaudacionDia.getChildren().get(3)).setOnAction(e -> handleVerRecaudacionDia());
+        gridEstadisticas.add(recaudacionDia, 2, 0);
+        
+        // Recaudación del mes
+        VBox recaudacionMes = crearTarjetaEstadistica("📊", "Recaudación del Mes", "S/ 0.00", "Ver Detalles");
+        recaudacionMes.getChildren().get(2).setId("lblRecaudacionMesCard");
+        ((Button)recaudacionMes.getChildren().get(3)).setOnAction(e -> handleVerRecaudacionMes());
+        gridEstadisticas.add(recaudacionMes, 3, 0);
+        
+        // Clientes activos
+        VBox clientesActivos = crearTarjetaEstadistica("👥", "Clientes Activos", "0", "Ver Detalles");
+        clientesActivos.getChildren().get(2).setId("lblClientesActivos");
+        ((Button)clientesActivos.getChildren().get(3)).setOnAction(e -> handleVerClientesActivos());
+        gridEstadisticas.add(clientesActivos, 0, 1);
+        
+        // Préstamos activos
+        VBox prestamosActivos = crearTarjetaEstadistica("📋", "Préstamos Activos", "0", "Ver Detalles");
+        prestamosActivos.getChildren().get(2).setId("lblPrestamosActivos");
+        ((Button)prestamosActivos.getChildren().get(3)).setOnAction(e -> handleVerPrestamosActivos());
+        gridEstadisticas.add(prestamosActivos, 1, 1);
+        
+        // Morosidad
+        VBox morosidad = crearTarjetaEstadistica("📉", "Morosidad", "0%", "Ver Detalles");
+        morosidad.getChildren().get(2).setId("lblMorosidad");
+        ((Button)morosidad.getChildren().get(3)).setOnAction(e -> handleVerMorosidad());
+        gridEstadisticas.add(morosidad, 2, 1);
+        
+        // Sueldo estimado
+        VBox sueldoEstimado = crearTarjetaEstadistica("💵", "Sueldo Estimado", "S/ 0.00", "Ver Detalles");
+        sueldoEstimado.getChildren().get(2).setId("lblSueldoEstimadoCard");
+        ((Button)sueldoEstimado.getChildren().get(3)).setOnAction(e -> handleVerSueldoEstimado());
+        gridEstadisticas.add(sueldoEstimado, 3, 1);
+        
+        // Acciones rápidas
+        VBox accionesRapidas = new VBox(15);
+        accionesRapidas.setStyle("-fx-background-color: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); -fx-background-radius: 16px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5); -fx-border-color: rgba(226,232,240,0.5); -fx-border-width: 1px; -fx-border-radius: 16px; -fx-padding: 25;");
+        
+        Label tituloAcciones = new Label("⚡ Acciones Rápidas");
+        tituloAcciones.setStyle("-fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #1e293b; -fx-padding: 0 0 15 0;");
+        
+        HBox botonesAcciones = new HBox(15);
+        botonesAcciones.setAlignment(Pos.CENTER_LEFT);
+        
+        Button btnNuevoCliente = new Button("👤 Nuevo Cliente");
+        btnNuevoCliente.setStyle("-fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); -fx-text-fill: #3b82f6; -fx-font-weight: 600; -fx-font-size: 14px; -fx-padding: 12 24; -fx-background-radius: 10px; -fx-border-color: rgba(30,64,175,0.3); -fx-border-width: 1px; -fx-border-radius: 10px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 8, 0, 0, 3); -fx-min-width: 160px;");
+        btnNuevoCliente.setOnAction(e -> handleNuevoCliente());
+        
+        Button btnNuevaSolicitud = new Button("📝 Nueva Solicitud");
+        btnNuevaSolicitud.setStyle("-fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); -fx-text-fill: #3b82f6; -fx-font-weight: 600; -fx-font-size: 14px; -fx-padding: 12 24; -fx-background-radius: 10px; -fx-border-color: rgba(30,64,175,0.3); -fx-border-width: 1px; -fx-border-radius: 10px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 8, 0, 0, 3); -fx-min-width: 160px;");
+        btnNuevaSolicitud.setOnAction(e -> handleNuevaSolicitud());
+        
+        Button btnRegistrarPago = new Button("💳 Registrar Pago");
+        btnRegistrarPago.setStyle("-fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); -fx-text-fill: #3b82f6; -fx-font-weight: 600; -fx-font-size: 14px; -fx-padding: 12 24; -fx-background-radius: 10px; -fx-border-color: rgba(30,64,175,0.3); -fx-border-width: 1px; -fx-border-radius: 10px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 8, 0, 0, 3); -fx-min-width: 160px;");
+        btnRegistrarPago.setOnAction(e -> handleRegistrarPago());
+        
+        Button btnSimularCredito = new Button("🧮 Simular Crédito");
+        btnSimularCredito.setStyle("-fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); -fx-text-fill: #3b82f6; -fx-font-weight: 600; -fx-font-size: 14px; -fx-padding: 12 24; -fx-background-radius: 10px; -fx-border-color: rgba(30,64,175,0.3); -fx-border-width: 1px; -fx-border-radius: 10px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 8, 0, 0, 3); -fx-min-width: 160px;");
+        btnSimularCredito.setOnAction(e -> handleSimularCredito());
+        
+        botonesAcciones.getChildren().addAll(btnNuevoCliente, btnNuevaSolicitud, btnRegistrarPago, btnSimularCredito);
+        accionesRapidas.getChildren().addAll(tituloAcciones, botonesAcciones);
+        
+        dashboard.getChildren().addAll(titulo, gridEstadisticas, accionesRapidas);
+        
+        return dashboard;
+    }
+    
+    /**
+     * Crea una tarjeta de estadística
+     */
+    private VBox crearTarjetaEstadistica(String icono, String titulo, String valor, String textoBoton) {
+        VBox tarjeta = new VBox(8);
+        tarjeta.setAlignment(Pos.CENTER);
+        tarjeta.setStyle("-fx-background-color: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); -fx-background-radius: 16px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5); -fx-border-color: rgba(226,232,240,0.5); -fx-border-width: 1px; -fx-border-radius: 16px; -fx-padding: 20; -fx-min-height: 120px;");
+        
+        Label iconoLabel = new Label(icono);
+        iconoLabel.setStyle("-fx-font-size: 28px; -fx-text-fill: #3b82f6; -fx-padding: 0 0 8 0;");
+        
+        Label tituloLabel = new Label(titulo);
+        tituloLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-font-weight: 600; -fx-padding: 0 0 5 0;");
+        
+        Label valorLabel = new Label(valor);
+        valorLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: #1e293b; -fx-font-weight: 700; -fx-padding: 0 0 8 0;");
+        
+        Button boton = new Button(textoBoton);
+        boton.setStyle("-fx-background-color: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); -fx-text-fill: #3b82f6; -fx-font-weight: 600; -fx-font-size: 12px; -fx-padding: 8 16; -fx-background-radius: 8px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(30,64,175,0.4), 8, 0, 0, 3);");
+        
+        tarjeta.getChildren().addAll(iconoLabel, tituloLabel, valorLabel, boton);
+        
+        return tarjeta;
     }
     
     /**
@@ -1220,7 +1420,7 @@ public class AsesorMainController {
             int numeroCuotas = calcularNumeroCuotas(plazoMeses, tipoPago);
             
             // Calcular simulación
-            double tasaInteres = 18.0; // 18% mensual
+            double tasaInteres = 14.4; // 14.4% mensual
             double totalPagar = monto * (1 + (tasaInteres / 100) * plazoMeses);
             double cuotaMensual = totalPagar / numeroCuotas;
             
@@ -1303,7 +1503,7 @@ public class AsesorMainController {
             nuevoPrestamo.setIdAsesor(12345678L); // ID del asesor actual
             nuevoPrestamo.setMontoSolicitado(new java.math.BigDecimal(monto));
             nuevoPrestamo.setMontoDesembolsado(new java.math.BigDecimal("0.00")); // Por defecto 0
-            nuevoPrestamo.setTasaInteres(new java.math.BigDecimal("18.00")); // 18% por defecto
+            nuevoPrestamo.setTasaInteres(new java.math.BigDecimal("14.40")); // 14.4% por defecto
             nuevoPrestamo.setEstado(Prestamo.EstadoPrestamo.PENDIENTE); // Estado pendiente
             nuevoPrestamo.setEtiqueta(Prestamo.EtiquetaPrestamo.PUNTUAL); // Por defecto puntual
             nuevoPrestamo.setPeriodoMeses((byte) plazoMeses);
@@ -1394,8 +1594,8 @@ public class AsesorMainController {
         
         Label lblInteres = new Label("📈 Tasa de interés (%):");
         lblInteres.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
-        TextField txtInteres = new TextField("18.00");
-        txtInteres.setPromptText("Ej: 18");
+        TextField txtInteres = new TextField("14.40");
+        txtInteres.setPromptText("Ej: 14.4");
         txtInteres.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
         
         Label lblPlazo = new Label("📅 Período (meses):");
@@ -1426,7 +1626,7 @@ public class AsesorMainController {
         HBox botones = new HBox(15);
         botones.setAlignment(Pos.CENTER);
         Button btnSimular = new Button("🚀 Simular Préstamo");
-        btnSimular.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;");
+        btnSimular.setStyle("-fx-background-color: #3498db; -fx-text-fill: blue; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;");
         btnSimular.setOnMouseEntered(e -> btnSimular.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
         btnSimular.setOnMouseExited(e -> btnSimular.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;"));
         
@@ -1589,7 +1789,7 @@ public class AsesorMainController {
         
         btnLimpiar.setOnAction(e -> {
             txtMonto.clear();
-            txtInteres.setText("18.00");
+            txtInteres.setText("14.40");
             cmbPlazo.getSelectionModel().clearSelection();
             cmbTipoPago.getSelectionModel().clearSelection();
             lblValorMontoSolicitado.setText("S/ 0.00");
