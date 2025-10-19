@@ -1,0 +1,51 @@
+# Archivos compilados de Java
+target/
+*.class
+
+# Archivos de logs
+logs/
+*.log
+
+# Archivos de configuración del IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Archivos de Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Archivos de Java
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Archivos de compilación
+build/
+out/
+dist/
+
+# Archivos de base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de configuración local
+application-local.properties
+database-local.properties
