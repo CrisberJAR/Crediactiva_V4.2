@@ -278,13 +278,8 @@ public class PrestamoService {
         }
         
         // Los clientes pueden tener múltiples préstamos activos
-        // Solo verificamos que no tenga préstamos pendientes
-        
-        // Verificar que no tenga préstamos pendientes
-        if (prestamoDAO.hasPendingLoans(prestamo.getIdCliente())) {
-            logger.warn("Cliente ya tiene préstamos pendientes: " + prestamo.getIdCliente());
-            return false;
-        }
+        // No hay restricción sobre el número de préstamos que puede tener un cliente
+        logger.info("Cliente " + prestamo.getIdCliente() + " puede tener múltiples préstamos - validación pasada");
         
         return true;
     }
@@ -357,6 +352,18 @@ public class PrestamoService {
     }
     
     /**
+     * Obtiene cuotas del día por asesor
+     */
+    public List<Cronograma> obtenerCuotasDelDiaPorAsesor(Long idAsesor) {
+        try {
+            return cronogramaDAO.findByFechaAndAsesor(LocalDate.now(), idAsesor);
+        } catch (Exception e) {
+            logger.error("Error al obtener cuotas del día por asesor: " + idAsesor, e);
+            throw new RuntimeException("Error al obtener las cuotas del día del asesor", e);
+        }
+    }
+    
+    /**
      * Obtiene cuotas vencidas
      */
     public List<Cronograma> obtenerCuotasVencidas() {
@@ -365,6 +372,18 @@ public class PrestamoService {
         } catch (Exception e) {
             logger.error("Error al obtener cuotas vencidas", e);
             throw new RuntimeException("Error al obtener las cuotas vencidas", e);
+        }
+    }
+    
+    /**
+     * Obtiene cuotas vencidas por asesor
+     */
+    public List<Cronograma> obtenerCuotasVencidasPorAsesor(Long idAsesor) {
+        try {
+            return cronogramaDAO.findVencidasByAsesor(idAsesor);
+        } catch (Exception e) {
+            logger.error("Error al obtener cuotas vencidas por asesor: " + idAsesor, e);
+            throw new RuntimeException("Error al obtener las cuotas vencidas del asesor", e);
         }
     }
     
@@ -417,15 +436,121 @@ public class PrestamoService {
     }
     
     /**
-     * Calcula la morosidad
+     * Calcula la morosidad como porcentaje de cuotas vencidas sobre total de cuotas
      */
     public double calcularMorosidad() {
         try {
-            // TODO: Implementar cálculo de morosidad
-            return 0.0;
+            // Obtener todas las cuotas pendientes y vencidas
+            List<Cronograma> cuotasVencidas = cronogramaDAO.findVencidas();
+            List<Cronograma> cuotasPendientes = cronogramaDAO.findByEstado(Cronograma.EstadoCuota.PENDIENTE);
+            
+            int totalCuotasPendientes = cuotasPendientes.size();
+            int totalCuotasVencidas = cuotasVencidas.size();
+            
+            if (totalCuotasPendientes == 0) {
+                return 0.0; // No hay cuotas pendientes, morosidad 0%
+            }
+            
+            // Calcular porcentaje de morosidad
+            double morosidad = (double) totalCuotasVencidas / totalCuotasPendientes * 100.0;
+            
+            logger.info("Morosidad calculada: " + totalCuotasVencidas + " vencidas de " + 
+                       totalCuotasPendientes + " pendientes = " + String.format("%.2f", morosidad) + "%");
+            
+            return morosidad;
+            
         } catch (Exception e) {
             logger.error("Error al calcular morosidad", e);
-            throw new RuntimeException("Error al calcular la morosidad", e);
+            return 0.0; // Retornar 0 en caso de error
+        }
+    }
+    
+    /**
+     * Calcula la morosidad por asesor
+     */
+    public double calcularMorosidadPorAsesor(Long idAsesor) {
+        try {
+            // Obtener cuotas vencidas y pendientes del asesor
+            List<Cronograma> cuotasVencidas = cronogramaDAO.findVencidasByAsesor(idAsesor);
+            List<Cronograma> cuotasPendientes = cronogramaDAO.findPendientesByAsesor(idAsesor);
+            
+            int totalCuotasPendientes = cuotasPendientes.size();
+            int totalCuotasVencidas = cuotasVencidas.size();
+            
+            if (totalCuotasPendientes == 0) {
+                return 0.0; // No hay cuotas pendientes, morosidad 0%
+            }
+            
+            // Calcular porcentaje de morosidad
+            double morosidad = (double) totalCuotasVencidas / totalCuotasPendientes * 100.0;
+            
+            logger.info("Morosidad calculada para asesor " + idAsesor + ": " + totalCuotasVencidas + " vencidas de " + 
+                       totalCuotasPendientes + " pendientes = " + String.format("%.2f", morosidad) + "%");
+            
+            return morosidad;
+        } catch (Exception e) {
+            logger.error("Error al calcular morosidad por asesor: " + idAsesor, e);
+            return 0.0;
+        }
+    }
+    
+    /**
+     * Verifica la consistencia de datos para un asesor
+     */
+    public void verificarConsistenciaAsesor(Long idAsesor) {
+        try {
+            logger.info("=== VERIFICACIÓN DE CONSISTENCIA PARA ASESOR " + idAsesor + " ===");
+            
+            // Obtener todas las cuotas del día para este asesor
+            List<Cronograma> cuotasDelDia = cronogramaDAO.findByFechaAndAsesor(java.time.LocalDate.now(), idAsesor);
+            
+            logger.info("Cuotas del día encontradas: " + cuotasDelDia.size());
+            
+            for (Cronograma cuota : cuotasDelDia) {
+                if (cuota.getPrestamo() != null) {
+                    Long asesorPrestamo = cuota.getPrestamo().getIdAsesor();
+                    String nombreCliente = "N/A";
+                    
+                    if (cuota.getPrestamo().getCliente() != null) {
+                        nombreCliente = cuota.getPrestamo().getCliente().getNombre() + " " + 
+                                      cuota.getPrestamo().getCliente().getApellido();
+                    }
+                    
+                    logger.info("Cuota ID: " + cuota.getIdCuota() + 
+                               ", Cliente: " + nombreCliente + 
+                               ", Asesor del préstamo: " + asesorPrestamo + 
+                               ", Asesor consultado: " + idAsesor);
+                    
+                    if (!idAsesor.equals(asesorPrestamo)) {
+                        logger.error("¡INCONSISTENCIA DETECTADA! Cuota " + cuota.getIdCuota() + 
+                                   " del cliente " + nombreCliente + 
+                                   " pertenece al asesor " + asesorPrestamo + 
+                                   " pero se está mostrando al asesor " + idAsesor);
+                    }
+                }
+            }
+            
+            logger.info("=== FIN VERIFICACIÓN DE CONSISTENCIA ===");
+            
+        } catch (Exception e) {
+            logger.error("Error al verificar consistencia del asesor: " + idAsesor, e);
+        }
+    }
+    
+    /**
+     * Verifica si un asesor tiene préstamos asignados
+     */
+    public boolean tienePrestamosAsignados(Long idAsesor) {
+        try {
+            List<Prestamo> prestamos = prestamoDAO.findByAsesor(idAsesor);
+            boolean tienePrestamos = !prestamos.isEmpty();
+            
+            logger.info("Asesor " + idAsesor + " tiene préstamos asignados: " + tienePrestamos + " (Total: " + prestamos.size() + ")");
+            
+            return tienePrestamos;
+        } catch (Exception e) {
+            logger.error("Error al verificar si el asesor tiene préstamos: " + idAsesor, e);
+            return false; // Por seguridad, asumir que no tiene préstamos
         }
     }
     

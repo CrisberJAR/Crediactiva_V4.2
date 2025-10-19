@@ -8,6 +8,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.util.FechaUtil;
+import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,18 +131,29 @@ public class GestionClientesController {
     }
     
     /**
-     * Carga los clientes según los filtros actuales
+     * Carga los clientes del asesor según los filtros actuales
      */
     private void cargarClientes() {
         try {
-            // TODO: Implementar paginación y filtros en ClienteService
-            List<Cliente> listaClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> listaClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             
             clientes.clear();
             clientes.addAll(listaClientes);
             tblClientes.setItems(clientes);
             
             actualizarInfoPaginacion();
+            
+            logger.info("Cargados " + listaClientes.size() + " clientes para el asesor: " + idAsesor);
             
         } catch (Exception e) {
             logger.error("Error al cargar clientes", e);

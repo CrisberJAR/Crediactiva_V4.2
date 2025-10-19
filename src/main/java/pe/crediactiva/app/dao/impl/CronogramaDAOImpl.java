@@ -424,6 +424,66 @@ public class CronogramaDAOImpl implements CronogramaDAO {
     }
     
     @Override
+    public List<Cronograma> findByFechaAndAsesor(LocalDate fecha, Long idAsesor) {
+        String sql = "SELECT c.*, p.id_cliente, p.id_asesor " +
+                    "FROM cronograma c " +
+                    "JOIN prestamos p ON c.id_prestamo = p.id_prestamo " +
+                    "WHERE c.fecha_programada = ? AND p.id_asesor = ? " +
+                    "ORDER BY c.numero_cuota";
+        
+        List<Cronograma> cuotas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setDate(1, Date.valueOf(fecha));
+            stmt.setLong(2, idAsesor);
+            
+            logger.info("=== CONSULTA SQL DEBUGGING ===");
+            logger.info("SQL: " + sql);
+            logger.info("Parámetros - Fecha: " + fecha + ", Asesor: " + idAsesor);
+            
+            // Verificar primero si existen préstamos para este asesor
+            String sqlVerificacion = "SELECT COUNT(*) as total FROM prestamos WHERE id_asesor = ?";
+            try (PreparedStatement stmtVerificacion = conn.prepareStatement(sqlVerificacion)) {
+                stmtVerificacion.setLong(1, idAsesor);
+                try (ResultSet rsVerificacion = stmtVerificacion.executeQuery()) {
+                    if (rsVerificacion.next()) {
+                        int totalPrestamos = rsVerificacion.getInt("total");
+                        logger.info("Total de préstamos para asesor " + idAsesor + ": " + totalPrestamos);
+                        
+                        if (totalPrestamos == 0) {
+                            logger.warn("¡ADVERTENCIA! El asesor " + idAsesor + " NO tiene préstamos asignados");
+                        }
+                    }
+                }
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Cronograma cuota = mapResultSetToCronograma(rs);
+                    cuotas.add(cuota);
+                    
+                    // Log detallado para debugging
+                    logger.info("Cuota encontrada - ID: " + cuota.getIdCuota() + 
+                               ", Préstamo: " + cuota.getIdPrestamo() + 
+                               ", Cliente: " + (cuota.getPrestamo() != null && cuota.getPrestamo().getCliente() != null ? 
+                                   cuota.getPrestamo().getCliente().getNombre() + " " + cuota.getPrestamo().getCliente().getApellido() : "N/A") +
+                               ", Asesor del préstamo: " + (cuota.getPrestamo() != null ? cuota.getPrestamo().getIdAsesor() : "N/A"));
+                }
+            }
+            
+            logger.info("Total cuotas encontradas para asesor " + idAsesor + " en fecha " + fecha + ": " + cuotas.size());
+            logger.info("=== FIN CONSULTA SQL DEBUGGING ===");
+            
+        } catch (SQLException e) {
+            logger.error("Error al buscar cuotas por fecha y asesor: " + fecha + ", asesor: " + idAsesor, e);
+        }
+        
+        return cuotas;
+    }
+    
+    @Override
     public List<Cronograma> findPendientesByCliente(Long idCliente) {
         String sql = "SELECT c.*, p.id_cliente, p.id_asesor " +
                     "FROM cronograma c " +
@@ -474,6 +534,34 @@ public class CronogramaDAOImpl implements CronogramaDAO {
             
         } catch (SQLException e) {
             logger.error("Error al buscar cuotas vencidas por cliente: " + idCliente, e);
+        }
+        
+        return cuotas;
+    }
+    
+    @Override
+    public List<Cronograma> findVencidasByAsesor(Long idAsesor) {
+        String sql = "SELECT c.*, p.id_cliente, p.id_asesor " +
+                    "FROM cronograma c " +
+                    "JOIN prestamos p ON c.id_prestamo = p.id_prestamo " +
+                    "WHERE p.id_asesor = ? AND c.estado_cuota = 'pendiente' AND c.fecha_programada < CURDATE() " +
+                    "ORDER BY c.fecha_programada";
+        
+        List<Cronograma> cuotas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, idAsesor);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    cuotas.add(mapResultSetToCronograma(rs));
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al buscar cuotas vencidas por asesor: " + idAsesor, e);
         }
         
         return cuotas;
@@ -531,5 +619,33 @@ public class CronogramaDAOImpl implements CronogramaDAO {
             logger.error("Error al marcar validación asesor para cuota: " + idCuota, e);
             return false;
         }
+    }
+    
+    @Override
+    public List<Cronograma> findPendientesByAsesor(Long idAsesor) {
+        String sql = "SELECT c.*, p.id_cliente, p.id_asesor " +
+                    "FROM cronograma c " +
+                    "JOIN prestamos p ON c.id_prestamo = p.id_prestamo " +
+                    "WHERE p.id_asesor = ? AND c.estado_cuota = 'pendiente' " +
+                    "ORDER BY c.fecha_programada";
+        
+        List<Cronograma> cuotas = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, idAsesor);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    cuotas.add(mapResultSetToCronograma(rs));
+                }
+            }
+            
+        } catch (SQLException e) {
+            logger.error("Error al buscar cuotas pendientes por asesor: " + idAsesor, e);
+        }
+        
+        return cuotas;
     }
 }

@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.service.ClienteService;
+import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,7 +217,19 @@ public class NuevoClienteController {
             return false;
         }
         
-        // TODO: Validar DNI cuando se agregue al modelo
+        // CORRECCIÓN: Validar DNI como campo obligatorio
+        if (txtDni.getText().trim().isEmpty()) {
+            mostrarAdvertencia("Por favor ingrese el DNI del cliente");
+            return false;
+        }
+        
+        // Validar que el DNI sea un número válido
+        try {
+            Long.parseLong(txtDni.getText().trim());
+        } catch (NumberFormatException e) {
+            mostrarAdvertencia("El DNI debe ser un número válido");
+            return false;
+        }
         
         if (txtTelefono.getText().trim().isEmpty()) {
             mostrarAdvertencia("Por favor ingrese el teléfono del cliente");
@@ -325,10 +338,33 @@ public class NuevoClienteController {
     private Cliente crearCliente() {
         Cliente cliente = new Cliente();
         
+        // Obtener el ID del asesor actual desde la sesión
+        Long idAsesor = SessionManager.getInstance().getAsesorId();
+        if (idAsesor == null) {
+            logger.error("No se pudo obtener el ID del asesor de la sesión");
+            throw new RuntimeException("Error: No se pudo identificar al asesor");
+        }
+        
+        // CORRECCIÓN CRÍTICA: Generar ID único para el cliente usando el DNI
+        String dni = txtDni.getText().trim();
+        if (dni.isEmpty()) {
+            logger.error("El DNI es obligatorio para crear un cliente");
+            throw new RuntimeException("Error: El DNI es obligatorio");
+        }
+        
+        try {
+            Long idCliente = Long.parseLong(dni);
+            cliente.setIdCliente(idCliente);
+            logger.info("Cliente será registrado con id_cliente: " + idCliente);
+        } catch (NumberFormatException e) {
+            logger.error("El DNI debe ser un número válido: " + dni);
+            throw new RuntimeException("Error: El DNI debe ser un número válido");
+        }
+        
         cliente.setNombre(txtNombres.getText().trim());
         cliente.setApellido(txtApellidos.getText().trim());
+        cliente.setDni(dni);
         // TODO: Agregar campos faltantes al modelo Cliente
-        // cliente.setDni(txtDni.getText().trim());
         // cliente.setFechaNacimiento(dpFechaNacimiento.getValue());
         // cliente.setSexo(cmbSexo.getValue());
         // cliente.setEstadoCivil(cmbEstadoCivil.getValue());
@@ -346,6 +382,10 @@ public class NuevoClienteController {
         // cliente.setObservaciones(txtObservaciones.getText().trim());
         cliente.setActivo(true);
         cliente.setFechaRegistro(LocalDate.now());
+        
+        // CORRECCIÓN CRÍTICA: Asignar el ID del asesor que está registrando el cliente
+        cliente.setIdAsesor(idAsesor);
+        logger.info("Cliente será registrado con id_asesor: " + idAsesor);
         
         return cliente;
     }

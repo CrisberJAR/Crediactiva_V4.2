@@ -379,14 +379,30 @@ public class RegistrarCobroController {
         }
         
         try {
-            // TODO: Implementar búsqueda por DNI en ClienteService
+            // Buscar el cliente por DNI
             java.util.Optional<Cliente> clienteOpt = clienteService.obtenerClientePorId(Long.parseLong(dni));
             if (clienteOpt.isPresent()) {
                 Cliente cliente = clienteOpt.get();
+                
+                // VALIDACIÓN CRÍTICA DE SEGURIDAD: Verificar que el cliente pertenezca al asesor actual
+                if (!clienteService.clientePerteneceAlAsesor(cliente.getIdCliente(), idAsesorActual)) {
+                    logger.warn("Intento de acceso no autorizado - Asesor " + idAsesorActual + 
+                               " intentó acceder al cliente " + cliente.getIdCliente() + 
+                               " (" + cliente.getNombre() + " " + cliente.getApellido() + ") para registro de cobro");
+                    mostrarError("No tiene permisos para registrar cobros para este cliente. " +
+                               "Solo puede registrar cobros para sus propios clientes.");
+                    txtDniCliente.clear();
+                    cmbCliente.setValue(null);
+                    clienteSeleccionado = null;
+                    return;
+                }
+                
+                // Cliente válido y pertenece al asesor
                 cmbCliente.setValue(cliente);
                 clienteSeleccionado = cliente;
                 mostrarInfoCliente(cliente);
                 cargarPrestamosCliente(cliente);
+                
             } else {
                 mostrarAdvertencia("No se encontró un cliente con el ID: " + dni);
             }

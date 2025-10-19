@@ -81,6 +81,11 @@ public interface CronogramaDAO {
     List<Cronograma> findByFecha(LocalDate fecha);
     
     /**
+     * Obtiene cuotas por fecha y asesor
+     */
+    List<Cronograma> findByFechaAndAsesor(LocalDate fecha, Long idAsesor);
+    
+    /**
      * Obtiene cuotas pendientes por cliente
      */
     List<Cronograma> findPendientesByCliente(Long idCliente);
@@ -99,6 +104,16 @@ public interface CronogramaDAO {
      * Obtiene cuotas vencidas por cliente
      */
     List<Cronograma> findVencidasByCliente(Long idCliente);
+    
+    /**
+     * Obtiene cuotas vencidas por asesor
+     */
+    List<Cronograma> findVencidasByAsesor(Long idAsesor);
+    
+    /**
+     * Obtiene cuotas pendientes por asesor
+     */
+    List<Cronograma> findPendientesByAsesor(Long idAsesor);
     
     /**
      * Obtiene cuotas por préstamo (alias de findByPrestamo)

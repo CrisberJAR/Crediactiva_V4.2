@@ -15,6 +15,7 @@ import pe.crediactiva.app.service.PagoService;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.RecaudacionService;
 import pe.crediactiva.app.util.FechaUtil;
+import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -356,7 +357,17 @@ public class CarteraController {
      */
     private void cargarResumenCartera() {
         try {
-            List<Cliente> todosClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> todosClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             
             // Total de clientes
             int totalClientes = todosClientes.size();
@@ -407,13 +418,25 @@ public class CarteraController {
     }
     
     /**
-     * Carga la lista de clientes
+     * Carga la lista de clientes del asesor
      */
     private void cargarClientes() {
         try {
-            List<Cliente> listaClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> listaClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             clientes.clear();
             clientes.addAll(listaClientes);
+            
+            logger.info("Cargados " + listaClientes.size() + " clientes para la cartera del asesor: " + idAsesor);
             
         } catch (Exception e) {
             logger.error("Error al cargar clientes", e);
@@ -468,7 +491,17 @@ public class CarteraController {
         String busqueda = txtBuscar.getText().trim();
         
         try {
-            List<Cliente> todosClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> todosClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             List<Cliente> clientesEncontrados = new ArrayList<>();
             
             if (busqueda.isEmpty()) {
@@ -517,7 +550,17 @@ public class CarteraController {
         String filtroSeleccionado = cmbFiltro.getValue();
         
         try {
-            List<Cliente> todosClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> todosClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             List<Cliente> clientesFiltrados = new ArrayList<>();
             
             for (Cliente cliente : todosClientes) {
@@ -771,11 +814,21 @@ public class CarteraController {
      */
     private void generarReporteBasico(String tipoReporte, LocalDate fechaInicio, LocalDate fechaFin) {
         try {
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
             StringBuilder reporte = new StringBuilder();
             reporte.append("REPORTE: ").append(tipoReporte).append("\n");
             reporte.append("Período: ").append(fechaInicio).append(" - ").append(fechaFin).append("\n\n");
             
-            List<Cliente> todosClientes = clienteService.obtenerTodosLosClientes();
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> todosClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             
             switch (tipoReporte) {
                 case "Reporte de Cartera General":

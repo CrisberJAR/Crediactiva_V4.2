@@ -8,6 +8,7 @@ import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
+import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,13 +156,25 @@ public class SolicitarPrestamoController {
     }
     
     /**
-     * Carga la lista de clientes
+     * Carga la lista de clientes del asesor
      */
     private void cargarClientes() {
         try {
-            List<Cliente> clientes = clienteService.obtenerTodosLosClientes();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener solo los clientes del asesor actual
+            List<Cliente> clientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             ObservableList<Cliente> clientesObservable = FXCollections.observableArrayList(clientes);
             cmbCliente.setItems(clientesObservable);
+            
+            logger.info("Cargados " + clientes.size() + " clientes para solicitud de préstamo del asesor: " + idAsesor);
             
         } catch (Exception e) {
             logger.error("Error al cargar clientes", e);
@@ -204,13 +217,38 @@ public class SolicitarPrestamoController {
         }
         
         try {
-            // TODO: Implementar búsqueda por DNI en ClienteService
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Buscar el cliente por DNI
             java.util.Optional<Cliente> clienteOpt = clienteService.obtenerClientePorId(Long.parseLong(dni));
             if (clienteOpt.isPresent()) {
                 Cliente cliente = clienteOpt.get();
+                
+                // VALIDACIÓN DE SEGURIDAD: Verificar que el cliente pertenezca al asesor actual
+                if (!clienteService.clientePerteneceAlAsesor(cliente.getIdCliente(), idAsesor)) {
+                    logger.warn("Intento de acceso no autorizado - Asesor " + idAsesor + 
+                               " intentó acceder al cliente " + cliente.getIdCliente() + 
+                               " (" + cliente.getNombre() + " " + cliente.getApellido() + ")");
+                    mostrarError("No tiene permisos para solicitar préstamos para este cliente. " +
+                               "Solo puede solicitar préstamos para sus propios clientes.");
+                    txtDniCliente.clear();
+                    cmbCliente.setValue(null);
+                    clienteSeleccionado = null;
+                    return;
+                }
+                
+                // Cliente válido y pertenece al asesor
                 cmbCliente.setValue(cliente);
                 clienteSeleccionado = cliente;
                 mostrarInfo("Cliente encontrado: " + cliente.getNombre() + " " + cliente.getApellido());
+                
             } else {
                 mostrarAdvertencia("No se encontró un cliente con el ID: " + dni);
             }

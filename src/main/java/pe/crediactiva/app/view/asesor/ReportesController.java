@@ -5,9 +5,15 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.RecaudacionService;
 import pe.crediactiva.app.service.ReporteService;
+import pe.crediactiva.app.service.ClienteService;
+import pe.crediactiva.app.model.Prestamo;
+import pe.crediactiva.app.model.Cronograma;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +43,9 @@ public class ReportesController {
     
     @FXML
     private Label lblCuotasVencidas;
+    
+    @FXML
+    private Button btnVerDetallesCuotasVencidas;
     
     @FXML
     private Label lblMorosidad;
@@ -90,10 +99,18 @@ public class ReportesController {
     @FXML
     private void initialize() {
         try {
+            logger.info("Inicializando ReportesController...");
             configurarControles();
             configurarFechas();
             cargarResumenReportes();
             cargarReportesGenerados();
+            
+            // Verificar que el botón esté conectado
+            if (btnVerDetallesCuotasVencidas != null) {
+                logger.info("Botón 'Ver Detalles' de cuotas vencidas conectado correctamente");
+            } else {
+                logger.warn("Botón 'Ver Detalles' de cuotas vencidas NO está conectado");
+            }
             
         } catch (Exception e) {
             logger.error("Error al inicializar reportes", e);
@@ -145,21 +162,28 @@ public class ReportesController {
      */
     private void cargarResumenReportes() {
         try {
-            // TODO: Implementar métodos en servicios
-            // Total recaudado
-            BigDecimal totalRecaudado = BigDecimal.ZERO; // recaudacionService.obtenerRecaudacionDelMes();
+            // Total recaudado del mes actual
+            BigDecimal totalRecaudado = recaudacionService.obtenerRecaudacionDelMes();
             lblTotalRecaudado.setText("S/ " + String.format("%.2f", totalRecaudado));
             
-            // Total cuotas pagadas
-            int totalCuotasPagadas = 0; // prestamoService.obtenerCuotasPagadas().size();
+            // Total cuotas pagadas (aproximado basado en préstamos activos)
+            List<Prestamo> prestamosActivos = prestamoService.obtenerPrestamosActivos();
+            int totalCuotasPagadas = 0;
+            for (Prestamo prestamo : prestamosActivos) {
+                List<Cronograma> cuotasPagadas = prestamoService.obtenerCuotasPorPrestamo(prestamo.getIdPrestamo())
+                    .stream()
+                    .filter(cuota -> cuota.getEstadoCuota() == Cronograma.EstadoCuota.PAGADA)
+                    .collect(java.util.stream.Collectors.toList());
+                totalCuotasPagadas += cuotasPagadas.size();
+            }
             lblTotalCuotasPagadas.setText(String.valueOf(totalCuotasPagadas));
             
             // Cuotas vencidas
-            int cuotasVencidas = 0; // prestamoService.obtenerCuotasVencidas().size();
-            lblCuotasVencidas.setText(String.valueOf(cuotasVencidas));
+            List<Cronograma> cuotasVencidas = prestamoService.obtenerCuotasVencidas();
+            lblCuotasVencidas.setText(String.valueOf(cuotasVencidas.size()));
             
             // Morosidad
-            double morosidad = 0.0; // prestamoService.calcularMorosidad();
+            double morosidad = prestamoService.calcularMorosidad();
             lblMorosidad.setText(String.format("%.1f%%", morosidad));
             
         } catch (Exception e) {
@@ -439,6 +463,169 @@ public class ReportesController {
         } catch (Exception e) {
             logger.error("Error al configurar reporte", e);
             mostrarError("Error al configurar el reporte");
+        }
+    }
+    
+    /**
+     * Maneja el clic en "Ver Detalles" de cuotas vencidas
+     */
+    @FXML
+    private void handleVerDetallesCuotasVencidas() {
+        try {
+            logger.info("Botón Ver Detalles de cuotas vencidas presionado");
+            
+            // Crear una ventana de prueba simple primero
+            Stage ventanaPrueba = new Stage();
+            ventanaPrueba.setTitle("Prueba - Cuotas Vencidas");
+            ventanaPrueba.setWidth(400);
+            ventanaPrueba.setHeight(300);
+            
+            VBox layout = new VBox(10);
+            layout.setPadding(new javafx.geometry.Insets(20));
+            
+            Label titulo = new Label("¡El botón funciona!");
+            titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+            
+            Label mensaje = new Label("Esta es una ventana de prueba para verificar que el botón 'Ver Detalles' está funcionando correctamente.");
+            mensaje.setWrapText(true);
+            
+            Button btnCerrar = new Button("Cerrar");
+            btnCerrar.setOnAction(e -> ventanaPrueba.close());
+            
+            layout.getChildren().addAll(titulo, mensaje, btnCerrar);
+            
+            Scene scene = new Scene(layout);
+            ventanaPrueba.setScene(scene);
+            ventanaPrueba.show();
+            
+            // También mostrar mensaje en consola
+            mostrarInfo("Botón 'Ver Detalles' funcionando correctamente");
+            
+        } catch (Exception e) {
+            logger.error("Error al mostrar ventana de prueba", e);
+            mostrarError("Error al mostrar ventana de prueba: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Obtiene cuotas vencidas filtradas por asesor actual
+     */
+    private List<Cronograma> obtenerCuotasVencidasPorAsesor() {
+        try {
+            logger.info("Obteniendo cuotas vencidas...");
+            
+            // Por ahora, obtenemos todas las cuotas vencidas
+            List<Cronograma> todasLasCuotasVencidas = prestamoService.obtenerCuotasVencidas();
+            logger.info("Total de cuotas vencidas obtenidas: " + todasLasCuotasVencidas.size());
+            
+            // TODO: Filtrar por asesor cuando tengamos SessionManager
+            // Long idAsesorActual = SessionManager.getInstance().getUsuarioActual().getId();
+            // return todasLasCuotasVencidas.stream()
+            //     .filter(cuota -> cuota.getPrestamo().getIdAsesor().equals(idAsesorActual))
+            //     .collect(Collectors.toList());
+            
+            return todasLasCuotasVencidas;
+            
+        } catch (Exception e) {
+            logger.error("Error al obtener cuotas vencidas por asesor", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Muestra los detalles de las cuotas vencidas en una nueva ventana
+     */
+    private void mostrarDetallesCuotasVencidas(List<Cronograma> cuotasVencidas) {
+        try {
+            logger.info("Iniciando creación de ventana de detalles para " + cuotasVencidas.size() + " cuotas vencidas");
+            
+            // Crear una nueva ventana para mostrar los detalles
+            Stage detallesStage = new Stage();
+            detallesStage.setTitle("Detalles de Cuotas Vencidas");
+            detallesStage.setWidth(900);
+            detallesStage.setHeight(700);
+            
+            // Crear tabla para mostrar las cuotas vencidas
+            TableView<Cronograma> tablaCuotas = new TableView<>();
+            
+            // Columnas básicas primero
+            TableColumn<Cronograma, Long> colIdCuota = new TableColumn<>("ID Cuota");
+            colIdCuota.setCellValueFactory(new PropertyValueFactory<>("idCuota"));
+            colIdCuota.setPrefWidth(80);
+            
+            TableColumn<Cronograma, Long> colIdPrestamo = new TableColumn<>("ID Préstamo");
+            colIdPrestamo.setCellValueFactory(new PropertyValueFactory<>("idPrestamo"));
+            colIdPrestamo.setPrefWidth(100);
+            
+            TableColumn<Cronograma, Integer> colNumeroCuota = new TableColumn<>("N° Cuota");
+            colNumeroCuota.setCellValueFactory(new PropertyValueFactory<>("numeroCuota"));
+            colNumeroCuota.setPrefWidth(80);
+            
+            TableColumn<Cronograma, LocalDate> colFechaProgramada = new TableColumn<>("Fecha Programada");
+            colFechaProgramada.setCellValueFactory(new PropertyValueFactory<>("fechaProgramada"));
+            colFechaProgramada.setPrefWidth(120);
+            
+            TableColumn<Cronograma, BigDecimal> colMonto = new TableColumn<>("Monto");
+            colMonto.setCellValueFactory(new PropertyValueFactory<>("montoCuota"));
+            colMonto.setPrefWidth(100);
+            
+            TableColumn<Cronograma, String> colEstado = new TableColumn<>("Estado");
+            colEstado.setCellValueFactory(cellData -> {
+                Cronograma.EstadoCuota estado = cellData.getValue().getEstadoCuota();
+                return new javafx.beans.property.SimpleStringProperty(estado.getDescripcion());
+            });
+            colEstado.setPrefWidth(100);
+            
+            // Calcular días de retraso
+            TableColumn<Cronograma, String> colDiasRetraso = new TableColumn<>("Días de Retraso");
+            colDiasRetraso.setCellValueFactory(cellData -> {
+                LocalDate fechaProgramada = cellData.getValue().getFechaProgramada();
+                long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(fechaProgramada, LocalDate.now());
+                return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasRetraso));
+            });
+            colDiasRetraso.setPrefWidth(100);
+            
+            // Agregar columnas a la tabla
+            tablaCuotas.getColumns().add(colIdCuota);
+            tablaCuotas.getColumns().add(colIdPrestamo);
+            tablaCuotas.getColumns().add(colNumeroCuota);
+            tablaCuotas.getColumns().add(colFechaProgramada);
+            tablaCuotas.getColumns().add(colMonto);
+            tablaCuotas.getColumns().add(colEstado);
+            tablaCuotas.getColumns().add(colDiasRetraso);
+            
+            // Cargar datos
+            ObservableList<Cronograma> cuotasObservable = FXCollections.observableArrayList(cuotasVencidas);
+            tablaCuotas.setItems(cuotasObservable);
+            
+            // Crear layout
+            VBox layout = new VBox(10);
+            layout.setPadding(new javafx.geometry.Insets(10));
+            
+            Label titulo = new Label("Cuotas Vencidas - Total: " + cuotasVencidas.size());
+            titulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+            
+            // Calcular total de monto vencido
+            BigDecimal totalVencido = cuotasVencidas.stream()
+                .map(Cronograma::getMontoCuota)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            Label totalLabel = new Label("Monto Total Vencido: S/ " + String.format("%.2f", totalVencido));
+            totalLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: red;");
+            
+            layout.getChildren().addAll(titulo, totalLabel, tablaCuotas);
+            
+            // Crear escena
+            Scene scene = new Scene(layout);
+            detallesStage.setScene(scene);
+            
+            // Mostrar la ventana
+            detallesStage.show();
+            logger.info("Ventana de detalles mostrada exitosamente");
+            
+        } catch (Exception e) {
+            logger.error("Error al mostrar detalles de cuotas vencidas", e);
+            mostrarError("Error al mostrar los detalles de cuotas vencidas: " + e.getMessage());
         }
     }
     

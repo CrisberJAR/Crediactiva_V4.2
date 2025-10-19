@@ -224,4 +224,27 @@ public class ClienteService {
     public Optional<Cliente> obtenerClientePorDni(Long dni) {
         return buscarPorDni(dni);
     }
+    
+    /**
+     * Verifica si un cliente pertenece a un asesor específico
+     */
+    public boolean clientePerteneceAlAsesor(Long idCliente, Long idAsesor) {
+        try {
+            // Obtener todos los clientes del asesor
+            List<Cliente> clientesDelAsesor = obtenerClientesPorAsesor(idAsesor);
+            
+            // Verificar si el cliente está en la lista
+            boolean pertenece = clientesDelAsesor.stream()
+                .anyMatch(cliente -> cliente.getIdCliente().equals(idCliente));
+            
+            logger.info("Verificación de pertenencia - Cliente: " + idCliente + 
+                       ", Asesor: " + idAsesor + ", Pertenece: " + pertenece);
+            
+            return pertenece;
+            
+        } catch (Exception e) {
+            logger.error("Error al verificar si el cliente pertenece al asesor: " + idCliente + ", " + idAsesor, e);
+            return false; // Por seguridad, asumir que no pertenece
+        }
+    }
 }

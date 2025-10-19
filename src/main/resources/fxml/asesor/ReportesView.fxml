@@ -70,7 +70,10 @@
          <Label fx:id="lblTotalCuotasPagadas" text="0" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
          
          <Label text="Cuotas Vencidas:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-         <Label fx:id="lblCuotasVencidas" text="0" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+         <HBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <Label fx:id="lblCuotasVencidas" text="0" styleClass="stat-value" />
+            <Button fx:id="btnVerDetallesCuotasVencidas" onAction="#handleVerDetallesCuotasVencidas" text="Ver Detalles" styleClass="small-button" />
+         </HBox>
          
          <Label text="Morosidad:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
          <Label fx:id="lblMorosidad" text="0%" styleClass="stat-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />

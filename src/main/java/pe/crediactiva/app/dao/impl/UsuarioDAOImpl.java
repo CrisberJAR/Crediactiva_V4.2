@@ -137,14 +137,26 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             stmt.setLong(1, usuario.getIdUsuario());
             stmt.setString(2, usuario.getPasswordHash());
             stmt.setInt(3, usuario.getIdRol());
-            stmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+            
+            // Usar la fecha del usuario si está disponible, sino usar la fecha actual
+            LocalDateTime fechaCreacion = usuario.getCreadoEn() != null ? 
+                usuario.getCreadoEn() : LocalDateTime.now();
+            stmt.setTimestamp(4, Timestamp.valueOf(fechaCreacion));
+            
             stmt.setBoolean(5, usuario.isActivo());
+            
+            logger.info("Creando usuario - ID: " + usuario.getIdUsuario() + 
+                       ", Rol: " + usuario.getIdRol() + 
+                       ", Activo: " + usuario.isActivo() + 
+                       ", Fecha: " + fechaCreacion);
             
             int rowsAffected = stmt.executeUpdate();
             
             if (rowsAffected > 0) {
                 logger.info("Usuario creado exitosamente: " + usuario.getIdUsuario());
                 return true;
+            } else {
+                logger.warn("No se insertó ningún registro para usuario: " + usuario.getIdUsuario());
             }
             
         } catch (SQLException e) {

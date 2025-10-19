@@ -3,6 +3,7 @@ package pe.crediactiva.app.view.asesor;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.Scene;
 import javafx.scene.Parent;
@@ -17,9 +18,9 @@ import pe.crediactiva.app.service.AuthenticationService;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.RecaudacionService;
+import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.dao.CronogramaDAO;
 import pe.crediactiva.app.dao.impl.CronogramaDAOImpl;
-import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.view.LoginController;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
@@ -28,6 +29,7 @@ import pe.crediactiva.app.model.Cronograma;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -143,12 +145,20 @@ public class AsesorMainController {
      */
     private void cargarEstadisticasDashboard() {
         try {
-            // Cuotas del día
-            int cuotasDia = prestamoService.obtenerCuotasDelDia().size();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                return;
+            }
+            
+            // Cuotas del día filtradas por asesor
+            int cuotasDia = prestamoService.obtenerCuotasDelDiaPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblCuotasDia", String.valueOf(cuotasDia));
             
-            // Cuotas vencidas
-            int cuotasVencidas = prestamoService.obtenerCuotasVencidas().size();
+            // Cuotas vencidas filtradas por asesor
+            int cuotasVencidas = prestamoService.obtenerCuotasVencidasPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblCuotasVencidas", String.valueOf(cuotasVencidas));
             
             // Recaudación del día
@@ -166,16 +176,16 @@ public class AsesorMainController {
             }
             actualizarLabelDashboard("lblSueldoEstimadoCard", "S/ " + String.format("%.2f", sueldoEstimado));
             
-            // Clientes activos
-            int clientesActivos = 0; // TODO: Implementar en ClienteService
+            // Clientes activos del asesor
+            int clientesActivos = clienteService.obtenerClientesPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblClientesActivos", String.valueOf(clientesActivos));
             
-            // Préstamos activos
-            int prestamosActivos = prestamoService.obtenerPrestamosActivos().size();
+            // Préstamos activos del asesor
+            int prestamosActivos = prestamoService.obtenerPrestamosPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblPrestamosActivos", String.valueOf(prestamosActivos));
             
-            // Morosidad (porcentaje de cuotas vencidas)
-            double morosidad = prestamoService.calcularMorosidad();
+            // Morosidad (porcentaje de cuotas vencidas del asesor)
+            double morosidad = prestamoService.calcularMorosidadPorAsesor(idAsesor);
             actualizarLabelDashboard("lblMorosidad", String.format("%.1f%%", morosidad));
             
         } catch (Exception e) {
@@ -743,8 +753,23 @@ public class AsesorMainController {
      */
     private void actualizarCuotasDia(TableView<CuotaDiaInfo> tabla, VBox statTotal, VBox statMonto, VBox statPagadas, VBox statPendientes) {
         try {
-            // Obtener cuotas del día desde el servicio
-            List<Cronograma> cronogramas = prestamoService.obtenerCuotasDelDia();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                return;
+            }
+            
+            // Verificar si el asesor tiene préstamos asignados
+            if (!prestamoService.tienePrestamosAsignados(idAsesor)) {
+                logger.warn("El asesor " + idAsesor + " no tiene préstamos asignados. No se mostrarán cuotas.");
+                tabla.getItems().clear();
+                return;
+            }
+            
+            // Obtener cuotas del día filtradas por asesor
+            List<Cronograma> cronogramas = prestamoService.obtenerCuotasDelDiaPorAsesor(idAsesor);
             List<CuotaDiaInfo> cuotas = new ArrayList<>();
             
             for (Cronograma cronograma : cronogramas) {
@@ -1527,18 +1552,116 @@ public class AsesorMainController {
     @FXML
     private void handleVerCuotasVencidas() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/CuotasVencidasView.fxml"));
-            VBox cuotasVencidasView = loader.load();
+            logger.info("Botón Ver Detalles de cuotas vencidas presionado");
             
-            // Reemplazar contenido
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(cuotasVencidasView);
+            // Crear una ventana de detalles de cuotas vencidas
+            mostrarDetallesCuotasVencidas();
             
-            logger.info("Cargadas cuotas vencidas");
+        } catch (Exception e) {
+            logger.error("Error al mostrar cuotas vencidas", e);
+            mostrarError("Error al mostrar las cuotas vencidas: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Muestra los detalles de las cuotas vencidas en una nueva ventana
+     */
+    private void mostrarDetallesCuotasVencidas() {
+        try {
+            logger.info("Iniciando creación de ventana de detalles de cuotas vencidas");
             
-        } catch (IOException e) {
-            logger.error("Error al cargar cuotas vencidas", e);
-            mostrarError("Error al cargar las cuotas vencidas");
+            // Crear una nueva ventana para mostrar los detalles
+            Stage detallesStage = new Stage();
+            detallesStage.setTitle("Detalles de Cuotas Vencidas");
+            detallesStage.setWidth(900);
+            detallesStage.setHeight(700);
+            
+            // Crear tabla para mostrar las cuotas vencidas
+            TableView<Cronograma> tablaCuotas = new TableView<>();
+            
+            // Columnas básicas
+            TableColumn<Cronograma, Long> colIdCuota = new TableColumn<>("ID Cuota");
+            colIdCuota.setCellValueFactory(new PropertyValueFactory<>("idCuota"));
+            colIdCuota.setPrefWidth(80);
+            
+            TableColumn<Cronograma, Long> colIdPrestamo = new TableColumn<>("ID Préstamo");
+            colIdPrestamo.setCellValueFactory(new PropertyValueFactory<>("idPrestamo"));
+            colIdPrestamo.setPrefWidth(100);
+            
+            TableColumn<Cronograma, Integer> colNumeroCuota = new TableColumn<>("N° Cuota");
+            colNumeroCuota.setCellValueFactory(new PropertyValueFactory<>("numeroCuota"));
+            colNumeroCuota.setPrefWidth(80);
+            
+            TableColumn<Cronograma, LocalDate> colFechaProgramada = new TableColumn<>("Fecha Programada");
+            colFechaProgramada.setCellValueFactory(new PropertyValueFactory<>("fechaProgramada"));
+            colFechaProgramada.setPrefWidth(120);
+            
+            TableColumn<Cronograma, BigDecimal> colMonto = new TableColumn<>("Monto");
+            colMonto.setCellValueFactory(new PropertyValueFactory<>("montoCuota"));
+            colMonto.setPrefWidth(100);
+            
+            TableColumn<Cronograma, String> colEstado = new TableColumn<>("Estado");
+            colEstado.setCellValueFactory(cellData -> {
+                Cronograma.EstadoCuota estado = cellData.getValue().getEstadoCuota();
+                return new javafx.beans.property.SimpleStringProperty(estado.getDescripcion());
+            });
+            colEstado.setPrefWidth(100);
+            
+            // Calcular días de retraso
+            TableColumn<Cronograma, String> colDiasRetraso = new TableColumn<>("Días de Retraso");
+            colDiasRetraso.setCellValueFactory(cellData -> {
+                LocalDate fechaProgramada = cellData.getValue().getFechaProgramada();
+                long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(fechaProgramada, LocalDate.now());
+                return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasRetraso));
+            });
+            colDiasRetraso.setPrefWidth(100);
+            
+            // Agregar columnas a la tabla
+            tablaCuotas.getColumns().add(colIdCuota);
+            tablaCuotas.getColumns().add(colIdPrestamo);
+            tablaCuotas.getColumns().add(colNumeroCuota);
+            tablaCuotas.getColumns().add(colFechaProgramada);
+            tablaCuotas.getColumns().add(colMonto);
+            tablaCuotas.getColumns().add(colEstado);
+            tablaCuotas.getColumns().add(colDiasRetraso);
+            
+            // Obtener cuotas vencidas del asesor actual
+            PrestamoService prestamoService = new PrestamoService();
+            Long idAsesorActual = SessionManager.getInstance().getAsesorId();
+            List<Cronograma> cuotasVencidas = prestamoService.obtenerCuotasVencidasPorAsesor(idAsesorActual);
+            
+            // Cargar datos
+            ObservableList<Cronograma> cuotasObservable = FXCollections.observableArrayList(cuotasVencidas);
+            tablaCuotas.setItems(cuotasObservable);
+            
+            // Crear layout
+            VBox layout = new VBox(10);
+            layout.setPadding(new javafx.geometry.Insets(10));
+            
+            Label titulo = new Label("Cuotas Vencidas del Asesor - Total: " + cuotasVencidas.size());
+            titulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+            
+            // Calcular total de monto vencido
+            BigDecimal totalVencido = cuotasVencidas.stream()
+                .map(Cronograma::getMontoCuota)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            Label totalLabel = new Label("Monto Total Vencido: S/ " + String.format("%.2f", totalVencido));
+            totalLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: red;");
+            
+            layout.getChildren().addAll(titulo, totalLabel, tablaCuotas);
+            
+            // Crear escena
+            Scene scene = new Scene(layout);
+            detallesStage.setScene(scene);
+            
+            // Mostrar la ventana
+            detallesStage.show();
+            logger.info("Ventana de detalles de cuotas vencidas mostrada exitosamente");
+            
+        } catch (Exception e) {
+            logger.error("Error al mostrar detalles de cuotas vencidas", e);
+            mostrarError("Error al mostrar los detalles de cuotas vencidas: " + e.getMessage());
         }
     }
     
@@ -2028,8 +2151,14 @@ public class AsesorMainController {
      */
     private void cargarTodosLosClientes(TableView<Cliente> tablaClientes, Label lblEstado) {
         try {
-            // Obtener el ID del asesor actual (12345678)
-            Long idAsesor = 12345678L;
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
             
             // Obtener clientes reales de la base de datos
             List<Cliente> clientesBD = clienteService.obtenerClientesPorAsesor(idAsesor);
@@ -2099,7 +2228,12 @@ public class AsesorMainController {
         
         try {
             // Primero cargar todos los clientes para tener la lista completa
-            Long idAsesor = 12345678L;
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
             List<Cliente> todosLosClientes = clienteService.obtenerClientesPorAsesor(idAsesor);
             ObservableList<Cliente> clientesFiltrados = FXCollections.observableArrayList();
             
@@ -2313,7 +2447,15 @@ public class AsesorMainController {
             nuevoCliente.setDireccion(txtDireccion.getText().trim());
             nuevoCliente.setTelefono(txtTelefono.getText().trim());
             nuevoCliente.setEmail(email);
-            nuevoCliente.setIdAsesor(12345678L); // ID del asesor actual
+            // CORRECCIÓN CRÍTICA: Obtener el ID del asesor actual desde la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            nuevoCliente.setIdAsesor(idAsesor);
+            logger.info("Cliente será registrado con id_asesor: " + idAsesor);
             nuevoCliente.setSaldoCapital(new java.math.BigDecimal("0.00"));
             nuevoCliente.setEtiquetaCliente(Cliente.EtiquetaCliente.EXCELENTE);
             nuevoCliente.setActivo(true);
@@ -2458,6 +2600,22 @@ public class AsesorMainController {
                 return;
             }
             
+            // VALIDACIÓN CRÍTICA DE SEGURIDAD: Verificar que el cliente pertenezca al asesor actual
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            if (!clienteService.clientePerteneceAlAsesor(idCliente, idAsesor)) {
+                logger.warn("Intento de acceso no autorizado - Asesor " + idAsesor + 
+                           " intentó solicitar préstamo para cliente " + idCliente);
+                mostrarError("No tiene permisos para solicitar préstamos para este cliente. " +
+                           "Solo puede solicitar préstamos para sus propios clientes.");
+                return;
+            }
+            
             // Obtener plazo en meses
             String plazoStr = cmbPlazo.getValue();
             int plazoMeses = 1;
@@ -2467,7 +2625,7 @@ public class AsesorMainController {
             // Crear el préstamo
             Prestamo nuevoPrestamo = new Prestamo();
             nuevoPrestamo.setIdCliente(idCliente);
-            nuevoPrestamo.setIdAsesor(12345678L); // ID del asesor actual
+            nuevoPrestamo.setIdAsesor(idAsesor); // ID del asesor actual de la sesión
             nuevoPrestamo.setMontoSolicitado(new java.math.BigDecimal(monto));
             nuevoPrestamo.setMontoDesembolsado(new java.math.BigDecimal("0.00")); // Por defecto 0
             nuevoPrestamo.setTasaInteres(new java.math.BigDecimal("14.40")); // 14.4% por defecto

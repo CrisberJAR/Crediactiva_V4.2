@@ -8,6 +8,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import pe.crediactiva.app.model.Cronograma;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.util.FechaUtil;
+import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,13 +155,60 @@ public class CuotasDiaController {
     }
     
     /**
-     * Carga las cuotas del día
+     * Carga las cuotas del día filtradas por asesor
      */
     private void cargarCuotasDelDia() {
         try {
-            List<Cronograma> cuotasDelDia = prestamoService.obtenerCuotasDelDia();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            logger.info("=== DEBUGGING CUOTAS DEL DÍA ===");
+            logger.info("Asesor actual: " + idAsesor);
+            
+            // Verificar consistencia de datos
+            prestamoService.verificarConsistenciaAsesor(idAsesor);
+            
+            // VALIDACIÓN ADICIONAL: Verificar si el asesor tiene préstamos
+            if (!prestamoService.tienePrestamosAsignados(idAsesor)) {
+                logger.warn("El asesor " + idAsesor + " no tiene préstamos asignados. No se mostrarán cuotas.");
+                cuotas.clear();
+                actualizarResumen();
+                return;
+            }
+            
+            // Obtener cuotas del día filtradas por asesor
+            List<Cronograma> cuotasDelDia = prestamoService.obtenerCuotasDelDiaPorAsesor(idAsesor);
+            
+            // Debugging: Verificar cada cuota encontrada
+            for (Cronograma cuota : cuotasDelDia) {
+                if (cuota.getPrestamo() != null && cuota.getPrestamo().getCliente() != null) {
+                    String nombreCliente = cuota.getPrestamo().getCliente().getNombre() + " " + cuota.getPrestamo().getCliente().getApellido();
+                    Long asesorPrestamo = cuota.getPrestamo().getIdAsesor();
+                    
+                    logger.info("Cuota encontrada - Cliente: " + nombreCliente + 
+                               ", Asesor del préstamo: " + asesorPrestamo + 
+                               ", Asesor actual: " + idAsesor);
+                    
+                    // Verificar si hay inconsistencia
+                    if (!idAsesor.equals(asesorPrestamo)) {
+                        logger.error("¡INCONSISTENCIA DETECTADA! Cliente: " + nombreCliente + 
+                                   " pertenece al asesor " + asesorPrestamo + 
+                                   " pero se está mostrando al asesor " + idAsesor);
+                    }
+                }
+            }
+            
             cuotas.clear();
             cuotas.addAll(cuotasDelDia);
+            
+            logger.info("Cargadas " + cuotasDelDia.size() + " cuotas del día para el asesor: " + idAsesor);
+            logger.info("=== FIN DEBUGGING ===");
             
         } catch (Exception e) {
             logger.error("Error al cargar cuotas del día", e);
@@ -207,13 +255,22 @@ public class CuotasDiaController {
         busquedaActual = txtBuscar.getText().trim();
         
         try {
-            // TODO: Implementar búsqueda en PrestamoService
-            List<Cronograma> cuotasEncontradas = prestamoService.obtenerCuotasDelDia();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener cuotas del día filtradas por asesor
+            List<Cronograma> cuotasEncontradas = prestamoService.obtenerCuotasDelDiaPorAsesor(idAsesor);
             cuotas.clear();
             cuotas.addAll(cuotasEncontradas);
             actualizarResumen();
             
-            logger.info("Búsqueda realizada: " + busquedaActual);
+            logger.info("Búsqueda realizada: " + busquedaActual + " para asesor: " + idAsesor);
             
         } catch (Exception e) {
             logger.error("Error al buscar cuotas", e);
@@ -243,14 +300,23 @@ public class CuotasDiaController {
         String estadoSeleccionado = cmbEstado.getValue();
         
         try {
-            // TODO: Implementar filtros en PrestamoService
-            List<Cronograma> cuotasFiltradas = prestamoService.obtenerCuotasDelDia();
+            // Obtener el ID del asesor actual de la sesión
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                mostrarError("Error: No se pudo identificar al asesor");
+                return;
+            }
+            
+            // Obtener cuotas del día filtradas por asesor
+            List<Cronograma> cuotasFiltradas = prestamoService.obtenerCuotasDelDiaPorAsesor(idAsesor);
             
             cuotas.clear();
             cuotas.addAll(cuotasFiltradas);
             actualizarResumen();
             
-            logger.info("Filtro aplicado: " + estadoSeleccionado);
+            logger.info("Filtro aplicado: " + estadoSeleccionado + " para asesor: " + idAsesor);
             
         } catch (Exception e) {
             logger.error("Error al filtrar cuotas", e);
