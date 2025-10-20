@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Controlador principal para la interfaz del administrador
@@ -112,7 +113,7 @@ public class AdminMainController {
             }
             
             // Configurar fecha actual
-            txtFechaHoy.setText("Fecha: " + FechaUtil.formatearFecha(LocalDate.now()));
+            txtFechaHoy.setText("Fecha: " + FechaUtil.formatearFecha(DateTimeUtil.today()));
             
             // Cargar estadísticas del dashboard
             loadDashboardStats();
@@ -145,8 +146,7 @@ public class AdminMainController {
             txtCapitalTotal.setText("S/ 0.00"); // TODO: Implementar
             
             // Última actualización
-            String fechaActual = java.time.LocalDateTime.now().format(
-                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            String fechaActual = DateTimeUtil.formatDateTime(DateTimeUtil.now());
             txtUltimaActualizacion.setText(fechaActual);
             lblUltimaActualizacion.setText("Última actualización: " + fechaActual);
             
@@ -1094,7 +1094,7 @@ public class AdminMainController {
             nuevoUsuario.setPasswordHash(password);
             nuevoUsuario.setIdRol(2); // Rol de asesor
             nuevoUsuario.setActivo(true);
-            nuevoUsuario.setCreadoEn(java.time.LocalDateTime.now());
+            nuevoUsuario.setCreadoEn(DateTimeUtil.now());
             
             // Verificar que el usuario se está creando con los valores correctos
             logger.info("Usuario a crear - ID: " + nuevoUsuario.getIdUsuario() + 
@@ -1165,7 +1165,7 @@ public class AdminMainController {
                 statement.setString(6, asesor.getDireccion());
                 statement.setBoolean(7, asesor.isActivo());
                 // Agregar fecha_contrato con la fecha actual
-                statement.setTimestamp(8, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                statement.setTimestamp(8, DateTimeUtil.nowAsTimestamp());
                 
                 int rowsAffected = statement.executeUpdate();
                 
@@ -1657,7 +1657,7 @@ public class AdminMainController {
             nuevoUsuario.setPasswordHash(password);
             nuevoUsuario.setIdRol(3); // Rol de cliente
             nuevoUsuario.setActivo(true);
-            nuevoUsuario.setCreadoEn(java.time.LocalDateTime.now());
+            nuevoUsuario.setCreadoEn(DateTimeUtil.now());
             
             // Crear rol para el usuario
             Rol rolCliente = new Rol();

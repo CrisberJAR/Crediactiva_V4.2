@@ -1,6 +1,7 @@
 package pe.crediactiva.app.model;
 
 import java.time.LocalDateTime;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Modelo para la entidad Auditoria
@@ -41,7 +42,7 @@ public class Auditoria {
         this.tablaAfectada = tablaAfectada;
         this.idRegistroAfectado = idRegistroAfectado;
         this.accion = accion;
-        this.fecha = LocalDateTime.now();
+        this.fecha = DateTimeUtil.now();
     }
     
     // Getters y Setters

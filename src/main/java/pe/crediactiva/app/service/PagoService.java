@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Servicio de gestión de pagos
@@ -54,13 +55,13 @@ public class PagoService {
             pago.setIdCuota(idCuota);
             pago.setIdCliente(idCliente);
             pago.setIdAsesor(idAsesor);
-            pago.setFechaPago(LocalDateTime.now());
+            pago.setFechaPago(DateTimeUtil.now());
             pago.setMontoPagado(montoPagado);
 
             boolean success = pagoDAO.create(pago);
             if (success) {
                 // Marcar la cuota como pagada
-                cronogramaDAO.marcarComoPagada(idCuota, LocalDateTime.now().toLocalDate());
+                cronogramaDAO.marcarComoPagada(idCuota, DateTimeUtil.today());
                 
                 // Registrar auditoría
                 auditoriaService.registrarAuditoria("pagos", pago.getIdPago().toString(), 
@@ -237,6 +238,57 @@ public class PagoService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         } catch (Exception e) {
             logger.error("Error al calcular total de pagos del asesor: " + idAsesor, e);
+            return BigDecimal.ZERO;
+        }
+    }
+    
+    /**
+     * Calcula la recaudación del mes actual para un asesor específico
+     * Busca en la tabla pagos los registros del asesor en el rango de fechas del mes actual
+     * y suma los montos de la columna monto_pagado
+     */
+    public BigDecimal calcularRecaudacionMesActual(Long idAsesor) {
+        try {
+            if (idAsesor == null) {
+                logger.warn("ID de asesor es null");
+                return BigDecimal.ZERO;
+            }
+            
+            // Obtener el primer día del mes actual y el día actual
+            java.time.LocalDate fechaInicio = DateTimeUtil.today().withDayOfMonth(1);
+            java.time.LocalDate fechaFin = DateTimeUtil.today();
+            
+            logger.info("Calculando recaudación del mes para asesor " + idAsesor + 
+                       " desde " + fechaInicio + " hasta " + fechaFin);
+            
+            // Obtener todos los pagos del asesor
+            List<Pago> todosPagos = pagoDAO.findByAsesor(idAsesor);
+            logger.info("Total de pagos encontrados para asesor " + idAsesor + ": " + todosPagos.size());
+            
+            // Filtrar pagos del mes actual y sumar montos
+            BigDecimal recaudacionTotal = BigDecimal.ZERO;
+            int pagosDelMes = 0;
+            
+            for (Pago pago : todosPagos) {
+                java.time.LocalDate fechaPago = pago.getFechaPago().toLocalDate();
+                
+                // Verificar si el pago está en el rango del mes actual
+                if (!fechaPago.isBefore(fechaInicio) && !fechaPago.isAfter(fechaFin)) {
+                    recaudacionTotal = recaudacionTotal.add(pago.getMontoPagado());
+                    pagosDelMes++;
+                    
+                    logger.info("Pago del mes encontrado - ID: " + pago.getIdPago() + 
+                               ", Fecha: " + fechaPago + 
+                               ", Monto: " + pago.getMontoPagado());
+                }
+            }
+            
+            logger.info("Pagos del mes actual: " + pagosDelMes + ", Recaudación total: S/ " + recaudacionTotal);
+            
+            return recaudacionTotal;
+            
+        } catch (Exception e) {
+            logger.error("Error al calcular recaudación del mes para asesor: " + idAsesor, e);
             return BigDecimal.ZERO;
         }
     }

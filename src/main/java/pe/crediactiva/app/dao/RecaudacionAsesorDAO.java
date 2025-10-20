@@ -79,4 +79,9 @@ public interface RecaudacionAsesorDAO {
      * Verifica si existe una recaudación pendiente para una cuota específica
      */
     boolean existeRecaudacionPendienteParaCuota(Long idPrestamo, Long idCuota);
+    
+    /**
+     * Obtiene recaudaciones por fecha y asesor
+     */
+    List<RecaudacionAsesor> findByFechaAndAsesor(LocalDate fecha, Long idAsesor);
 }

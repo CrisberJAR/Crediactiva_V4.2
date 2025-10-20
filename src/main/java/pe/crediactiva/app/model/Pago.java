@@ -2,6 +2,7 @@ package pe.crediactiva.app.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Modelo para la entidad Pago
@@ -31,8 +32,8 @@ public class Pago {
         this.idCliente = idCliente;
         this.idAsesor = idAsesor;
         this.montoPagado = montoPagado;
-        this.fechaPago = LocalDateTime.now();
-        this.fechaRegistro = LocalDateTime.now();
+        this.fechaPago = DateTimeUtil.now();
+        this.fechaRegistro = DateTimeUtil.now();
         this.validado = false;
     }
     

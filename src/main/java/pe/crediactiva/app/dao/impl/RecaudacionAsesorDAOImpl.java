@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para RecaudacionAsesor
@@ -53,7 +54,7 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
             stmt.setLong(2, recaudacion.getIdCliente());
             stmt.setLong(3, recaudacion.getIdPrestamo());
             stmt.setObject(4, recaudacion.getIdCuota()); // Puede ser NULL
-            stmt.setTimestamp(5, Timestamp.valueOf(recaudacion.getFechaRegistro()));
+            stmt.setTimestamp(5, DateTimeUtil.nowAsTimestamp());
             stmt.setBigDecimal(6, recaudacion.getMontoRegistrado());
             stmt.setBoolean(7, recaudacion.isValidado());
             stmt.setString(8, recaudacion.getObservaciones());
@@ -88,7 +89,7 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
             stmt.setLong(2, recaudacion.getIdCliente());
             stmt.setLong(3, recaudacion.getIdPrestamo());
             stmt.setObject(4, recaudacion.getIdCuota()); // Puede ser NULL
-            stmt.setTimestamp(5, Timestamp.valueOf(recaudacion.getFechaRegistro()));
+            stmt.setTimestamp(5, DateTimeUtil.nowAsTimestamp());
             stmt.setBigDecimal(6, recaudacion.getMontoRegistrado());
             stmt.setBoolean(7, recaudacion.isValidado());
             stmt.setString(8, recaudacion.getObservaciones());
@@ -374,5 +375,43 @@ public class RecaudacionAsesorDAOImpl implements RecaudacionAsesorDAO {
         recaudacion.setObservaciones(observaciones);
         
         return recaudacion;
+    }
+    
+    @Override
+    public List<RecaudacionAsesor> findByFechaAndAsesor(LocalDate fecha, Long idAsesor) {
+        List<RecaudacionAsesor> recaudaciones = new ArrayList<>();
+        
+        String sql = """
+            SELECT r.*, p.id_asesor 
+            FROM recaudacion_asesor r
+            INNER JOIN prestamos p ON r.id_prestamo = p.id_prestamo
+            WHERE DATE(r.fecha_registro) = ? 
+            AND p.id_asesor = ?
+            ORDER BY r.fecha_registro DESC
+            """;
+        
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setDate(1, java.sql.Date.valueOf(fecha));
+            stmt.setLong(2, idAsesor);
+            
+            logger.info("Ejecutando consulta: " + sql);
+            logger.info("Parámetros - Fecha: " + fecha + ", Asesor: " + idAsesor);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    RecaudacionAsesor recaudacion = mapResultSetToRecaudacionAsesor(rs);
+                    recaudaciones.add(recaudacion);
+                }
+            }
+            
+            logger.info("Recaudaciones encontradas para asesor " + idAsesor + " en fecha " + fecha + ": " + recaudaciones.size());
+            
+        } catch (SQLException e) {
+            logger.error("Error al buscar recaudaciones por fecha y asesor", e);
+        }
+        
+        return recaudaciones;
     }
 }

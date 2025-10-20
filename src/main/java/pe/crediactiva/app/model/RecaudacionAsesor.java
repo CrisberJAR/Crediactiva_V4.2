@@ -2,6 +2,9 @@ package pe.crediactiva.app.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Modelo para la entidad RecaudacionAsesor
@@ -26,13 +29,20 @@ public class RecaudacionAsesor {
         this.validado = false;
     }
     
+    /**
+     * Obtiene la fecha y hora actual de Perú usando DateTimeUtil
+     */
+    private LocalDateTime getCurrentDateTimePeru() {
+        return DateTimeUtil.now();
+    }
+    
     public RecaudacionAsesor(Long idAsesor, Long idCliente, Long idPrestamo, BigDecimal montoRegistrado) {
         this();
         this.idAsesor = idAsesor;
         this.idCliente = idCliente;
         this.idPrestamo = idPrestamo;
         this.montoRegistrado = montoRegistrado;
-        this.fechaRegistro = LocalDateTime.now();
+        this.fechaRegistro = getCurrentDateTimePeru();
     }
     
     public RecaudacionAsesor(Long idAsesor, Long idCliente, Long idPrestamo, Long idCuota, BigDecimal montoRegistrado) {
@@ -42,7 +52,7 @@ public class RecaudacionAsesor {
         this.idPrestamo = idPrestamo;
         this.idCuota = idCuota;
         this.montoRegistrado = montoRegistrado;
-        this.fechaRegistro = LocalDateTime.now();
+        this.fechaRegistro = getCurrentDateTimePeru();
     }
     
     // Getters y Setters

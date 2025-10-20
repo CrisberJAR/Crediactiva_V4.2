@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para Préstamo
@@ -226,7 +227,7 @@ public class PrestamoDAOImpl implements PrestamoDAO {
             stmt.setDate(10, prestamo.getFechaInicio() != null ? Date.valueOf(prestamo.getFechaInicio()) : null);
             stmt.setDate(11, prestamo.getFechaFin() != null ? Date.valueOf(prestamo.getFechaFin()) : null);
             stmt.setString(12, prestamo.getObservacion());
-            stmt.setTimestamp(13, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setTimestamp(13, DateTimeUtil.nowAsTimestamp());
             
             int rowsAffected = stmt.executeUpdate();
             

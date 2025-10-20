@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pe.crediactiva.app.view.asesor.RecaudacionDiaController" spacing="15.0">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   
+   <Label text="Recaudación del Día" styleClass="title-label">
+      <font>
+         <Font size="16.0" />
+      </font>
+   </Label>
+   
+   <!-- Resumen de recaudación del día -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Resumen de Recaudación del Día" styleClass="section-title" />
+      
+      <GridPane hgap="10.0" vgap="10.0">
+         <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+            <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+            <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+            <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints minHeight="80.0" vgrow="NEVER" />
+         </rowConstraints>
+         
+         <!-- Total Recaudado -->
+         <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="0">
+            <Label text="💰" styleClass="stat-icon" />
+            <Label text="Total Recaudado" styleClass="stat-label" />
+            <Label fx:id="lblTotalRecaudado" text="S/ 0.00" styleClass="stat-value" />
+         </VBox>
+         
+         <!-- Total Cobros -->
+         <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="1">
+            <Label text="📊" styleClass="stat-icon" />
+            <Label text="Total Cobros" styleClass="stat-label" />
+            <Label fx:id="lblTotalCobros" text="0" styleClass="stat-value" />
+         </VBox>
+         
+         <!-- Total Validados -->
+         <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="2">
+            <Label text="✅" styleClass="stat-icon" />
+            <Label text="Validados" styleClass="stat-label" />
+            <Label fx:id="lblTotalValidados" text="0" styleClass="stat-value" />
+         </VBox>
+         
+         <!-- Total Pendientes -->
+         <VBox alignment="CENTER" spacing="5.0" styleClass="stat-card" GridPane.columnIndex="3">
+            <Label text="⏳" styleClass="stat-icon" />
+            <Label text="Pendientes" styleClass="stat-label" />
+            <Label fx:id="lblTotalPendientes" text="0" styleClass="stat-value" />
+         </VBox>
+      </GridPane>
+   </VBox>
+   
+   <!-- Filtros y búsqueda -->
+   <VBox spacing="10.0" styleClass="form-section">
+      <Label text="Filtros y Búsqueda" styleClass="section-title" />
+      
+      <HBox spacing="15.0" alignment="CENTER_LEFT">
+         <Label text="Buscar:" />
+         <TextField fx:id="txtBuscar" onAction="#handleBuscar" promptText="ID Cliente o Préstamo" prefWidth="200.0" />
+         <Button onAction="#handleBuscar" styleClass="primary-button" text="Buscar" />
+         
+         <Separator orientation="VERTICAL" />
+         
+         <Label text="Estado:" />
+         <ComboBox fx:id="cmbEstado" onAction="#handleFiltrar" prefWidth="120.0" />
+         
+         <Button onAction="#handleActualizar" styleClass="secondary-button" text="Actualizar" />
+      </HBox>
+   </VBox>
+   
+   <!-- Tabla de recaudación -->
+   <VBox spacing="10.0" styleClass="form-section" VBox.vgrow="ALWAYS">
+      <Label text="Detalle de Recaudación del Día" styleClass="section-title" />
+      
+      <TableView fx:id="tblRecaudacion" styleClass="data-table">
+         <columns>
+            <TableColumn fx:id="colIdRecaudacion" text="ID" prefWidth="60.0" />
+            <TableColumn fx:id="colCliente" text="Cliente" prefWidth="150.0" />
+            <TableColumn fx:id="colPrestamo" text="Préstamo" prefWidth="100.0" />
+            <TableColumn fx:id="colMonto" text="Monto" prefWidth="100.0" />
+            <TableColumn fx:id="colFechaRegistro" text="Fecha Registro" prefWidth="120.0" />
+            <TableColumn fx:id="colEstado" text="Estado" prefWidth="100.0" />
+            <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="80.0" />
+         </columns>
+      </TableView>
+   </VBox>
+   
+   <!-- Botones de acción -->
+   <HBox spacing="15.0" alignment="CENTER_LEFT">
+      <Button onAction="#handleActualizar" styleClass="primary-button" text="Actualizar" />
+      <Button styleClass="secondary-button" text="Exportar" />
+      <Button styleClass="secondary-button" text="Regresar al Dashboard" />
+   </HBox>
+</VBox>

@@ -17,6 +17,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 import java.util.ResourceBundle;
 
 /**
@@ -188,7 +189,7 @@ public class DetallePrestamoController implements Initializable {
                 dpFechaInicio.setValue(prestamo.getFechaInicio());
             } else {
                 // Si no hay fecha de inicio, usar la fecha actual
-                dpFechaInicio.setValue(LocalDate.now());
+                dpFechaInicio.setValue(DateTimeUtil.today());
             }
             
             txtObservacion.setText(prestamo.getObservacion() != null ? prestamo.getObservacion() : "");

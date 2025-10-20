@@ -1,6 +1,7 @@
 package pe.crediactiva.app.model;
 
 import java.time.LocalDateTime;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Modelo para la entidad Documento
@@ -22,7 +23,7 @@ public class Documento {
         this.idPrestamo = idPrestamo;
         this.tipo = tipo;
         this.ruta = ruta;
-        this.subidoEn = LocalDateTime.now();
+        this.subidoEn = DateTimeUtil.now();
     }
 
     // Getters y Setters

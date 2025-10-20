@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para Documento
@@ -52,7 +53,7 @@ public class DocumentoDAOImpl implements DocumentoDAO {
             stmt.setLong(1, documento.getIdPrestamo());
             stmt.setString(2, documento.getTipo());
             stmt.setString(3, documento.getRuta());
-            stmt.setTimestamp(4, Timestamp.valueOf(documento.getSubidoEn()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -82,7 +83,7 @@ public class DocumentoDAOImpl implements DocumentoDAO {
             stmt.setLong(1, documento.getIdPrestamo());
             stmt.setString(2, documento.getTipo());
             stmt.setString(3, documento.getRuta());
-            stmt.setTimestamp(4, Timestamp.valueOf(documento.getSubidoEn()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setLong(5, documento.getIdDocumento());
 
             int rowsAffected = stmt.executeUpdate();

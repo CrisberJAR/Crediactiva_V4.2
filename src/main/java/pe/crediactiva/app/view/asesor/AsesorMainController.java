@@ -18,6 +18,7 @@ import pe.crediactiva.app.service.AuthenticationService;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.RecaudacionService;
+import pe.crediactiva.app.service.PagoService;
 import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.dao.CronogramaDAO;
 import pe.crediactiva.app.dao.impl.CronogramaDAOImpl;
@@ -32,11 +33,11 @@ import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import pe.crediactiva.app.util.DateTimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -96,6 +97,7 @@ public class AsesorMainController {
     private PrestamoService prestamoService;
     private ClienteService clienteService;
     private RecaudacionService recaudacionService;
+    private PagoService pagoService;
     private CronogramaDAO cronogramaDAO;
     
     public AsesorMainController() {
@@ -103,6 +105,7 @@ public class AsesorMainController {
         this.prestamoService = new PrestamoService();
         this.clienteService = new ClienteService();
         this.recaudacionService = new RecaudacionService();
+        this.pagoService = new PagoService();
         this.cronogramaDAO = new CronogramaDAOImpl();
     }
     
@@ -126,14 +129,14 @@ public class AsesorMainController {
             }
             
             // Configurar fecha actual
-            lblFechaHoy.setText("Fecha: " + LocalDate.now().toString());
+            lblFechaHoy.setText("Fecha: " + DateTimeUtil.today().toString());
             
             // Cargar estadísticas del dashboard
             cargarEstadisticasDashboard();
             
             // Configurar última actualización
             lblUltimaActualizacion.setText("Última actualización: " + 
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+                DateTimeUtil.formatDateTime(DateTimeUtil.now()));
             
         } catch (Exception e) {
             logger.error("Error al inicializar la pantalla del asesor", e);
@@ -161,18 +164,24 @@ public class AsesorMainController {
             int cuotasVencidas = prestamoService.obtenerCuotasVencidasPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblCuotasVencidas", String.valueOf(cuotasVencidas));
             
-            // Recaudación del día
-            // TODO: Implementar recaudación
-            actualizarLabelDashboard("lblRecaudacionDia", "S/ 0.00");
+            // Recaudación del día filtrada por asesor
+            BigDecimal recaudacionDia = recaudacionService.obtenerRecaudacionDelDiaPorAsesor(idAsesor)
+                .stream()
+                .map(RecaudacionAsesor::getMontoRegistrado)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            actualizarLabelDashboard("lblRecaudacionDia", "S/ " + String.format("%.2f", recaudacionDia));
+            
+            // Recaudación del mes actual filtrada por asesor (desde tabla pagos)
+            BigDecimal recaudacionMes = pagoService.calcularRecaudacionMesActual(idAsesor);
             if (lblRecaudacionMes != null) {
-                lblRecaudacionMes.setText("Recaudación Mes: S/ 0.00");
+                lblRecaudacionMes.setText("Recaudación Mes: S/ " + String.format("%.2f", recaudacionMes));
             }
-            actualizarLabelDashboard("lblRecaudacionMesCard", "S/ 0.00");
+            actualizarLabelDashboard("lblRecaudacionMesCard", "S/ " + String.format("%.2f", recaudacionMes));
             
             // Sueldo estimado (10% de la recaudación del mes)
-            double sueldoEstimado = 0.0;
+            double sueldoEstimado = recaudacionMes.doubleValue() * 0.10;
             if (lblSueldoEstimado != null) {
-                lblSueldoEstimado.setText("Sueldo Estimado: S/ 0.00");
+                lblSueldoEstimado.setText("Sueldo Estimado: S/ " + String.format("%.2f", sueldoEstimado));
             }
             actualizarLabelDashboard("lblSueldoEstimadoCard", "S/ " + String.format("%.2f", sueldoEstimado));
             
@@ -574,7 +583,7 @@ public class AsesorMainController {
         contenedor.setPadding(new Insets(25));
         
         // Título
-        Label titulo = new Label("📅 Cuotas del Día - " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        Label titulo = new Label("📅 Cuotas del Día - " + DateTimeUtil.today().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         titulo.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 20 0;");
         
         // Panel de información
@@ -657,7 +666,7 @@ public class AsesorMainController {
     private TableView<CuotaDiaInfo> crearTablaCuotasDia() {
         TableView<CuotaDiaInfo> tabla = new TableView<>();
         tabla.setStyle("-fx-background-color: transparent; -fx-border-color: #e5e7eb; -fx-border-width: 1px; -fx-border-radius: 8px;");
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         
         // Columna Cliente
         TableColumn<CuotaDiaInfo, String> colCliente = new TableColumn<>("Cliente");
@@ -819,10 +828,10 @@ public class AsesorMainController {
             }
             
             // CORRECCIÓN: Mostrar valores reales, no datos de ejemplo
-            actualizarEstadistica(statTotal, String.valueOf(totalCuotas));
-            actualizarEstadistica(statMonto, String.format("S/ %.2f", montoTotal));
-            actualizarEstadistica(statPagadas, String.valueOf(cuotasPagadas));
-            actualizarEstadistica(statPendientes, String.valueOf(cuotasPendientes));
+                actualizarEstadistica(statTotal, String.valueOf(totalCuotas));
+                actualizarEstadistica(statMonto, String.format("S/ %.2f", montoTotal));
+                actualizarEstadistica(statPagadas, String.valueOf(cuotasPagadas));
+                actualizarEstadistica(statPendientes, String.valueOf(cuotasPendientes));
             
         } catch (Exception e) {
             logger.error("Error al actualizar estadísticas de cuotas del día", e);
@@ -1075,7 +1084,7 @@ public class AsesorMainController {
             fechaPago.setAlignment(Pos.CENTER_LEFT);
             Label lblFechaPago = new Label("📅 Fecha de Pago:");
             lblFechaPago.setStyle("-fx-font-weight: bold; -fx-min-width: 120px;");
-            DatePicker dpFechaPago = new DatePicker(LocalDate.now());
+            DatePicker dpFechaPago = new DatePicker(DateTimeUtil.today());
             dpFechaPago.setStyle("-fx-background-color: #ffffff; -fx-border-color: #d1d5db; -fx-border-width: 1px; -fx-border-radius: 4px;");
             fechaPago.getChildren().addAll(lblFechaPago, dpFechaPago);
             
@@ -1589,7 +1598,7 @@ public class AsesorMainController {
             TableColumn<Cronograma, String> colDiasRetraso = new TableColumn<>("Días de Retraso");
             colDiasRetraso.setCellValueFactory(cellData -> {
                 LocalDate fechaProgramada = cellData.getValue().getFechaProgramada();
-                long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(fechaProgramada, LocalDate.now());
+                long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(fechaProgramada, DateTimeUtil.today());
                 return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasRetraso));
             });
             colDiasRetraso.setPrefWidth(100);
@@ -1670,18 +1679,91 @@ public class AsesorMainController {
     @FXML
     private void handleVerRecaudacionMes() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/RecaudacionMesView.fxml"));
-            VBox recaudacionMesView = loader.load();
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            if (idAsesor == null) {
+                mostrarError("No se pudo obtener el ID del asesor");
+                return;
+            }
+            
+            // Crear vista de recaudación del mes
+            VBox recaudacionMesView = crearRecaudacionMesView(idAsesor);
             
             // Reemplazar contenido
             contentArea.getChildren().clear();
             contentArea.getChildren().add(recaudacionMesView);
             
-            logger.info("Cargada recaudación del mes");
+            logger.info("Cargada recaudación del mes para asesor: " + idAsesor);
             
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error al cargar recaudación del mes", e);
-            mostrarError("Error al cargar la recaudación del mes");
+            mostrarError("Error al cargar la recaudación del mes: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Crea la vista de recaudación del mes
+     */
+    private VBox crearRecaudacionMesView(Long idAsesor) {
+        VBox contenedor = new VBox(20);
+        contenedor.setPadding(new Insets(25));
+        
+        // Título
+        Label titulo = new Label("📊 Recaudación del Mes - " + DateTimeUtil.today().format(DateTimeFormatter.ofPattern("MMMM yyyy")));
+        titulo.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 20 0;");
+        
+        // Panel de información
+        VBox panelInfo = new VBox(15);
+        panelInfo.setStyle("-fx-background-color: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); -fx-background-radius: 16px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5); -fx-border-color: rgba(226,232,240,0.5); -fx-border-width: 1px; -fx-border-radius: 16px; -fx-padding: 25;");
+        
+        // Obtener datos de recaudación del mes
+        BigDecimal recaudacionTotal = pagoService.calcularRecaudacionMesActual(idAsesor);
+        
+        // Estadísticas
+        HBox estadisticas = new HBox(30);
+        estadisticas.setAlignment(Pos.CENTER);
+        
+        VBox statTotal = crearEstadistica("💰", "Total Recaudado", "S/ " + String.format("%.2f", recaudacionTotal), "#10b981");
+        VBox statSueldo = crearEstadistica("💼", "Sueldo Estimado", "S/ " + String.format("%.2f", recaudacionTotal.doubleValue() * 0.10), "#3b82f6");
+        
+        estadisticas.getChildren().addAll(statTotal, statSueldo);
+        
+        // Información adicional
+        Label infoLabel = new Label("Esta recaudación incluye todos los pagos validados y aprobados por el administrador durante el mes actual.");
+        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280; -fx-wrap-text: true;");
+        
+        panelInfo.getChildren().addAll(estadisticas, infoLabel);
+        
+        // Botón de regreso
+        HBox botones = new HBox(10);
+        botones.setAlignment(Pos.CENTER);
+        
+        Button btnRegresar = new Button("← Regresar al Dashboard");
+        btnRegresar.setStyle("-fx-background-color: #6b7280; -fx-text-fill: white; -fx-font-weight: 600; -fx-padding: 10 20; -fx-background-radius: 8px; -fx-cursor: hand;");
+        btnRegresar.setOnAction(e -> mostrarDashboard());
+        
+        botones.getChildren().add(btnRegresar);
+        
+        contenedor.getChildren().addAll(titulo, panelInfo, botones);
+        
+        return contenedor;
+    }
+    
+    /**
+     * Muestra el dashboard principal
+     */
+    private void mostrarDashboard() {
+        try {
+            VBox dashboardView = crearDashboardView();
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(dashboardView);
+            
+            // CORRECCIÓN: Recargar los datos del dashboard después de crear la vista
+            cargarEstadisticasDashboard();
+            
+            logger.info("Dashboard mostrado y datos recargados");
+        } catch (Exception e) {
+            logger.error("Error al mostrar dashboard", e);
+            mostrarError("Error al cargar el dashboard");
         }
     }
     
@@ -2048,7 +2130,7 @@ public class AsesorMainController {
         
         Label lblFechaInicio = new Label("Fecha de Inicio:");
         DatePicker dpFechaInicio = new DatePicker();
-        dpFechaInicio.setValue(LocalDate.now());
+        dpFechaInicio.setValue(DateTimeUtil.today());
         
         Label lblProposito = new Label("Propósito:");
         TextArea txtProposito = new TextArea();
@@ -2112,7 +2194,7 @@ public class AsesorMainController {
             txtMonto.clear();
             cmbPlazo.getSelectionModel().clearSelection();
             cmbTipoPago.getSelectionModel().clearSelection();
-            dpFechaInicio.setValue(LocalDate.now());
+            dpFechaInicio.setValue(DateTimeUtil.today());
             txtProposito.clear();
             lblCuotaMensual.setText("Cuota Mensual: S/ 0.00");
             lblTotalPagar.setText("Total a Pagar: S/ 0.00");
@@ -2317,7 +2399,7 @@ public class AsesorMainController {
         txtApellido.setMaxWidth(200);
         
         DatePicker dpFechaContrato = new DatePicker();
-        dpFechaContrato.setValue(LocalDate.now());
+        dpFechaContrato.setValue(DateTimeUtil.today());
         dpFechaContrato.setMaxWidth(200);
         
         TextField txtDireccion = new TextField();
@@ -2640,7 +2722,7 @@ public class AsesorMainController {
                 txtMonto.clear();
                 cmbPlazo.getSelectionModel().clearSelection();
                 cmbTipoPago.getSelectionModel().clearSelection();
-                dpFechaInicio.setValue(LocalDate.now());
+                dpFechaInicio.setValue(DateTimeUtil.today());
                 txtProposito.clear();
             } else {
                 mostrarError("Error al guardar el préstamo en la base de datos.");
@@ -3026,7 +3108,7 @@ public class AsesorMainController {
             valorCuota = Math.ceil(valorCuota * 10.0) / 10.0;
             
             // Calcular fecha de finalización
-            LocalDate fechaInicio = LocalDate.now();
+            LocalDate fechaInicio = DateTimeUtil.today();
             LocalDate fechaFinalizacion = fechaInicio;
             
             switch (tipoPago) {
@@ -3170,7 +3252,7 @@ public class AsesorMainController {
             ObservableList<CronogramaSimulacion> cronograma = FXCollections.observableArrayList();
             
             // Fecha de inicio (hoy)
-            LocalDate fechaInicio = LocalDate.now();
+            LocalDate fechaInicio = DateTimeUtil.today();
             LocalDate fechaPago = fechaInicio;
             
             double saldoRestante = montoTotal;
@@ -3343,7 +3425,7 @@ public class AsesorMainController {
         Label lblFecha = new Label("📆 Fecha de cobro:");
         lblFecha.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");
         DatePicker dpFecha = new DatePicker();
-        dpFecha.setValue(LocalDate.now());
+        dpFecha.setValue(DateTimeUtil.today());
         dpFecha.setStyle("-fx-padding: 8 12; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #bdc3c7; -fx-border-radius: 8;");
         
         Label lblMetodo = new Label("💳 Método de pago:");
@@ -3634,7 +3716,7 @@ public class AsesorMainController {
                     cmbPrestamo.getItems().clear();
                     cmbCuota.getItems().clear();
                     txtMonto.clear();
-                    dpFecha.setValue(LocalDate.now());
+                    dpFecha.setValue(DateTimeUtil.today());
                     cmbMetodo.setValue("EFECTIVO");
                     lblClienteInfo.setText("Cliente: -");
                     lblClienteTelefono.setText("Teléfono: -");
@@ -3661,7 +3743,7 @@ public class AsesorMainController {
             cmbPrestamo.getItems().clear();
             cmbCuota.getItems().clear();
             txtMonto.clear();
-            dpFecha.setValue(LocalDate.now());
+            dpFecha.setValue(DateTimeUtil.today());
             cmbMetodo.setValue("EFECTIVO");
             lblClienteInfo.setText("Cliente: -");
             lblClienteTelefono.setText("Teléfono: -");

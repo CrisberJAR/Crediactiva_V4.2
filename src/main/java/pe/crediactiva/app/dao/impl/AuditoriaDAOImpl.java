@@ -11,6 +11,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para Auditoria
@@ -34,7 +35,7 @@ public class AuditoriaDAOImpl implements AuditoriaDAO {
             stmt.setString(4, auditoria.getAccion().name().toLowerCase());
             stmt.setString(5, auditoria.getValorAnterior());
             stmt.setString(6, auditoria.getValorNuevo());
-            stmt.setTimestamp(7, Timestamp.valueOf(auditoria.getFecha()));
+            stmt.setTimestamp(7, DateTimeUtil.nowAsTimestamp());
             
             int rowsAffected = stmt.executeUpdate();
             

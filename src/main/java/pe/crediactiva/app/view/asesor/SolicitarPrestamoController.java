@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Controlador para la solicitud de préstamos del asesor
@@ -186,7 +187,7 @@ public class SolicitarPrestamoController {
      * Configura la fecha de inicio por defecto
      */
     private void configurarFechaInicio() {
-        dpFechaInicio.setValue(LocalDate.now().plusDays(1));
+        dpFechaInicio.setValue(DateTimeUtil.today().plusDays(1));
     }
     
     /**
@@ -503,7 +504,7 @@ public class SolicitarPrestamoController {
         txtMonto.clear();
         cmbPlazo.setValue(null);
         cmbTipoPago.setValue("MENSUAL");
-        dpFechaInicio.setValue(LocalDate.now().plusDays(1));
+        dpFechaInicio.setValue(DateTimeUtil.today().plusDays(1));
         txtProposito.clear();
         txtObservaciones.clear();
         

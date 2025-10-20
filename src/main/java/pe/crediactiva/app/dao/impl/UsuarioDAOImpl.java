@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para Usuario
@@ -140,7 +141,7 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             
             // Usar la fecha del usuario si está disponible, sino usar la fecha actual
             LocalDateTime fechaCreacion = usuario.getCreadoEn() != null ? 
-                usuario.getCreadoEn() : LocalDateTime.now();
+                usuario.getCreadoEn() : DateTimeUtil.now();
             stmt.setTimestamp(4, Timestamp.valueOf(fechaCreacion));
             
             stmt.setBoolean(5, usuario.isActivo());

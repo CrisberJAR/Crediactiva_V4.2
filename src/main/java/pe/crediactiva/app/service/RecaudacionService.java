@@ -11,8 +11,12 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Servicio de gestión de recaudaciones de asesores
@@ -24,6 +28,13 @@ public class RecaudacionService {
     private final RecaudacionAsesorDAO recaudacionAsesorDAO;
     private final CronogramaDAO cronogramaDAO;
     private final AuditoriaService auditoriaService;
+    
+    /**
+     * Obtiene la fecha y hora actual de Perú usando DateTimeUtil
+     */
+    private LocalDateTime getCurrentDateTimePeru() {
+        return DateTimeUtil.now();
+    }
 
     public RecaudacionService() {
         this.recaudacionAsesorDAO = new RecaudacionAsesorDAOImpl();
@@ -40,7 +51,7 @@ public class RecaudacionService {
             recaudacion.setIdAsesor(idAsesor);
             recaudacion.setIdCliente(idCliente);
             recaudacion.setIdPrestamo(idPrestamo);
-            recaudacion.setFechaRegistro(LocalDateTime.now());
+            recaudacion.setFechaRegistro(getCurrentDateTimePeru());
             recaudacion.setMontoRegistrado(monto);
             recaudacion.setValidado(false);
 
@@ -293,14 +304,14 @@ public class RecaudacionService {
      * Obtiene recaudación del día actual
      */
     public BigDecimal obtenerRecaudacionDelDia() {
-        return obtenerRecaudacionMensualPorAsesor(null, LocalDate.now().getYear(), LocalDate.now().getMonthValue());
+        return obtenerRecaudacionMensualPorAsesor(null, DateTimeUtil.today().getYear(), DateTimeUtil.today().getMonthValue());
     }
 
     /**
      * Obtiene recaudación del mes actual
      */
     public BigDecimal obtenerRecaudacionDelMes() {
-        return obtenerRecaudacionMensualPorAsesor(null, LocalDate.now().getYear(), LocalDate.now().getMonthValue());
+        return obtenerRecaudacionMensualPorAsesor(null, DateTimeUtil.today().getYear(), DateTimeUtil.today().getMonthValue());
     }
     
     /**
@@ -329,7 +340,7 @@ public class RecaudacionService {
             recaudacion.setIdCliente(idCliente);
             recaudacion.setIdPrestamo(idPrestamo);
             recaudacion.setIdCuota(idCuota); // Agregar el ID de la cuota específica
-            recaudacion.setFechaRegistro(LocalDateTime.now());
+            recaudacion.setFechaRegistro(getCurrentDateTimePeru());
             recaudacion.setMontoRegistrado(monto);
             recaudacion.setValidado(false);
             
@@ -377,6 +388,29 @@ public class RecaudacionService {
         } catch (Exception e) {
             logger.error("Error al verificar recaudación pendiente para cuota: " + idCuota, e);
             return false;
+        }
+    }
+    
+    /**
+     * Obtiene la recaudación del día filtrada por asesor
+     */
+    public List<RecaudacionAsesor> obtenerRecaudacionDelDiaPorAsesor(Long idAsesor) {
+        try {
+            if (idAsesor == null) {
+                logger.warn("ID de asesor es null");
+                return new ArrayList<>();
+            }
+            
+            LocalDate fechaHoy = DateTimeUtil.today();
+            List<RecaudacionAsesor> recaudaciones = recaudacionAsesorDAO.findByFechaAndAsesor(fechaHoy, idAsesor);
+            
+            logger.info("Recaudaciones del día encontradas para asesor " + idAsesor + ": " + recaudaciones.size());
+            
+            return recaudaciones;
+            
+        } catch (Exception e) {
+            logger.error("Error al obtener recaudación del día por asesor: " + idAsesor, e);
+            return new ArrayList<>();
         }
     }
 }

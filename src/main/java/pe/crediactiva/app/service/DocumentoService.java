@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import pe.crediactiva.app.util.DateTimeUtil;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +64,7 @@ public class DocumentoService {
             documento.setIdPrestamo(idPrestamo);
             documento.setTipo(tipo);
             documento.setRuta(destino.toString());
-            documento.setSubidoEn(LocalDateTime.now());
+            documento.setSubidoEn(DateTimeUtil.now());
 
             boolean success = documentoDAO.create(documento);
             if (success) {
@@ -143,7 +144,7 @@ public class DocumentoService {
                                             List<DocumentoDisponible> documentos) {
         
         LocalDate fechaPrestamo = prestamo.getFechaInicio() != null ? 
-            prestamo.getFechaInicio() : LocalDate.now();
+            prestamo.getFechaInicio() : DateTimeUtil.today();
         
         // Verificar si el préstamo está en el rango de fechas
         if (fechaDesde != null && fechaPrestamo.isBefore(fechaDesde)) return;

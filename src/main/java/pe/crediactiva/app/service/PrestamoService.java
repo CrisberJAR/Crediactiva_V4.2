@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Servicio de gestión de préstamos
@@ -329,7 +330,7 @@ public class PrestamoService {
             
             Cronograma cuotaSimulada = new Cronograma();
             cuotaSimulada.setMontoCuota(montoCuota);
-            cuotaSimulada.setFechaProgramada(calcularFechaPago(LocalDate.now(), 1, tipoPago));
+            cuotaSimulada.setFechaProgramada(calcularFechaPago(DateTimeUtil.today(), 1, tipoPago));
             
             return cuotaSimulada;
             
@@ -344,7 +345,7 @@ public class PrestamoService {
      */
     public List<Cronograma> obtenerCuotasDelDia() {
         try {
-            return cronogramaDAO.findByFecha(LocalDate.now());
+            return cronogramaDAO.findByFecha(DateTimeUtil.today());
         } catch (Exception e) {
             logger.error("Error al obtener cuotas del día", e);
             throw new RuntimeException("Error al obtener las cuotas del día", e);
@@ -356,7 +357,7 @@ public class PrestamoService {
      */
     public List<Cronograma> obtenerCuotasDelDiaPorAsesor(Long idAsesor) {
         try {
-            return cronogramaDAO.findByFechaAndAsesor(LocalDate.now(), idAsesor);
+            return cronogramaDAO.findByFechaAndAsesor(DateTimeUtil.today(), idAsesor);
         } catch (Exception e) {
             logger.error("Error al obtener cuotas del día por asesor: " + idAsesor, e);
             throw new RuntimeException("Error al obtener las cuotas del día del asesor", e);
@@ -502,7 +503,7 @@ public class PrestamoService {
             logger.info("=== VERIFICACIÓN DE CONSISTENCIA PARA ASESOR " + idAsesor + " ===");
             
             // Obtener todas las cuotas del día para este asesor
-            List<Cronograma> cuotasDelDia = cronogramaDAO.findByFechaAndAsesor(java.time.LocalDate.now(), idAsesor);
+            List<Cronograma> cuotasDelDia = cronogramaDAO.findByFechaAndAsesor(DateTimeUtil.today(), idAsesor);
             
             logger.info("Cuotas del día encontradas: " + cuotasDelDia.size());
             

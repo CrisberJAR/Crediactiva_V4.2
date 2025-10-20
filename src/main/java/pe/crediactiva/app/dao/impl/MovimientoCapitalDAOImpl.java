@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para MovimientoCapital
@@ -53,7 +54,7 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
             stmt.setLong(1, movimiento.getIdCliente());
             stmt.setString(2, movimiento.getTipoMovimiento().name().toLowerCase());
             stmt.setBigDecimal(3, movimiento.getMonto());
-            stmt.setTimestamp(4, Timestamp.valueOf(movimiento.getFecha()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setLong(5, movimiento.getIdAdmin());
 
             int rowsAffected = stmt.executeUpdate();
@@ -85,7 +86,7 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
             stmt.setLong(1, movimiento.getIdCliente());
             stmt.setString(2, movimiento.getTipoMovimiento().name().toLowerCase());
             stmt.setBigDecimal(3, movimiento.getMonto());
-            stmt.setTimestamp(4, Timestamp.valueOf(movimiento.getFecha()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setLong(5, movimiento.getIdAdmin());
             stmt.setLong(6, movimiento.getIdMovimiento());
 

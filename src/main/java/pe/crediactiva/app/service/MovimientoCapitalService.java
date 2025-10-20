@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import pe.crediactiva.app.util.DateTimeUtil;
 import java.util.Optional;
 
 /**
@@ -37,7 +38,7 @@ public class MovimientoCapitalService {
             movimiento.setIdCliente(idCliente);
             movimiento.setTipoMovimiento(MovimientoCapital.TipoMovimiento.ABONO);
             movimiento.setMonto(monto);
-            movimiento.setFecha(LocalDateTime.now());
+            movimiento.setFecha(DateTimeUtil.now());
             movimiento.setIdAdmin(idAdmin);
 
             boolean success = movimientoCapitalDAO.create(movimiento);
@@ -85,7 +86,7 @@ public class MovimientoCapitalService {
             movimiento.setIdCliente(idCliente);
             movimiento.setTipoMovimiento(MovimientoCapital.TipoMovimiento.DESEMBOLSO);
             movimiento.setMonto(monto);
-            movimiento.setFecha(LocalDateTime.now());
+            movimiento.setFecha(DateTimeUtil.now());
             movimiento.setIdAdmin(idAdmin);
 
             boolean success = movimientoCapitalDAO.create(movimiento);

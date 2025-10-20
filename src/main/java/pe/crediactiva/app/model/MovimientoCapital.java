@@ -2,6 +2,7 @@ package pe.crediactiva.app.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Modelo para la entidad MovimientosCapital
@@ -40,7 +41,7 @@ public class MovimientoCapital {
         this.tipoMovimiento = tipoMovimiento;
         this.monto = monto;
         this.idAdmin = idAdmin;
-        this.fecha = LocalDateTime.now();
+        this.fecha = DateTimeUtil.now();
     }
     
     // Getters y Setters

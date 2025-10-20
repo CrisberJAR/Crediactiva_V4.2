@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Controlador para el formulario de nuevo cliente del asesor
@@ -159,7 +160,7 @@ public class NuevoClienteController {
      * Configura la fecha de nacimiento por defecto
      */
     private void configurarFechaNacimiento() {
-        dpFechaNacimiento.setValue(LocalDate.now().minusYears(25));
+        dpFechaNacimiento.setValue(DateTimeUtil.today().minusYears(25));
     }
     
     /**
@@ -381,7 +382,7 @@ public class NuevoClienteController {
         // cliente.setReferencia2Telefono(txtRef2Telefono.getText().trim());
         // cliente.setObservaciones(txtObservaciones.getText().trim());
         cliente.setActivo(true);
-        cliente.setFechaRegistro(LocalDate.now());
+        cliente.setFechaRegistro(DateTimeUtil.today());
         
         // CORRECCIÓN CRÍTICA: Asignar el ID del asesor que está registrando el cliente
         cliente.setIdAsesor(idAsesor);
@@ -406,7 +407,7 @@ public class NuevoClienteController {
         txtNombres.clear();
         txtApellidos.clear();
         txtDni.clear();
-        dpFechaNacimiento.setValue(LocalDate.now().minusYears(25));
+        dpFechaNacimiento.setValue(DateTimeUtil.today().minusYears(25));
         cmbSexo.setValue(null);
         cmbEstadoCivil.setValue(null);
         txtTelefono.clear();

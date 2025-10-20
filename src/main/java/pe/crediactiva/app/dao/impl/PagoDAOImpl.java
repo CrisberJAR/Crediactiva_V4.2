@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Implementación JDBC del DAO para Pago
@@ -53,7 +54,7 @@ public class PagoDAOImpl implements PagoDAO {
             stmt.setLong(1, pago.getIdCuota());
             stmt.setLong(2, pago.getIdCliente());
             stmt.setLong(3, pago.getIdAsesor());
-            stmt.setTimestamp(4, Timestamp.valueOf(pago.getFechaPago()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setBigDecimal(5, pago.getMontoPagado());
 
             int rowsAffected = stmt.executeUpdate();
@@ -85,7 +86,7 @@ public class PagoDAOImpl implements PagoDAO {
             stmt.setLong(1, pago.getIdCuota());
             stmt.setLong(2, pago.getIdCliente());
             stmt.setLong(3, pago.getIdAsesor());
-            stmt.setTimestamp(4, Timestamp.valueOf(pago.getFechaPago()));
+            stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setBigDecimal(5, pago.getMontoPagado());
             stmt.setLong(6, pago.getIdPago());
 
@@ -195,21 +196,33 @@ public class PagoDAOImpl implements PagoDAO {
         String sql = "SELECT * FROM pagos WHERE id_asesor = ? ORDER BY fecha_pago DESC";
         List<Pago> pagos = new ArrayList<>();
 
+        logger.info("=== DEBUGGING findByAsesor ===");
+        logger.info("SQL: " + sql);
+        logger.info("ID Asesor: " + idAsesor);
+
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, idAsesor);
 
             try (ResultSet rs = stmt.executeQuery()) {
+                int count = 0;
                 while (rs.next()) {
+                    count++;
+                    logger.info("Registro encontrado #" + count + " - ID: " + rs.getLong("id_pago") + 
+                               ", Asesor: " + rs.getLong("id_asesor") + 
+                               ", Fecha: " + rs.getTimestamp("fecha_pago") + 
+                               ", Monto: " + rs.getBigDecimal("monto_pagado"));
                     pagos.add(mapResultSetToPago(rs));
                 }
+                logger.info("Total registros encontrados: " + count);
             }
 
         } catch (SQLException e) {
             logger.error("Error al buscar pagos por asesor: " + idAsesor, e);
         }
 
+        logger.info("=== FIN DEBUGGING findByAsesor ===");
         return pagos;
     }
 
@@ -338,18 +351,47 @@ public class PagoDAOImpl implements PagoDAO {
         pago.setIdCuota(rs.getLong("id_cuota"));
         pago.setIdCliente(rs.getLong("id_cliente"));
         pago.setIdAsesor(rs.getLong("id_asesor"));
-        pago.setIdPrestamo(rs.getLong("id_prestamo"));
         pago.setFechaPago(rs.getTimestamp("fecha_pago").toLocalDateTime());
-        pago.setFechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime());
         pago.setMontoPagado(rs.getBigDecimal("monto_pagado"));
-        pago.setValidado(rs.getBoolean("validado"));
         
-        // Campos opcionales
-        if (rs.getTimestamp("fecha_validacion") != null) {
-            pago.setFechaValidacion(rs.getTimestamp("fecha_validacion").toLocalDateTime());
+        // Campos opcionales - solo si existen en la tabla
+        try {
+            if (rs.getLong("id_prestamo") != 0) {
+                pago.setIdPrestamo(rs.getLong("id_prestamo"));
+            }
+        } catch (SQLException e) {
+            // Campo no existe, continuar
         }
-        if (rs.getString("observaciones") != null) {
-            pago.setObservaciones(rs.getString("observaciones"));
+        
+        try {
+            if (rs.getTimestamp("fecha_registro") != null) {
+                pago.setFechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime());
+            }
+        } catch (SQLException e) {
+            // Campo no existe, continuar
+        }
+        
+        try {
+            pago.setValidado(rs.getBoolean("validado"));
+        } catch (SQLException e) {
+            // Campo no existe, usar valor por defecto
+            pago.setValidado(true);
+        }
+        
+        try {
+            if (rs.getTimestamp("fecha_validacion") != null) {
+                pago.setFechaValidacion(rs.getTimestamp("fecha_validacion").toLocalDateTime());
+            }
+        } catch (SQLException e) {
+            // Campo no existe, continuar
+        }
+        
+        try {
+            if (rs.getString("observaciones") != null) {
+                pago.setObservaciones(rs.getString("observaciones"));
+            }
+        } catch (SQLException e) {
+            // Campo no existe, continuar
         }
         
         return pago;

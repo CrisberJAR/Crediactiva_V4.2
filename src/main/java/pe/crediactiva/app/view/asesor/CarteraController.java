@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import pe.crediactiva.app.util.DateTimeUtil;
 
 /**
  * Controlador para la cartera del asesor
@@ -300,7 +301,7 @@ public class CarteraController {
         colDiasVencido.setCellValueFactory(cellData -> {
             Cronograma cuota = cellData.getValue();
             if (cuota.getEstadoCuota() == Cronograma.EstadoCuota.RETRASADA) {
-                long diasVencido = ChronoUnit.DAYS.between(cuota.getFechaProgramada(), LocalDate.now());
+                long diasVencido = ChronoUnit.DAYS.between(cuota.getFechaProgramada(), DateTimeUtil.today());
                 return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasVencido));
             } else {
                 return new javafx.beans.property.SimpleStringProperty("-");
@@ -399,8 +400,8 @@ public class CarteraController {
             lblSaldoPorCobrar.setText("S/ " + String.format("%.2f", saldoPorCobrar));
             
             // Recaudación del mes (todos los pagos del mes actual)
-            LocalDate fechaInicio = LocalDate.now().withDayOfMonth(1);
-            LocalDate fechaFin = LocalDate.now();
+            LocalDate fechaInicio = DateTimeUtil.today().withDayOfMonth(1);
+            LocalDate fechaFin = DateTimeUtil.today();
             BigDecimal recaudacionMes = BigDecimal.ZERO;
             if (asesorId != null) {
                 recaudacionMes = pagoService.calcularTotalPagosAsesor(asesorId, fechaInicio, fechaFin);
@@ -771,10 +772,10 @@ public class CarteraController {
             cmbTipoReporte.setValue("Reporte de Cartera General");
             
             DatePicker dpFechaInicio = new DatePicker();
-            dpFechaInicio.setValue(LocalDate.now().minusMonths(1));
+            dpFechaInicio.setValue(DateTimeUtil.today().minusMonths(1));
             
             DatePicker dpFechaFin = new DatePicker();
-            dpFechaFin.setValue(LocalDate.now());
+            dpFechaFin.setValue(DateTimeUtil.today());
             
             GridPane grid = new GridPane();
             grid.add(new Label("Tipo de reporte:"), 0, 0);

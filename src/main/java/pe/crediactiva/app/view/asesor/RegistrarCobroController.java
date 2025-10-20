@@ -21,8 +21,13 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import pe.crediactiva.app.util.DateTimeUtil;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -306,7 +311,7 @@ public class RegistrarCobroController {
         colDiasVencido.setCellValueFactory(cellData -> {
             Cronograma cuota = cellData.getValue().getCronograma();
             if (cuota.getEstadoCuota() == Cronograma.EstadoCuota.RETRASADA) {
-                long diasVencido = ChronoUnit.DAYS.between(cuota.getFechaProgramada(), LocalDate.now());
+                long diasVencido = ChronoUnit.DAYS.between(cuota.getFechaProgramada(), DateTimeUtil.today());
                 return new javafx.beans.property.SimpleStringProperty(String.valueOf(diasVencido));
             } else {
                 return new javafx.beans.property.SimpleStringProperty("-");
@@ -348,7 +353,7 @@ public class RegistrarCobroController {
      * Configura la fecha de pago por defecto
      */
     private void configurarFechaPago() {
-        dpFechaPago.setValue(LocalDate.now());
+        dpFechaPago.setValue(DateTimeUtil.today());
     }
     
     /**
@@ -522,6 +527,9 @@ public class RegistrarCobroController {
      */
     @FXML
     private void handleRegistrarPago() {
+        // DIAGNÓSTICO: Verificar fecha y hora antes de registrar
+        diagnosticarFechaHora();
+        
         if (!validarDatosPago()) {
             return;
         }
@@ -747,7 +755,7 @@ public class RegistrarCobroController {
         cuotasSeleccionables.clear();
         
         // Limpiar información del pago
-        dpFechaPago.setValue(LocalDate.now());
+        dpFechaPago.setValue(DateTimeUtil.today());
         cmbMetodoPago.setValue("EFECTIVO");
         txtReferencia.clear();
         txtObservaciones.clear();
@@ -854,7 +862,7 @@ public class RegistrarCobroController {
             String metodoPago = cmbMetodoPago.getValue();
             String referencia = txtReferencia.getText().trim();
             String observaciones = txtObservaciones.getText().trim();
-            LocalDate fechaPago = dpFechaPago.getValue() != null ? dpFechaPago.getValue() : LocalDate.now();
+            LocalDate fechaPago = dpFechaPago.getValue() != null ? dpFechaPago.getValue() : DateTimeUtil.today();
             
             int recaudacionesRegistradas = 0;
             int errores = 0;
@@ -937,5 +945,13 @@ public class RegistrarCobroController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Método de diagnóstico para verificar fecha y hora
+     */
+    private void diagnosticarFechaHora() {
+        // Usar DateTimeUtil para diagnóstico consistente
+        DateTimeUtil.printDiagnostic();
     }
 }
