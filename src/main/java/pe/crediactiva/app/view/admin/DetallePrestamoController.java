@@ -67,6 +67,9 @@ public class DetallePrestamoController implements Initializable {
     private Label lblFechaSolicitud;
     
     @FXML
+    private DatePicker dpFechaInicio;
+    
+    @FXML
     private TextField txtObservacion;
     
     @FXML
@@ -180,6 +183,14 @@ public class DetallePrestamoController implements Initializable {
                 comboTipoPago.setValue(prestamo.getTipoPago().name().toLowerCase());
             }
             
+            // CORRECCIÓN: Cargar fecha de inicio del préstamo (por defecto la fecha que puso el asesor)
+            if (prestamo.getFechaInicio() != null) {
+                dpFechaInicio.setValue(prestamo.getFechaInicio());
+            } else {
+                // Si no hay fecha de inicio, usar la fecha actual
+                dpFechaInicio.setValue(LocalDate.now());
+            }
+            
             txtObservacion.setText(prestamo.getObservacion() != null ? prestamo.getObservacion() : "");
             
             // Cargar información del cliente
@@ -245,19 +256,30 @@ public class DetallePrestamoController implements Initializable {
     private void handleAprobar() {
         try {
             if (validarCampos()) {
+                // Validar que se haya seleccionado una fecha de inicio
+                if (dpFechaInicio.getValue() == null) {
+                    mostrarError("Debe seleccionar una fecha de inicio para el préstamo");
+                    return;
+                }
+                
                 // Actualizar datos del préstamo
                 actualizarDatosPrestamo();
                 
-                // Aprobar préstamo usando el MONTO SOLICITADO para el cálculo del cronograma
+                // CORRECCIÓN: Usar la fecha de inicio seleccionada por el administrador
+                LocalDate fechaInicio = dpFechaInicio.getValue();
+                logger.info("Aprobando préstamo con fecha de inicio: " + fechaInicio);
+                
+                // Aprobar préstamo usando la fecha de inicio seleccionada
                 prestamoService.aprobarPrestamo(
                     prestamoActual.getIdPrestamo(),
                     prestamoActual.getTasaInteres(),
                     prestamoActual.getPeriodoMeses(),
                     prestamoActual.getTipoPago(),
-                    java.time.LocalDate.now()
+                    fechaInicio
                 );
                 
-                mostrarInfo("Préstamo aprobado exitosamente");
+                mostrarInfo("Préstamo aprobado exitosamente con fecha de inicio: " + 
+                           fechaInicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
                 cerrarVentana();
             }
         } catch (Exception e) {

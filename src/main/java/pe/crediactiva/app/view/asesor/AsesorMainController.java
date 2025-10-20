@@ -779,10 +779,9 @@ public class AsesorMainController {
                 }
             }
             
-            // Agregar datos de ejemplo si no hay datos reales
+            // CORRECCIÓN: No mostrar datos de ejemplo, solo datos reales
             if (cuotas.isEmpty()) {
-                logger.info("No hay cuotas del día en la base de datos, mostrando datos de ejemplo");
-                cuotas.addAll(crearCuotasEjemplo());
+                logger.info("No hay cuotas del día para el asesor " + idAsesor + " en la base de datos");
             }
             
             tabla.getItems().clear();
@@ -819,26 +818,19 @@ public class AsesorMainController {
                 }
             }
             
-            // Si no hay datos reales, usar datos de ejemplo
-            if (totalCuotas == 0) {
-                actualizarEstadistica(statTotal, "7");
-                actualizarEstadistica(statMonto, "S/ 1,250.00");
-                actualizarEstadistica(statPagadas, "3");
-                actualizarEstadistica(statPendientes, "4");
-            } else {
-                actualizarEstadistica(statTotal, String.valueOf(totalCuotas));
-                actualizarEstadistica(statMonto, String.format("S/ %.2f", montoTotal));
-                actualizarEstadistica(statPagadas, String.valueOf(cuotasPagadas));
-                actualizarEstadistica(statPendientes, String.valueOf(cuotasPendientes));
-            }
+            // CORRECCIÓN: Mostrar valores reales, no datos de ejemplo
+            actualizarEstadistica(statTotal, String.valueOf(totalCuotas));
+            actualizarEstadistica(statMonto, String.format("S/ %.2f", montoTotal));
+            actualizarEstadistica(statPagadas, String.valueOf(cuotasPagadas));
+            actualizarEstadistica(statPendientes, String.valueOf(cuotasPendientes));
             
         } catch (Exception e) {
             logger.error("Error al actualizar estadísticas de cuotas del día", e);
-            // Usar datos de ejemplo en caso de error
-            actualizarEstadistica(statTotal, "7");
-            actualizarEstadistica(statMonto, "S/ 1,250.00");
-            actualizarEstadistica(statPagadas, "3");
-            actualizarEstadistica(statPendientes, "4");
+            // CORRECCIÓN: Mostrar valores en cero en caso de error, no datos de ejemplo
+            actualizarEstadistica(statTotal, "0");
+            actualizarEstadistica(statMonto, "S/ 0.00");
+            actualizarEstadistica(statPagadas, "0");
+            actualizarEstadistica(statPendientes, "0");
         }
     }
     
@@ -893,20 +885,6 @@ public class AsesorMainController {
         }
     }
     
-    /**
-     * Crea datos de ejemplo para las cuotas del día
-     */
-    private List<CuotaDiaInfo> crearCuotasEjemplo() {
-        List<CuotaDiaInfo> cuotas = new ArrayList<>();
-        cuotas.add(new CuotaDiaInfo("María González", "12345678", "S/ 200.00", "Pagada", 1L, 101L));
-        cuotas.add(new CuotaDiaInfo("Juan Pérez", "87654321", "S/ 150.00", "Pendiente", 2L, 102L));
-        cuotas.add(new CuotaDiaInfo("Ana López", "11223344", "S/ 300.00", "Pagada", 3L, 103L));
-        cuotas.add(new CuotaDiaInfo("Carlos Ruiz", "55667788", "S/ 180.00", "Pendiente", 4L, 104L));
-        cuotas.add(new CuotaDiaInfo("Laura Martínez", "99887766", "S/ 250.00", "Vencida", 5L, 105L));
-        cuotas.add(new CuotaDiaInfo("Pedro Sánchez", "44332211", "S/ 120.00", "Pagada", 6L, 106L));
-        cuotas.add(new CuotaDiaInfo("Sofía García", "77665544", "S/ 220.00", "Pendiente", 7L, 107L));
-        return cuotas;
-    }
     
     /**
      * Registra el pago de una cuota

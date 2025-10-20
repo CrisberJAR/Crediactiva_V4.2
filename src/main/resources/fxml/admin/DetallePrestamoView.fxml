@@ -73,8 +73,10 @@
                <Label text="Fecha Solicitud:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
                <Label fx:id="lblFechaSolicitud" GridPane.columnIndex="3" GridPane.rowIndex="4" />
                
-               <Label text="Observación:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-               <TextField fx:id="txtObservacion" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="5" />
+               <Label text="Fecha Inicio Préstamo:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+               <DatePicker fx:id="dpFechaInicio" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+               <Label text="Observación:" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+               <TextField fx:id="txtObservacion" GridPane.columnIndex="3" GridPane.rowIndex="5" />
             </GridPane>
             
             <!-- Información adicional del cliente -->
