@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Optional;
@@ -117,16 +118,25 @@ public class ValidarCobrosController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
+            logger.info("Iniciando inicialización del controlador ValidarCobrosController...");
+            
+            logger.info("Configurando tabla...");
             configurarTabla();
+            
+            logger.info("Configurando filtros...");
             configurarFiltros();
+            
+            logger.info("Cargando cobros pendientes...");
             cargarCobrosPendientes();
+            
+            logger.info("Actualizando resumen...");
             actualizarResumen();
             
             logger.info("Validar cobros inicializado correctamente");
             
         } catch (Exception e) {
             logger.error("Error al inicializar validar cobros", e);
-            mostrarError("Error al inicializar la validación de cobros");
+            mostrarError("Error al inicializar la validación de cobros: " + e.getMessage());
         }
     }
     
@@ -319,25 +329,43 @@ public class ValidarCobrosController implements Initializable {
     private void handleFiltrar() {
         try {
             String asesorSeleccionado = cmbAsesor.getValue();
+            LocalDate fechaSeleccionada = dpFecha.getValue();
             
-            if ("Todos".equals(asesorSeleccionado) || asesorSeleccionado == null) {
-                // Cargar todos los cobros pendientes
-                cargarCobrosPendientes();
-            } else {
-                // Extraer ID del asesor del texto seleccionado
-                Long idAsesor = extraerIdAsesor(asesorSeleccionado);
-                if (idAsesor != null) {
-                    List<RecaudacionAsesor> recaudacionesAsesor = recaudacionService.obtenerBorradoresPorAsesor(idAsesor);
-                    cobrosPendientes.clear();
-                    cobrosPendientes.addAll(recaudacionesAsesor);
-                    logger.info("Cargados " + recaudacionesAsesor.size() + " cobros del asesor ID: " + idAsesor);
-                } else {
-                    cargarCobrosPendientes();
+            // Obtener todos los cobros pendientes
+            List<RecaudacionAsesor> todosLosCobros = recaudacionService.obtenerBorradoresPendientes();
+            List<RecaudacionAsesor> cobrosFiltrados = new ArrayList<>();
+            
+            for (RecaudacionAsesor cobro : todosLosCobros) {
+                boolean cumpleFiltroAsesor = true;
+                boolean cumpleFiltroFecha = true;
+                
+                // Aplicar filtro por asesor
+                if (asesorSeleccionado != null && !"Todos".equals(asesorSeleccionado)) {
+                    Long idAsesor = extraerIdAsesor(asesorSeleccionado);
+                    if (idAsesor != null) {
+                        cumpleFiltroAsesor = cobro.getIdAsesor().equals(idAsesor);
+                    }
+                }
+                
+                // Aplicar filtro por fecha
+                if (fechaSeleccionada != null) {
+                    LocalDate fechaRegistro = cobro.getFechaRegistro().toLocalDate();
+                    cumpleFiltroFecha = fechaRegistro.equals(fechaSeleccionada);
+                }
+                
+                // Si cumple ambos filtros, agregarlo a la lista
+                if (cumpleFiltroAsesor && cumpleFiltroFecha) {
+                    cobrosFiltrados.add(cobro);
                 }
             }
             
+            // Actualizar la tabla con los cobros filtrados
+            cobrosPendientes.clear();
+            cobrosPendientes.addAll(cobrosFiltrados);
+            
             actualizarResumen();
-            logger.info("Filtros aplicados");
+            logger.info("Filtros aplicados - Asesor: " + asesorSeleccionado + ", Fecha: " + fechaSeleccionada + 
+                       " - Resultados: " + cobrosFiltrados.size() + " cobros");
             
         } catch (Exception e) {
             logger.error("Error al filtrar cobros", e);
@@ -454,7 +482,7 @@ public class ValidarCobrosController implements Initializable {
     @FXML
     private void handleLimpiarFiltros() {
         cmbAsesor.setValue("Todos");
-        dpFecha.setValue(LocalDate.now());
+        dpFecha.setValue(null); // Limpiar la fecha para mostrar todos los cobros
         cargarCobrosPendientes();
         actualizarResumen();
         

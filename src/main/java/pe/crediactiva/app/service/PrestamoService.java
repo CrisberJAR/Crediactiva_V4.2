@@ -3,13 +3,17 @@ package pe.crediactiva.app.service;
 import pe.crediactiva.app.dao.ClienteDAO;
 import pe.crediactiva.app.dao.CronogramaDAO;
 import pe.crediactiva.app.dao.PrestamoDAO;
+import pe.crediactiva.app.dao.MovimientoCapitalDAO;
 import pe.crediactiva.app.dao.impl.ClienteDAOImpl;
 import pe.crediactiva.app.dao.impl.CronogramaDAOImpl;
 import pe.crediactiva.app.dao.impl.PrestamoDAOImpl;
+import pe.crediactiva.app.dao.impl.MovimientoCapitalDAOImpl;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Cronograma;
 import pe.crediactiva.app.model.Pago;
 import pe.crediactiva.app.model.Prestamo;
+import pe.crediactiva.app.model.MovimientoCapital;
+import pe.crediactiva.app.config.SessionManager;
 import pe.crediactiva.app.util.FechaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +36,14 @@ public class PrestamoService {
     private final PrestamoDAO prestamoDAO;
     private final ClienteDAO clienteDAO;
     private final CronogramaDAO cronogramaDAO;
+    private final MovimientoCapitalDAO movimientoCapitalDAO;
     private final AuditoriaService auditoriaService;
     
     public PrestamoService() {
         this.prestamoDAO = new PrestamoDAOImpl();
         this.clienteDAO = new ClienteDAOImpl();
         this.cronogramaDAO = new CronogramaDAOImpl();
+        this.movimientoCapitalDAO = new MovimientoCapitalDAOImpl();
         this.auditoriaService = new AuditoriaService();
     }
     
@@ -241,6 +247,73 @@ public class PrestamoService {
     }
     
     /**
+     * Registra un desembolso de capital del cliente
+     */
+    public boolean registrarDesembolsoCapital(Long idCliente, BigDecimal montoDesembolso, String observacion) {
+        try {
+            Optional<Cliente> clienteOpt = clienteDAO.findById(idCliente);
+            if (!clienteOpt.isPresent()) {
+                logger.warn("Cliente no encontrado para desembolso: " + idCliente);
+                return false;
+            }
+            
+            Cliente cliente = clienteOpt.get();
+            
+            // Validar que el cliente tenga suficiente capital
+            if (cliente.getSaldoCapital().compareTo(montoDesembolso) < 0) {
+                logger.warn("Saldo insuficiente para desembolso. Cliente: " + idCliente + 
+                           ", Saldo actual: " + cliente.getSaldoCapital() + 
+                           ", Monto solicitado: " + montoDesembolso);
+                return false;
+            }
+            
+            // Obtener ID del admin logueado
+            SessionManager sessionManager = SessionManager.getInstance();
+            Long idAdmin = sessionManager.getCurrentUser() != null ? 
+                sessionManager.getCurrentUser().getIdUsuario() : null;
+            
+            if (idAdmin == null) {
+                logger.error("No se pudo obtener ID del administrador para desembolso");
+                return false;
+            }
+            
+            // Actualizar saldo del cliente
+            BigDecimal nuevoSaldo = cliente.getSaldoCapital().subtract(montoDesembolso);
+            boolean saldoActualizado = clienteDAO.updateSaldoCapital(idCliente, nuevoSaldo);
+            
+            if (saldoActualizado) {
+                // Registrar movimiento en la tabla movimientos_capital
+                MovimientoCapital movimiento = new MovimientoCapital(
+                    idCliente,
+                    MovimientoCapital.TipoMovimiento.DESEMBOLSO,
+                    montoDesembolso,
+                    idAdmin,
+                    observacion != null ? observacion : "Desembolsado por solicitud de desembolso capital del cliente"
+                );
+                
+                boolean movimientoCreado = movimientoCapitalDAO.create(movimiento);
+                if (movimientoCreado) {
+                    logger.info("Desembolso de capital registrado: " + montoDesembolso + 
+                              " para cliente " + idCliente + " por admin " + idAdmin);
+                    return true;
+                } else {
+                    logger.error("Error al crear movimiento de desembolso para cliente: " + idCliente);
+                    // Revertir cambio en saldo
+                    clienteDAO.updateSaldoCapital(idCliente, cliente.getSaldoCapital());
+                    return false;
+                }
+            } else {
+                logger.error("Error al actualizar saldo de capital para cliente: " + idCliente);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error al registrar desembolso de capital", e);
+            return false;
+        }
+    }
+    
+    /**
      * Registra el abono de capital (10% del préstamo)
      */
     private void registrarAbonoCapital(Long idCliente, BigDecimal montoAbono) {
@@ -250,6 +323,31 @@ public class PrestamoService {
                 Cliente cliente = clienteOpt.get();
                 BigDecimal nuevoSaldo = cliente.getSaldoCapital().add(montoAbono);
                 clienteDAO.updateSaldoCapital(idCliente, nuevoSaldo);
+                
+                // Registrar movimiento en la tabla movimientos_capital
+                SessionManager sessionManager = SessionManager.getInstance();
+                Long idAdmin = sessionManager.getCurrentUser() != null ? 
+                    sessionManager.getCurrentUser().getIdUsuario() : null;
+                
+                if (idAdmin != null) {
+                    MovimientoCapital movimiento = new MovimientoCapital(
+                        idCliente,
+                        MovimientoCapital.TipoMovimiento.ABONO,
+                        montoAbono,
+                        idAdmin,
+                        "Abono al capital por préstamo aprobado"
+                    );
+                    
+                    boolean movimientoCreado = movimientoCapitalDAO.create(movimiento);
+                    if (movimientoCreado) {
+                        logger.info("Movimiento de capital registrado: ABONO de " + montoAbono + 
+                                  " para cliente " + idCliente + " por admin " + idAdmin);
+                    } else {
+                        logger.error("Error al crear movimiento de capital para cliente: " + idCliente);
+                    }
+                } else {
+                    logger.warn("No se pudo obtener ID del administrador para registrar movimiento de capital");
+                }
                 
                 logger.info("Abono de capital registrado: " + montoAbono + " para cliente: " + idCliente);
             }

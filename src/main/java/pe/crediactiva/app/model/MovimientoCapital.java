@@ -14,6 +14,7 @@ public class MovimientoCapital {
     private BigDecimal monto;
     private LocalDateTime fecha;
     private Long idAdmin;
+    private String observacion;
     
     // Campos de relación
     private Cliente cliente;
@@ -41,6 +42,15 @@ public class MovimientoCapital {
         this.tipoMovimiento = tipoMovimiento;
         this.monto = monto;
         this.idAdmin = idAdmin;
+        this.fecha = DateTimeUtil.now();
+    }
+    
+    public MovimientoCapital(Long idCliente, TipoMovimiento tipoMovimiento, BigDecimal monto, Long idAdmin, String observacion) {
+        this.idCliente = idCliente;
+        this.tipoMovimiento = tipoMovimiento;
+        this.monto = monto;
+        this.idAdmin = idAdmin;
+        this.observacion = observacion;
         this.fecha = DateTimeUtil.now();
     }
     
@@ -93,6 +103,14 @@ public class MovimientoCapital {
         this.idAdmin = idAdmin;
     }
     
+    public String getObservacion() {
+        return observacion;
+    }
+    
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
+    }
+    
     public Cliente getCliente() {
         return cliente;
     }
@@ -107,6 +125,33 @@ public class MovimientoCapital {
     
     public void setAdmin(Usuario admin) {
         this.admin = admin;
+    }
+    
+    /**
+     * Obtiene el nombre completo del cliente
+     */
+    public String getNombreCliente() {
+        if (cliente != null && cliente.getNombre() != null && cliente.getApellido() != null) {
+            return cliente.getNombre() + " " + cliente.getApellido();
+        }
+        return "Cliente #" + idCliente;
+    }
+    
+    /**
+     * Obtiene la fecha formateada como string
+     */
+    public String getFechaFormateada() {
+        if (fecha != null) {
+            return fecha.toLocalDate().toString();
+        }
+        return "";
+    }
+    
+    /**
+     * Obtiene el tipo de movimiento como string
+     */
+    public String getTipoMovimientoString() {
+        return tipoMovimiento != null ? tipoMovimiento.getDescripcion() : "";
     }
     
     @Override

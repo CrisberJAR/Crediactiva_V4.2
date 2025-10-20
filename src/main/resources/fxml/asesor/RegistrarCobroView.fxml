@@ -32,7 +32,7 @@
             <Label text="👤 Selección de Cliente" styleClass="section-title" />
             <HBox spacing="10.0" alignment="CENTER_LEFT">
                <Label text="Cliente:" prefWidth="120.0" />
-               <ComboBox fx:id="cmbCliente" promptText="Seleccionar cliente" prefWidth="320.0" styleClass="combo-box" />
+               <ComboBox fx:id="cmbCliente" onAction="#handleClienteSeleccionado" promptText="Seleccionar cliente" prefWidth="320.0" styleClass="combo-box" />
                <Button fx:id="btnBuscarCliente" onAction="#handleBuscarCliente" text="🔍 Buscar" styleClass="quick-action-button" />
             </HBox>
             <HBox spacing="10.0" alignment="CENTER_LEFT">

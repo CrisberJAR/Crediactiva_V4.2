@@ -10,11 +10,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.RowConstraints;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import pe.crediactiva.app.service.AuthenticationService;
@@ -31,13 +31,11 @@ import pe.crediactiva.app.model.Asesor;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.MovimientoCapital;
 import pe.crediactiva.app.model.Rol;
-import pe.crediactiva.app.model.Prestamo;
 import pe.crediactiva.app.util.FechaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import pe.crediactiva.app.util.DateTimeUtil;
@@ -225,20 +223,37 @@ public class AdminMainController {
      * Maneja la opción de validar cobros
      */
     @FXML
+    
     private void handleValidarCobros() {
         try {
+            logger.info("Iniciando carga de validación de cobros...");
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/admin/ValidarCobrosView.fxml"));
-            VBox validarCobrosView = loader.load();
+            
+            // Verificar que el archivo FXML existe
+            if (loader.getLocation() == null) {
+                logger.error("No se encontró el archivo ValidarCobrosView.fxml");
+                showError("Error: No se encontró el archivo de la vista de validación de cobros");
+                return;
+            }
+            
+            logger.info("Archivo FXML encontrado, cargando...");
+            ScrollPane validarCobrosView = loader.load();
+            
+            logger.info("Vista cargada exitosamente, reemplazando contenido...");
             
             // Reemplazar contenido
             contentArea.getChildren().clear();
             contentArea.getChildren().add(validarCobrosView);
             
-            logger.info("Cargada validación de cobros");
+            logger.info("Validación de cobros cargada exitosamente");
             
         } catch (IOException e) {
             logger.error("Error al cargar validación de cobros", e);
-            showError("Error al cargar la validación de cobros");
+            showError("Error al cargar la validación de cobros: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error inesperado al cargar validación de cobros", e);
+            showError("Error inesperado al cargar la validación de cobros: " + e.getMessage());
         }
     }
     
@@ -780,30 +795,30 @@ public class AdminMainController {
     }
     
     /**
-     * Elimina un usuario
+     * Desactiva un usuario (cambia su estado a inactivo)
      */
     private void eliminarUsuario(Usuario usuario) {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmacion.setTitle("Confirmar Eliminación");
-        confirmacion.setHeaderText("¿Está seguro de eliminar el usuario?");
-        confirmacion.setContentText("Usuario ID: " + usuario.getIdUsuario());
+        confirmacion.setTitle("Confirmar Desactivación");
+        confirmacion.setHeaderText("¿Está seguro de desactivar este usuario?");
+        confirmacion.setContentText("Usuario ID: " + usuario.getIdUsuario() + "\n\nNota: El usuario será desactivado, no eliminado permanentemente.");
         
         Optional<ButtonType> resultado = confirmacion.showAndWait();
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
             try {
                 UsuarioDAO usuarioDAO = new UsuarioDAOImpl();
-                boolean eliminado = usuarioDAO.delete(usuario.getIdUsuario());
+                boolean desactivado = usuarioDAO.delete(usuario.getIdUsuario());
                 
-                if (eliminado) {
-                    showInfo("Usuario eliminado exitosamente");
+                if (desactivado) {
+                    showInfo("Usuario desactivado exitosamente");
                     cargarUsuarios();
                 } else {
-                    showError("Error al eliminar el usuario");
+                    showError("Error al desactivar el usuario");
                 }
                 
             } catch (Exception e) {
-                logger.error("Error al eliminar usuario", e);
-                showError("Error al eliminar el usuario");
+                logger.error("Error al desactivar usuario", e);
+                showError("Error al desactivar el usuario");
             }
         }
     }
@@ -1365,146 +1380,215 @@ public class AdminMainController {
     }
     
     /**
-     * Muestra el formulario para crear usuario de cliente
+     * Muestra el formulario para crear usuario de cliente - VERSION MEJORADA
      */
     private void mostrarFormularioNuevoClienteUsuario() {
-        try {
-            Stage dialogStage = new Stage();
-            dialogStage.setTitle("Crear Usuario para Cliente");
-            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            dialogStage.setResizable(false);
+        // Asegurar que todo se ejecuta en el hilo de JavaFX
+        Platform.runLater(() -> {
+            try {
+                logger.info("=== INICIANDO CREACIÓN DE VENTANA CREAR USUARIO CLIENTE ===");
+                
+                // Crear nueva ventana cada vez
+                Stage ventana = new Stage();
+                ventana.setTitle("Crear Usuario para Cliente");
+                ventana.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+                ventana.setWidth(700);
+                ventana.setHeight(600);
             
-            VBox mainContent = new VBox(15);
-            mainContent.setPadding(new Insets(20));
+            // Contenedor principal
+            VBox contenedorPrincipal = new VBox(20);
+            contenedorPrincipal.setPadding(new Insets(20));
+            contenedorPrincipal.setStyle("-fx-background-color: #f5f5f5;");
             
-            Label titulo = new Label("👥 Crear Usuario para Cliente");
-            titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+            // Título
+            Label lblTitulo = new Label("👥 Crear Usuario para Cliente");
+            lblTitulo.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
             
-            // Obtener clientes que tienen préstamos pero no tienen usuario
+            // Obtener clientes sin usuario
             List<Cliente> clientesSinUsuario = obtenerClientesSinUsuario();
+            logger.info("Clientes sin usuario obtenidos: " + clientesSinUsuario.size());
             
             if (clientesSinUsuario.isEmpty()) {
-                Label mensaje = new Label("No hay clientes con préstamos que necesiten usuario.");
-                mensaje.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 14px;");
-                mainContent.getChildren().addAll(titulo, mensaje);
+                // No hay clientes
+                VBox contenidoVacio = new VBox(20);
+                contenidoVacio.setAlignment(Pos.CENTER);
+                contenidoVacio.setPadding(new Insets(40));
+                contenidoVacio.setStyle("-fx-background-color: white; -fx-background-radius: 10px;");
+                
+                Label lblMensaje = new Label("✅ Todos los clientes activos\nya tienen usuario asignado");
+                lblMensaje.setStyle("-fx-font-size: 16px; -fx-text-fill: #27ae60; -fx-text-alignment: center;");
+                lblMensaje.setWrapText(true);
                 
                 Button btnCerrar = new Button("Cerrar");
-                btnCerrar.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5px;");
-                btnCerrar.setOnAction(e -> dialogStage.close());
-                mainContent.getChildren().add(btnCerrar);
+                btnCerrar.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 24; -fx-background-radius: 5px; -fx-font-size: 14px;");
+                btnCerrar.setOnAction(e -> ventana.close());
+                
+                contenidoVacio.getChildren().addAll(lblMensaje, btnCerrar);
+                contenedorPrincipal.getChildren().addAll(lblTitulo, contenidoVacio);
+                
             } else {
-                Label instruccion = new Label("Seleccione un cliente para crear su usuario:");
-                instruccion.setStyle("-fx-font-size: 14px; -fx-text-fill: #2c3e50;");
+                // Hay clientes disponibles
+                Label lblInstruccion = new Label("Seleccione un cliente para crear su usuario:");
+                lblInstruccion.setStyle("-fx-font-size: 14px; -fx-text-fill: #34495e;");
                 
-                // Tabla de clientes
-                TableView<Cliente> tablaClientes = new TableView<>();
-                tablaClientes.setStyle("-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-width: 1px; -fx-border-radius: 5px;");
-                tablaClientes.setMaxHeight(300);
+                // Crear tabla
+                TableView<Cliente> tabla = new TableView<>();
+                tabla.setStyle("-fx-background-color: white;");
+                tabla.setPrefHeight(350);
+                tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
                 
-                // Columnas de la tabla
-                TableColumn<Cliente, Long> colId = new TableColumn<>("ID");
+                // Columna ID
+                TableColumn<Cliente, Long> colId = new TableColumn<>("ID Cliente");
                 colId.setCellValueFactory(new PropertyValueFactory<>("idCliente"));
-                colId.setPrefWidth(60);
+                colId.setMinWidth(100);
+                colId.setStyle("-fx-alignment: CENTER;");
                 
-                TableColumn<Cliente, String> colNombre = new TableColumn<>("Nombre");
+                // Columna Nombre
+                TableColumn<Cliente, String> colNombre = new TableColumn<>("Nombre Completo");
                 colNombre.setCellValueFactory(new PropertyValueFactory<>("nombreCompleto"));
-                colNombre.setPrefWidth(200);
+                colNombre.setMinWidth(200);
                 
-                TableColumn<Cliente, String> colDni = new TableColumn<>("DNI");
-                colDni.setCellValueFactory(new PropertyValueFactory<>("dni"));
-                colDni.setPrefWidth(100);
-                
+                // Columna Teléfono
                 TableColumn<Cliente, String> colTelefono = new TableColumn<>("Teléfono");
                 colTelefono.setCellValueFactory(new PropertyValueFactory<>("telefono"));
-                colTelefono.setPrefWidth(120);
+                colTelefono.setMinWidth(120);
                 
-                TableColumn<Cliente, String> colAccion = new TableColumn<>("Acción");
-                colAccion.setPrefWidth(100);
-                colAccion.setCellFactory(column -> new TableCell<Cliente, String>() {
-                    private final Button btnCrear = new Button("Crear");
+                // Columna Email
+                TableColumn<Cliente, String> colEmail = new TableColumn<>("Email");
+                colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+                colEmail.setMinWidth(150);
+                
+                // Columna Acción
+                TableColumn<Cliente, Void> colAccion = new TableColumn<>("Acción");
+                colAccion.setMinWidth(100);
+                colAccion.setCellFactory(param -> new TableCell<>() {
+                    private final Button btnCrear = new Button("✅ Crear");
                     
                     {
-                        btnCrear.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 10px; -fx-padding: 4 8; -fx-background-radius: 3px;");
-                        btnCrear.setOnAction(e -> {
-                            Cliente cliente = getTableView().getItems().get(getIndex());
-                            dialogStage.close();
-                            mostrarFormularioCrearUsuarioCliente(cliente);
+                        btnCrear.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 5px; -fx-cursor: hand;");
+                        btnCrear.setOnAction(event -> {
+                            Cliente clienteSeleccionado = getTableView().getItems().get(getIndex());
+                            logger.info("Cliente seleccionado para crear usuario: " + clienteSeleccionado.getNombreCompleto());
+                            ventana.close();
+                            mostrarFormularioCrearUsuarioCliente(clienteSeleccionado);
                         });
                     }
                     
                     @Override
-                    protected void updateItem(String item, boolean empty) {
+                    protected void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            setGraphic(btnCrear);
-                        }
+                        setGraphic(empty ? null : btnCrear);
                     }
                 });
                 
-                tablaClientes.getColumns().addAll(colId, colNombre, colDni, colTelefono, colAccion);
+                // Agregar columnas
+                tabla.getColumns().addAll(colId, colNombre, colTelefono, colEmail, colAccion);
                 
                 // Cargar datos
-                ObservableList<Cliente> clientesObservable = FXCollections.observableArrayList(clientesSinUsuario);
-                tablaClientes.setItems(clientesObservable);
+                tabla.setItems(FXCollections.observableArrayList(clientesSinUsuario));
+                logger.info("Datos cargados en tabla: " + tabla.getItems().size() + " clientes");
                 
-                Button btnCancelar = new Button("❌ Cancelar");
-                btnCancelar.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5px;");
-                btnCancelar.setOnAction(e -> dialogStage.close());
+                // Botones inferiores
+                HBox contenedorBotones = new HBox(15);
+                contenedorBotones.setAlignment(Pos.CENTER_RIGHT);
+                contenedorBotones.setPadding(new Insets(10, 0, 0, 0));
                 
-                mainContent.getChildren().addAll(titulo, instruccion, tablaClientes, btnCancelar);
+                Button btnActualizar = new Button("🔄 Actualizar Lista");
+                btnActualizar.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5px; -fx-font-size: 13px;");
+                btnActualizar.setOnAction(e -> {
+                    List<Cliente> clientesActualizados = obtenerClientesSinUsuario();
+                    tabla.setItems(FXCollections.observableArrayList(clientesActualizados));
+                    logger.info("Tabla actualizada con " + clientesActualizados.size() + " clientes");
+                    if (clientesActualizados.isEmpty()) {
+                        ventana.close();
+                        mostrarFormularioNuevoClienteUsuario();
+                    }
+                });
+                
+                Button btnCerrar = new Button("❌ Cerrar");
+                btnCerrar.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5px; -fx-font-size: 13px;");
+                btnCerrar.setOnAction(e -> ventana.close());
+                
+                contenedorBotones.getChildren().addAll(btnActualizar, btnCerrar);
+                
+                // Agregar todo al contenedor principal
+                contenedorPrincipal.getChildren().addAll(lblTitulo, lblInstruccion, tabla, contenedorBotones);
             }
             
-            Scene scene = new Scene(mainContent, 600, 500);
-            dialogStage.setScene(scene);
-            dialogStage.showAndWait();
+            // Crear escena y mostrar
+            Scene escena = new Scene(contenedorPrincipal);
+            ventana.setScene(escena);
             
-        } catch (Exception e) {
-            logger.error("Error al mostrar formulario de nuevo cliente usuario", e);
-            showError("Error al mostrar el formulario de nuevo cliente usuario");
-        }
+                logger.info("Mostrando ventana de crear usuario cliente...");
+                ventana.showAndWait();
+                logger.info("Ventana cerrada");
+                
+            } catch (Exception e) {
+                logger.error("Error al mostrar ventana de crear usuario cliente", e);
+                showError("Error al mostrar la ventana: " + e.getMessage());
+            }
+        });
     }
     
     /**
      * Obtiene clientes que tienen préstamos pero no tienen usuario
      */
     private List<Cliente> obtenerClientesSinUsuario() {
+        List<Cliente> clientesSinUsuario = new java.util.ArrayList<>();
+        
         try {
-            // Usar SQL directo para obtener clientes con préstamos pero sin usuario
-            String sql = "SELECT DISTINCT c.id_cliente, c.nombre, c.apellido, c.dni, c.telefono, c.email, c.activo " +
-                        "FROM clientes c " +
-                        "INNER JOIN prestamos p ON c.id_cliente = p.id_cliente " +
-                        "LEFT JOIN usuarios u ON c.id_cliente = u.id_usuario " +
-                        "WHERE u.id_usuario IS NULL AND c.activo = 1";
+            logger.info("Buscando clientes activos sin usuario...");
             
-            List<Cliente> clientesSinUsuario = new java.util.ArrayList<>();
+            // Consulta mejorada para obtener clientes activos sin usuario
+            String sql = "SELECT DISTINCT c.id_cliente, c.nombre, c.apellido, c.telefono, c.email, c.activo " +
+                        "FROM clientes c " +
+                        "WHERE c.activo = 1 " +
+                        "AND c.id_cliente NOT IN (SELECT DISTINCT u.id_usuario FROM usuarios u WHERE u.id_usuario IS NOT NULL) " +
+                        "ORDER BY c.nombre, c.apellido";
+            
+            logger.info("Ejecutando consulta SQL: " + sql);
             
             try (java.sql.Connection connection = DatabaseConfig.getConnection();
-                 java.sql.PreparedStatement statement = connection.prepareStatement(sql);
-                 java.sql.ResultSet resultSet = statement.executeQuery()) {
+                 java.sql.PreparedStatement statement = connection.prepareStatement(sql)) {
                 
-                while (resultSet.next()) {
-                    Cliente cliente = new Cliente();
-                    cliente.setIdCliente(resultSet.getLong("id_cliente"));
-                    cliente.setNombre(resultSet.getString("nombre"));
-                    cliente.setApellido(resultSet.getString("apellido"));
-                    cliente.setDni(resultSet.getString("dni"));
-                    cliente.setTelefono(resultSet.getString("telefono"));
-                    cliente.setEmail(resultSet.getString("email"));
-                    cliente.setActivo(resultSet.getBoolean("activo"));
+                logger.info("Conexión establecida, ejecutando query...");
+                
+                try (java.sql.ResultSet resultSet = statement.executeQuery()) {
+                    logger.info("Query ejecutado, procesando resultados...");
                     
-                    clientesSinUsuario.add(cliente);
+                    int contador = 0;
+                    while (resultSet.next()) {
+                        Cliente cliente = new Cliente();
+                        cliente.setIdCliente(resultSet.getLong("id_cliente"));
+                        cliente.setNombre(resultSet.getString("nombre"));
+                        cliente.setApellido(resultSet.getString("apellido"));
+                        cliente.setTelefono(resultSet.getString("telefono"));
+                        cliente.setEmail(resultSet.getString("email"));
+                        cliente.setActivo(resultSet.getBoolean("activo"));
+                        
+                        clientesSinUsuario.add(cliente);
+                        contador++;
+                        
+                        if (contador <= 5) {
+                            logger.info("Cliente #" + contador + " encontrado: " + cliente.getNombre() + " " + 
+                                       cliente.getApellido() + " (ID: " + cliente.getIdCliente() + ")");
+                        }
+                    }
+                    
+                    logger.info("Total de clientes activos sin usuario encontrados: " + clientesSinUsuario.size());
                 }
             }
             
-            logger.info("Clientes sin usuario encontrados: " + clientesSinUsuario.size());
-            return clientesSinUsuario;
-            
+        } catch (java.sql.SQLException e) {
+            logger.error("Error SQL al obtener clientes sin usuario: " + e.getMessage(), e);
+            logger.error("SQL State: " + e.getSQLState());
+            logger.error("Error Code: " + e.getErrorCode());
         } catch (Exception e) {
-            logger.error("Error al obtener clientes sin usuario", e);
-            return new java.util.ArrayList<>();
+            logger.error("Error general al obtener clientes sin usuario: " + e.getMessage(), e);
+            e.printStackTrace();
         }
+        
+        return clientesSinUsuario;
     }
     
     /**
@@ -1573,10 +1657,10 @@ public class AdminMainController {
             lblInfo.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
             
             Label lblNombre = new Label("Nombre: " + cliente.getNombreCompleto());
-            Label lblDni = new Label("DNI: " + cliente.getDni());
-            Label lblTelefono = new Label("Teléfono: " + cliente.getTelefono());
+            Label lblId = new Label("ID: " + cliente.getIdCliente());
+            Label lblTelefono = new Label("Teléfono: " + (cliente.getTelefono() != null ? cliente.getTelefono() : "N/A"));
             
-            infoCliente.getChildren().addAll(lblInfo, lblNombre, lblDni, lblTelefono);
+            infoCliente.getChildren().addAll(lblInfo, lblNombre, lblId, lblTelefono);
             
             // Formulario de usuario
             GridPane formGrid = new GridPane();
@@ -1592,7 +1676,8 @@ public class AdminMainController {
             
             Label lblPassword = new Label("Contraseña:");
             PasswordField txtPassword = new PasswordField();
-            txtPassword.setPromptText("Contraseña para el usuario");
+            txtPassword.setText(cliente.getIdCliente().toString());
+            txtPassword.setPromptText("Contraseña para el usuario (por defecto: ID del cliente)");
             
             formGrid.add(lblIdUsuario, 0, 0);
             formGrid.add(txtIdUsuario, 1, 0);
@@ -1640,21 +1725,26 @@ public class AdminMainController {
      */
     private void crearUsuarioCliente(Cliente cliente, String password, Stage dialogStage) {
         try {
+            // Usar el ID del cliente como contraseña por defecto
+            String passwordFinal = password.trim().isEmpty() ? cliente.getIdCliente().toString() : password;
+            
             // Validar contraseña
-            if (password.trim().isEmpty()) {
+            if (passwordFinal.trim().isEmpty()) {
                 showError("La contraseña es obligatoria");
                 return;
             }
             
-            if (password.length() < 4) {
+            if (passwordFinal.length() < 4) {
                 showError("La contraseña debe tener al menos 4 caracteres");
                 return;
             }
             
+            logger.info("Creando usuario para cliente: " + cliente.getNombreCompleto() + " (ID: " + cliente.getIdCliente() + ")");
+            
             // Crear el usuario
             Usuario nuevoUsuario = new Usuario();
             nuevoUsuario.setIdUsuario(cliente.getIdCliente());
-            nuevoUsuario.setPasswordHash(password);
+            nuevoUsuario.setPasswordHash(passwordFinal);
             nuevoUsuario.setIdRol(3); // Rol de cliente
             nuevoUsuario.setActivo(true);
             nuevoUsuario.setCreadoEn(DateTimeUtil.now());
@@ -1670,10 +1760,19 @@ public class AdminMainController {
             boolean usuarioCreado = usuarioDAO.create(nuevoUsuario);
             
             if (usuarioCreado) {
-                showInfo("Usuario creado exitosamente para " + cliente.getNombreCompleto());
+                String mensaje = "Usuario creado exitosamente para " + cliente.getNombreCompleto() + 
+                               "\nID de Usuario: " + cliente.getIdCliente() + 
+                               "\nContraseña: " + passwordFinal +
+                               "\nRol: Cliente" +
+                               "\nEstado: Activo";
+                showInfo(mensaje);
                 dialogStage.close();
                 
-                logger.info("Nuevo usuario cliente creado: " + cliente.getNombreCompleto() + " (ID: " + cliente.getIdCliente() + ")");
+                // Actualizar la tabla de usuarios en la vista principal
+                cargarUsuarios();
+                
+                logger.info("Nuevo usuario cliente creado: " + cliente.getNombreCompleto() + 
+                           " (ID: " + cliente.getIdCliente() + ", Password: " + passwordFinal + ")");
             } else {
                 showError("Error al crear el usuario. Verifique que el ID no esté en uso.");
             }
@@ -1748,8 +1847,18 @@ public class AdminMainController {
         colId.setCellValueFactory(new PropertyValueFactory<>("idMovimiento"));
         colId.setPrefWidth(60);
         
+        TableColumn<MovimientoCapital, String> colCliente = new TableColumn<>("Cliente");
+        colCliente.setCellValueFactory(cellData -> {
+            MovimientoCapital movimiento = cellData.getValue();
+            return new SimpleStringProperty(movimiento.getNombreCliente());
+        });
+        colCliente.setPrefWidth(200);
+        
         TableColumn<MovimientoCapital, String> colTipo = new TableColumn<>("Tipo");
-        colTipo.setCellValueFactory(new PropertyValueFactory<>("tipoMovimiento"));
+        colTipo.setCellValueFactory(cellData -> {
+            MovimientoCapital movimiento = cellData.getValue();
+            return new SimpleStringProperty(movimiento.getTipoMovimientoString());
+        });
         colTipo.setPrefWidth(120);
         
         TableColumn<MovimientoCapital, String> colMonto = new TableColumn<>("Monto");
@@ -1757,41 +1866,17 @@ public class AdminMainController {
         colMonto.setPrefWidth(100);
         
         TableColumn<MovimientoCapital, String> colDescripcion = new TableColumn<>("Descripción");
-        colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
-        colDescripcion.setPrefWidth(200);
+        colDescripcion.setCellValueFactory(new PropertyValueFactory<>("observacion"));
+        colDescripcion.setPrefWidth(250);
         
         TableColumn<MovimientoCapital, String> colFecha = new TableColumn<>("Fecha");
-        colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaMovimiento"));
+        colFecha.setCellValueFactory(cellData -> {
+            MovimientoCapital movimiento = cellData.getValue();
+            return new SimpleStringProperty(movimiento.getFechaFormateada());
+        });
         colFecha.setPrefWidth(120);
         
-        TableColumn<MovimientoCapital, String> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setPrefWidth(150);
-        colAcciones.setCellFactory(column -> new TableCell<MovimientoCapital, String>() {
-            private final Button btnEditar = new Button("✏️");
-            private final Button btnEliminar = new Button("🗑️");
-            
-            {
-                btnEditar.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-size: 10px; -fx-padding: 4 8; -fx-background-radius: 3px;");
-                btnEliminar.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 10px; -fx-padding: 4 8; -fx-background-radius: 3px;");
-                
-                btnEditar.setOnAction(e -> editarMovimiento(getTableView().getItems().get(getIndex())));
-                btnEliminar.setOnAction(e -> eliminarMovimiento(getTableView().getItems().get(getIndex())));
-            }
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    HBox hbox = new HBox(5);
-                    hbox.getChildren().addAll(btnEditar, btnEliminar);
-                    setGraphic(hbox);
-                }
-            }
-        });
-        
-        tablaMovimientos.getColumns().addAll(colId, colTipo, colMonto, colDescripcion, colFecha, colAcciones);
+        tablaMovimientos.getColumns().addAll(colId, colCliente, colTipo, colMonto, colDescripcion, colFecha);
         
         // Configurar el botón actualizar para recargar la tabla
         btnActualizar.setOnAction(e -> cargarMovimientosCapitalEnTabla(tablaMovimientos));
@@ -1831,9 +1916,9 @@ public class AdminMainController {
      */
     private void cargarMovimientosCapitalEnTabla(TableView<MovimientoCapital> tablaMovimientos) {
         try {
-            // Usar el DAO directamente para obtener todos los movimientos
+            // Usar el DAO directamente para obtener todos los movimientos con información del cliente
             pe.crediactiva.app.dao.MovimientoCapitalDAO movimientoDAO = new pe.crediactiva.app.dao.impl.MovimientoCapitalDAOImpl();
-            List<MovimientoCapital> movimientos = movimientoDAO.findAll();
+            List<MovimientoCapital> movimientos = movimientoDAO.findAllWithCliente();
             
             ObservableList<MovimientoCapital> movimientosObservable = FXCollections.observableArrayList(movimientos);
             tablaMovimientos.setItems(movimientosObservable);

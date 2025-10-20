@@ -3,8 +3,12 @@ package pe.crediactiva.app.view.asesor;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 import pe.crediactiva.app.model.RecaudacionAsesor;
 import pe.crediactiva.app.service.RecaudacionService;
 import pe.crediactiva.app.config.SessionManager;
@@ -206,8 +210,31 @@ public class RecaudacionDiaController {
      */
     @FXML
     private void handleBuscar() {
-        busquedaActual = txtBuscar.getText().trim().toLowerCase();
-        aplicarFiltros();
+        String textoBusqueda = txtBuscar.getText().trim();
+        
+        if (textoBusqueda.isEmpty()) {
+            busquedaActual = "";
+            aplicarFiltros();
+            return;
+        }
+        
+        // Validar que el texto de búsqueda sea un número válido
+        try {
+            Long.parseLong(textoBusqueda);
+            busquedaActual = textoBusqueda;
+            
+            // Verificar si el ID buscado pertenece al asesor actual
+            if (!verificarPermisosBusqueda(textoBusqueda)) {
+                mostrarError("El ID ingresado no pertenece a sus clientes asignados.");
+                return;
+            }
+            
+            aplicarFiltros();
+            
+        } catch (NumberFormatException e) {
+            mostrarError("Por favor ingrese un ID válido (número).");
+            txtBuscar.clear();
+        }
     }
     
     /**
@@ -217,6 +244,39 @@ public class RecaudacionDiaController {
     private void handleFiltrar() {
         filtroActual = cmbEstado.getValue();
         aplicarFiltros();
+    }
+    
+    /**
+     * Verifica si el ID de búsqueda pertenece a los clientes del asesor actual
+     */
+    private boolean verificarPermisosBusqueda(String idBuscado) {
+        try {
+            Long idAsesor = SessionManager.getInstance().getAsesorId();
+            if (idAsesor == null) {
+                logger.error("No se pudo obtener el ID del asesor de la sesión");
+                return false;
+            }
+            
+            // Obtener todas las recaudaciones del asesor para verificar permisos
+            List<RecaudacionAsesor> recaudacionesDelAsesor = recaudacionService.obtenerRecaudacionDelDiaPorAsesor(idAsesor);
+            
+            // Verificar si el ID buscado corresponde a algún cliente o préstamo del asesor
+            Long idBuscadoLong = Long.parseLong(idBuscado);
+            
+            for (RecaudacionAsesor recaudacion : recaudacionesDelAsesor) {
+                if (recaudacion.getIdCliente().equals(idBuscadoLong) || 
+                    recaudacion.getIdPrestamo().equals(idBuscadoLong)) {
+                    return true;
+                }
+            }
+            
+            logger.info("ID buscado " + idBuscado + " no pertenece al asesor " + idAsesor);
+            return false;
+            
+        } catch (Exception e) {
+            logger.error("Error al verificar permisos de búsqueda para ID: " + idBuscado, e);
+            return false;
+        }
     }
     
     /**
@@ -256,6 +316,15 @@ public class RecaudacionDiaController {
             recaudaciones.addAll(recaudacionesFiltradas);
             actualizarResumen();
             
+            // Mostrar mensaje informativo si hay búsqueda activa
+            if (!busquedaActual.isEmpty()) {
+                if (recaudacionesFiltradas.isEmpty()) {
+                    mostrarInfo("No se encontraron registros para el ID: " + busquedaActual);
+                } else {
+                    mostrarInfo("Se encontraron " + recaudacionesFiltradas.size() + " registro(s) para el ID: " + busquedaActual);
+                }
+            }
+            
         } catch (Exception e) {
             logger.error("Error al aplicar filtros", e);
             mostrarError("Error al aplicar filtros");
@@ -267,6 +336,12 @@ public class RecaudacionDiaController {
      */
     @FXML
     private void handleActualizar() {
+        // Limpiar búsqueda y filtros
+        txtBuscar.clear();
+        busquedaActual = "";
+        cmbEstado.setValue("Todos");
+        filtroActual = "Todos";
+        
         cargarRecaudacionDelDia();
         actualizarResumen();
         mostrarInfo("Recaudación del día actualizada");
@@ -292,5 +367,32 @@ public class RecaudacionDiaController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Maneja el botón de regresar al dashboard
+     */
+    @FXML
+    private void handleRegresarDashboard() {
+        try {
+            // Obtener el stage actual
+            Stage stage = (Stage) txtBuscar.getScene().getWindow();
+            
+            // Cargar la vista principal del asesor
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/AsesorMainView.fxml"));
+            Parent root = loader.load();
+            
+            // Configurar la nueva escena
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            
+            stage.setScene(scene);
+            stage.setTitle("Dashboard - Asesor");
+            stage.centerOnScreen();
+            
+        } catch (Exception e) {
+            logger.error("Error al regresar al dashboard", e);
+            mostrarError("Error al regresar al dashboard");
+        }
     }
 }

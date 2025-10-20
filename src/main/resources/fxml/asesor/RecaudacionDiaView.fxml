@@ -100,6 +100,6 @@
    <HBox spacing="15.0" alignment="CENTER_LEFT">
       <Button onAction="#handleActualizar" styleClass="primary-button" text="Actualizar" />
       <Button styleClass="secondary-button" text="Exportar" />
-      <Button styleClass="secondary-button" text="Regresar al Dashboard" />
+      <Button onAction="#handleRegresarDashboard" styleClass="secondary-button" text="Regresar al Dashboard" />
    </HBox>
 </VBox>

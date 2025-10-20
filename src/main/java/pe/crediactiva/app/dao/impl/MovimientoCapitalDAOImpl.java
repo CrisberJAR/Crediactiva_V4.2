@@ -3,12 +3,12 @@ package pe.crediactiva.app.dao.impl;
 import pe.crediactiva.app.config.DatabaseConfig;
 import pe.crediactiva.app.dao.MovimientoCapitalDAO;
 import pe.crediactiva.app.model.MovimientoCapital;
+import pe.crediactiva.app.model.Cliente;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,8 +45,8 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
 
     @Override
     public boolean create(MovimientoCapital movimiento) {
-        String sql = "INSERT INTO movimientos_capital (id_cliente, tipo_movimiento, monto, fecha, id_admin) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO movimientos_capital (id_cliente, tipo_movimiento, monto, fecha, id_admin, observacion) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -56,6 +56,7 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
             stmt.setBigDecimal(3, movimiento.getMonto());
             stmt.setTimestamp(4, DateTimeUtil.nowAsTimestamp());
             stmt.setLong(5, movimiento.getIdAdmin());
+            stmt.setString(6, movimiento.getObservacion());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -282,6 +283,41 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
 
         return false;
     }
+    
+    @Override
+    public List<MovimientoCapital> findAllWithCliente() {
+        String sql = "SELECT mc.*, c.nombre, c.apellido " +
+                    "FROM movimientos_capital mc " +
+                    "LEFT JOIN clientes c ON mc.id_cliente = c.id_cliente " +
+                    "ORDER BY mc.fecha DESC";
+        List<MovimientoCapital> movimientos = new ArrayList<>();
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                MovimientoCapital movimiento = mapResultSetToMovimientoCapital(rs);
+                
+                // Agregar información del cliente si existe
+                String nombre = rs.getString("nombre");
+                String apellido = rs.getString("apellido");
+                if (nombre != null && apellido != null) {
+                    Cliente cliente = new Cliente();
+                    cliente.setNombre(nombre);
+                    cliente.setApellido(apellido);
+                    movimiento.setCliente(cliente);
+                }
+                
+                movimientos.add(movimiento);
+            }
+
+        } catch (SQLException e) {
+            logger.error("Error al obtener movimientos con información de cliente", e);
+        }
+
+        return movimientos;
+    }
 
     private MovimientoCapital mapResultSetToMovimientoCapital(ResultSet rs) throws SQLException {
         MovimientoCapital movimiento = new MovimientoCapital();
@@ -291,6 +327,7 @@ public class MovimientoCapitalDAOImpl implements MovimientoCapitalDAO {
         movimiento.setMonto(rs.getBigDecimal("monto"));
         movimiento.setFecha(rs.getTimestamp("fecha").toLocalDateTime());
         movimiento.setIdAdmin(rs.getLong("id_admin"));
+        movimiento.setObservacion(rs.getString("observacion"));
         return movimiento;
     }
 }

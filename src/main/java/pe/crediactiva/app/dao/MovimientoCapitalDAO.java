@@ -64,4 +64,9 @@ public interface MovimientoCapitalDAO {
      * Verifica si existe un movimiento con el ID dado
      */
     boolean exists(Long idMovimiento);
+    
+    /**
+     * Obtiene todos los movimientos con información del cliente
+     */
+    List<MovimientoCapital> findAllWithCliente();
 }

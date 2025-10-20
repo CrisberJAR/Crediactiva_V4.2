@@ -231,6 +231,9 @@ public class RegistrarCobroController {
             }
         });
         
+        // Configurar evento de selección del cliente
+        cmbCliente.setOnAction(e -> handleClienteSeleccionado());
+        
         
         
         // Configurar combo de método de pago
@@ -357,6 +360,29 @@ public class RegistrarCobroController {
     }
     
     /**
+     * Maneja la selección de cliente del ComboBox
+     */
+    @FXML
+    private void handleClienteSeleccionado() {
+        try {
+            Cliente clienteSeleccionado = cmbCliente.getValue();
+            
+            if (clienteSeleccionado != null) {
+                this.clienteSeleccionado = clienteSeleccionado;
+                mostrarInfoCliente(clienteSeleccionado);
+                cargarPrestamosCliente(clienteSeleccionado);
+                logger.info("Cliente seleccionado: " + clienteSeleccionado.getNombre() + " " + clienteSeleccionado.getApellido());
+            } else {
+                limpiarDatosCliente();
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error al seleccionar cliente", e);
+            mostrarError("Error al seleccionar cliente");
+        }
+    }
+    
+    /**
      * Maneja la búsqueda de cliente
      */
     @FXML
@@ -426,6 +452,25 @@ public class RegistrarCobroController {
         lblDniCliente.setText(cliente.getTelefono()); // Usar teléfono como identificador
         lblTelefonoCliente.setText(cliente.getTelefono());
         lblEmailCliente.setText(cliente.getEmail());
+    }
+    
+    /**
+     * Limpia los datos del cliente cuando no hay selección
+     */
+    private void limpiarDatosCliente() {
+        lblNombreCliente.setText("-");
+        lblDniCliente.setText("-");
+        lblTelefonoCliente.setText("-");
+        lblEmailCliente.setText("-");
+        
+        // Limpiar préstamos y cuotas
+        prestamos.clear();
+        cuotasSeleccionables.clear();
+        prestamoSeleccionado = null;
+        clienteSeleccionado = null;
+        
+        // Limpiar cálculos
+        actualizarCalculos();
     }
     
     /**
