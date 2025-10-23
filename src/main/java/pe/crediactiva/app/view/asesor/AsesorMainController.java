@@ -1773,18 +1773,20 @@ public class AsesorMainController {
     @FXML
     private void handleVerClientesActivos() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/ClientesActivosView.fxml"));
-            VBox clientesActivosView = loader.load();
+            logger.info("Botón Ver Detalles de clientes activos presionado");
+            
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/GestionClientesView.fxml"));
+            VBox gestionClientesView = loader.load();
             
             // Reemplazar contenido
             contentArea.getChildren().clear();
-            contentArea.getChildren().add(clientesActivosView);
+            contentArea.getChildren().add(gestionClientesView);
             
-            logger.info("Cargados clientes activos");
+            logger.info("Cargada vista de gestión de clientes");
             
         } catch (IOException e) {
-            logger.error("Error al cargar clientes activos", e);
-            mostrarError("Error al cargar los clientes activos");
+            logger.error("Error al cargar gestión de clientes", e);
+            mostrarError("Error al cargar la gestión de clientes: " + e.getMessage());
         }
     }
     

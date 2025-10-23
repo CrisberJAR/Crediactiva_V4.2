@@ -535,6 +535,21 @@ public class PrestamoService {
     }
     
     /**
+     * Cuenta el número de préstamos activos por cliente
+     */
+    public int contarPrestamosActivosPorCliente(Long idCliente) {
+        try {
+            logger.info("Contando préstamos activos para cliente: " + idCliente);
+            List<Prestamo> prestamosActivos = prestamoDAO.findByClienteAndEstado(idCliente, Prestamo.EstadoPrestamo.ACTIVO);
+            logger.info("Encontrados " + prestamosActivos.size() + " préstamos activos para cliente: " + idCliente);
+            return prestamosActivos.size();
+        } catch (Exception e) {
+            logger.error("Error al contar préstamos activos por cliente: " + idCliente, e);
+            return 0;
+        }
+    }
+    
+    /**
      * Calcula la morosidad como porcentaje de cuotas vencidas sobre total de cuotas
      */
     public double calcularMorosidad() {

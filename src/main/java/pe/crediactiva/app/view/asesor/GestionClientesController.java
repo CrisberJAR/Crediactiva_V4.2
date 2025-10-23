@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.service.ClienteService;
+import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.util.FechaUtil;
 import pe.crediactiva.app.config.SessionManager;
 import org.slf4j.Logger;
@@ -36,8 +37,6 @@ public class GestionClientesController {
     @FXML
     private TableColumn<Cliente, String> colNombre;
     
-    @FXML
-    private TableColumn<Cliente, String> colDni;
     
     @FXML
     private TableColumn<Cliente, String> colTelefono;
@@ -64,6 +63,7 @@ public class GestionClientesController {
     private Button btnSiguiente;
     
     private ClienteService clienteService;
+    private PrestamoService prestamoService;
     private ObservableList<Cliente> clientes;
     private int paginaActual = 1;
     private int elementosPorPagina = 20;
@@ -72,6 +72,7 @@ public class GestionClientesController {
     
     public GestionClientesController() {
         this.clienteService = new ClienteService();
+        this.prestamoService = new PrestamoService();
         this.clientes = FXCollections.observableArrayList();
     }
     
@@ -101,7 +102,6 @@ public class GestionClientesController {
                 cliente.getNombre() + " " + cliente.getApellido()
             );
         });
-        colDni.setCellValueFactory(new PropertyValueFactory<>("dni"));
         colTelefono.setCellValueFactory(new PropertyValueFactory<>("telefono"));
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colEstado.setCellValueFactory(cellData -> {
@@ -110,7 +110,17 @@ public class GestionClientesController {
                 cliente.isActivo() ? "Activo" : "Inactivo"
             );
         });
-        colPrestamos.setCellValueFactory(new PropertyValueFactory<>("prestamos"));
+        colPrestamos.setCellValueFactory(cellData -> {
+            Cliente cliente = cellData.getValue();
+            try {
+                // Obtener el número de préstamos activos del cliente
+                int prestamosActivos = prestamoService.contarPrestamosActivosPorCliente(cliente.getIdCliente());
+                return new javafx.beans.property.SimpleObjectProperty<>(prestamosActivos);
+            } catch (Exception e) {
+                logger.error("Error al obtener préstamos activos para cliente: " + cliente.getIdCliente(), e);
+                return new javafx.beans.property.SimpleObjectProperty<>(0);
+            }
+        });
         colFechaRegistro.setCellValueFactory(cellData -> {
             Cliente cliente = cellData.getValue();
             return new javafx.beans.property.SimpleStringProperty(

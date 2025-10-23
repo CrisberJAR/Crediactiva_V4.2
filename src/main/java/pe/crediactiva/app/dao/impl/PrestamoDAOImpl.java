@@ -491,13 +491,18 @@ public class PrestamoDAOImpl implements PrestamoDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, idCliente);
-            stmt.setString(2, estado.name().toLowerCase());
+            String estadoStr = estado.name().toLowerCase();
+            stmt.setString(2, estadoStr);
+            
+            logger.info("Ejecutando consulta: " + sql + " con parámetros: idCliente=" + idCliente + ", estado=" + estadoStr);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    prestamos.add(mapResultSetToPrestamo(rs));
+                    prestamos.add(mapResultSetToPrestamoSimple(rs));
                 }
             }
+            
+            logger.info("Encontrados " + prestamos.size() + " préstamos para cliente " + idCliente + " con estado " + estadoStr);
 
         } catch (SQLException e) {
             logger.error("Error al buscar préstamos por cliente y estado: " + idCliente + ", " + estado, e);
@@ -507,7 +512,43 @@ public class PrestamoDAOImpl implements PrestamoDAO {
     }
     
     /**
-     * Mapea un ResultSet a un objeto Préstamo
+     * Mapea un ResultSet a un objeto Préstamo (solo campos básicos, sin JOINs)
+     */
+    private Prestamo mapResultSetToPrestamoSimple(ResultSet rs) throws SQLException {
+        Prestamo prestamo = new Prestamo();
+        prestamo.setIdPrestamo(rs.getLong("id_prestamo"));
+        prestamo.setIdCliente(rs.getLong("id_cliente"));
+        prestamo.setIdAsesor(rs.getLong("id_asesor"));
+        prestamo.setMontoSolicitado(rs.getBigDecimal("monto_solicitado"));
+        prestamo.setMontoDesembolsado(rs.getBigDecimal("monto_desembolsado"));
+        prestamo.setTasaInteres(rs.getBigDecimal("tasa_interes"));
+        prestamo.setEstado(Prestamo.EstadoPrestamo.valueOf(rs.getString("estado").toUpperCase()));
+        prestamo.setEtiqueta(Prestamo.EtiquetaPrestamo.valueOf(rs.getString("etiqueta").toUpperCase()));
+        prestamo.setPeriodoMeses(rs.getInt("periodo_meses"));
+        prestamo.setTipoPago(Prestamo.TipoPago.valueOf(rs.getString("tipo_pago").toUpperCase()));
+        
+        Date fechaInicio = rs.getDate("fecha_inicio");
+        if (fechaInicio != null) {
+            prestamo.setFechaInicio(fechaInicio.toLocalDate());
+        }
+        
+        Date fechaFin = rs.getDate("fecha_fin");
+        if (fechaFin != null) {
+            prestamo.setFechaFin(fechaFin.toLocalDate());
+        }
+        
+        prestamo.setObservacion(rs.getString("observacion"));
+        
+        Timestamp creadoEn = rs.getTimestamp("creado_en");
+        if (creadoEn != null) {
+            prestamo.setCreadoEn(creadoEn.toLocalDateTime());
+        }
+        
+        return prestamo;
+    }
+
+    /**
+     * Mapea un ResultSet a un objeto Préstamo (con JOINs de cliente y asesor)
      */
     private Prestamo mapResultSetToPrestamo(ResultSet rs) throws SQLException {
         Prestamo prestamo = new Prestamo();
