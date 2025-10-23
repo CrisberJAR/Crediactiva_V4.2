@@ -2350,22 +2350,34 @@ public class AsesorMainController {
      */
     private void abrirNuevoCliente() {
         try {
-            // Crear ventana de nuevo cliente
-            Stage ventanaNuevoCliente = new Stage();
-            ventanaNuevoCliente.setTitle("Nuevo Cliente");
-            ventanaNuevoCliente.initModality(Modality.APPLICATION_MODAL);
-            ventanaNuevoCliente.setResizable(false);
+            logger.info("Abriendo formulario FXML de nuevo cliente...");
             
-            // Crear el contenido de la ventana
-            VBox contenido = crearFormularioNuevoCliente(ventanaNuevoCliente);
-            
-            Scene scene = new Scene(contenido, 500, 600);
-            ventanaNuevoCliente.setScene(scene);
-            ventanaNuevoCliente.showAndWait();
-            
+            // Crear una nueva ventana modal para el nuevo cliente
+            Stage nuevoClienteStage = new Stage();
+
+            // Cargar la pantalla del nuevo cliente desde FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/NuevoClienteView.fxml"));
+            Scene scene = new Scene(loader.load());
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+
+            // Configurar la nueva ventana
+            nuevoClienteStage.setTitle("CrediActiva - Nuevo Cliente");
+            nuevoClienteStage.setScene(scene);
+            nuevoClienteStage.setMinWidth(800);
+            nuevoClienteStage.setMinHeight(600);
+            nuevoClienteStage.setResizable(false);
+
+            // Centrar la ventana
+            nuevoClienteStage.centerOnScreen();
+
+            // Mostrar la ventana modal
+            nuevoClienteStage.showAndWait();
+
+            logger.info("Formulario FXML de nuevo cliente cerrado");
+
         } catch (Exception e) {
-            logger.error("Error al abrir nuevo cliente", e);
-            mostrarError("Error al abrir nuevo cliente: " + e.getMessage());
+            logger.error("Error al abrir formulario FXML de nuevo cliente", e);
+            mostrarError("Error al abrir el formulario de nuevo cliente: " + e.getMessage());
         }
     }
     
