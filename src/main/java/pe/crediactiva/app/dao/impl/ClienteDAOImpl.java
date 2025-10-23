@@ -160,9 +160,9 @@ public class ClienteDAOImpl implements ClienteDAO {
     
     @Override
     public boolean create(Cliente cliente) {
-        String sql = "INSERT INTO clientes (id_cliente, nombre, apellido, fecha_registro, direccion, " +
-                    "telefono, email, id_asesor, saldo_capital, etiqueta_cliente, activo) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO clientes (id_cliente, nombre, apellido, fecha_registro, fecha_nacimiento, sexo, direccion, " +
+                    "telefono, email, ocupacion, lugar_trabajo, id_asesor, saldo_capital, etiqueta_cliente, activo) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -171,13 +171,31 @@ public class ClienteDAOImpl implements ClienteDAO {
             stmt.setString(2, cliente.getNombre());
             stmt.setString(3, cliente.getApellido());
             stmt.setDate(4, Date.valueOf(cliente.getFechaRegistro()));
-            stmt.setString(5, cliente.getDireccion());
-            stmt.setString(6, cliente.getTelefono());
-            stmt.setString(7, cliente.getEmail());
-            stmt.setLong(8, cliente.getIdAsesor());
-            stmt.setBigDecimal(9, cliente.getSaldoCapital());
-            stmt.setString(10, cliente.getEtiquetaCliente().name().toLowerCase());
-            stmt.setBoolean(11, cliente.isActivo());
+            
+            // Fecha de nacimiento
+            if (cliente.getFechaNacimiento() != null) {
+                stmt.setDate(5, Date.valueOf(cliente.getFechaNacimiento()));
+            } else {
+                stmt.setNull(5, java.sql.Types.DATE);
+            }
+            
+            // Sexo
+            stmt.setString(6, cliente.getSexo());
+            
+            stmt.setString(7, cliente.getDireccion());
+            stmt.setString(8, cliente.getTelefono());
+            stmt.setString(9, cliente.getEmail());
+            
+            // Ocupación
+            stmt.setString(10, cliente.getOcupacion());
+            
+            // Lugar de trabajo
+            stmt.setString(11, cliente.getLugarTrabajo());
+            
+            stmt.setLong(12, cliente.getIdAsesor());
+            stmt.setBigDecimal(13, cliente.getSaldoCapital());
+            stmt.setString(14, cliente.getEtiquetaCliente().name().toLowerCase());
+            stmt.setBoolean(15, cliente.isActivo());
             
             int rowsAffected = stmt.executeUpdate();
             
@@ -393,9 +411,28 @@ public class ClienteDAOImpl implements ClienteDAO {
         cliente.setNombre(rs.getString("nombre"));
         cliente.setApellido(rs.getString("apellido"));
         cliente.setFechaRegistro(rs.getDate("fecha_registro").toLocalDate());
+        
+        // hasta aquí ya estaba, ahora agregamos los nuevos campos:
+        
+        // Fecha de nacimiento
+        Date fechaNacimiento = rs.getDate("fecha_nacimiento");
+        if (fechaNacimiento != null) {
+            cliente.setFechaNacimiento(fechaNacimiento.toLocalDate());
+        }
+        
+        // Sexo
+        cliente.setSexo(rs.getString("sexo"));
+        
         cliente.setDireccion(rs.getString("direccion"));
         cliente.setTelefono(rs.getString("telefono"));
         cliente.setEmail(rs.getString("email"));
+        
+        // Ocupación
+        cliente.setOcupacion(rs.getString("ocupacion"));
+        
+        // Lugar de trabajo
+        cliente.setLugarTrabajo(rs.getString("lugar_trabajo"));
+        
         cliente.setIdAsesor(rs.getLong("id_asesor"));
         cliente.setSaldoCapital(rs.getBigDecimal("saldo_capital"));
         cliente.setEtiquetaCliente(Cliente.EtiquetaCliente.valueOf(

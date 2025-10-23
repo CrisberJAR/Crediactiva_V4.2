@@ -34,8 +34,6 @@ public class NuevoClienteController {
     @FXML
     private ComboBox<String> cmbSexo;
     
-    @FXML
-    private ComboBox<String> cmbEstadoCivil;
     
     @FXML
     private TextField txtTelefono;
@@ -52,44 +50,9 @@ public class NuevoClienteController {
     @FXML
     private TextField txtLugarTrabajo;
     
-    @FXML
-    private TextField txtIngresosMensuales;
     
-    @FXML
-    private TextField txtTiempoTrabajo;
     
-    @FXML
-    private TextField txtRef1Nombre;
     
-    @FXML
-    private TextField txtRef1Telefono;
-    
-    @FXML
-    private TextField txtRef2Nombre;
-    
-    @FXML
-    private TextField txtRef2Telefono;
-    
-    @FXML
-    private CheckBox chkDni;
-    
-    @FXML
-    private CheckBox chkComprobanteIngresos;
-    
-    @FXML
-    private CheckBox chkReciboLuz;
-    
-    @FXML
-    private CheckBox chkReciboAgua;
-    
-    @FXML
-    private CheckBox chkReferencias;
-    
-    @FXML
-    private CheckBox chkOtros;
-    
-    @FXML
-    private TextArea txtObservaciones;
     
     private ClienteService clienteService;
     
@@ -113,27 +76,13 @@ public class NuevoClienteController {
      * Configura los controles del formulario
      */
     private void configurarControles() {
-        // Configurar combo de sexo
-        cmbSexo.getItems().addAll("M", "F");
+        // Configurar combo de sexo (según la base de datos: 'f', 'm')
+        cmbSexo.getItems().addAll("m", "f");
         
-        // Configurar combo de estado civil
-        cmbEstadoCivil.getItems().addAll("SOLTERO", "CASADO", "DIVORCIADO", "VIUDO");
         
         // TODO: Agregar campo DNI al modelo Cliente
         
-        // Configurar validación de ingresos
-        txtIngresosMensuales.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*\\.?\\d*")) {
-                txtIngresosMensuales.setText(oldValue);
-            }
-        });
         
-        // Configurar validación de tiempo de trabajo
-        txtTiempoTrabajo.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                txtTiempoTrabajo.setText(oldValue);
-            }
-        });
         
         // Configurar validación de teléfono
         txtTelefono.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -142,18 +91,6 @@ public class NuevoClienteController {
             }
         });
         
-        // Configurar validación de teléfonos de referencia
-        txtRef1Telefono.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                txtRef1Telefono.setText(oldValue);
-            }
-        });
-        
-        txtRef2Telefono.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                txtRef2Telefono.setText(oldValue);
-            }
-        });
     }
     
     /**
@@ -185,24 +122,6 @@ public class NuevoClienteController {
         }
     }
     
-    /**
-     * Maneja el guardado del borrador
-     */
-    @FXML
-    private void handleGuardarBorrador() {
-        if (!validarDatosBasicos()) {
-            return;
-        }
-        
-        try {
-            // TODO: Implementar guardado de borrador
-            mostrarInfo("Funcionalidad de guardado de borrador en desarrollo");
-            
-        } catch (Exception e) {
-            logger.error("Error al guardar borrador", e);
-            mostrarError("Error al guardar el borrador");
-        }
-    }
     
     /**
      * Valida los datos básicos del formulario
@@ -283,52 +202,6 @@ public class NuevoClienteController {
             return false;
         }
         
-        if (txtIngresosMensuales.getText().trim().isEmpty()) {
-            mostrarAdvertencia("Por favor ingrese los ingresos mensuales del cliente");
-            return false;
-        }
-        
-        try {
-            BigDecimal ingresos = new BigDecimal(txtIngresosMensuales.getText());
-            if (ingresos.compareTo(BigDecimal.ZERO) <= 0) {
-                mostrarAdvertencia("Los ingresos deben ser mayores a cero");
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            mostrarAdvertencia("Por favor ingrese un monto válido para los ingresos");
-            return false;
-        }
-        
-        if (txtTiempoTrabajo.getText().trim().isEmpty()) {
-            mostrarAdvertencia("Por favor ingrese el tiempo en el trabajo");
-            return false;
-        }
-        
-        try {
-            int tiempoTrabajo = Integer.parseInt(txtTiempoTrabajo.getText());
-            if (tiempoTrabajo < 0) {
-                mostrarAdvertencia("El tiempo en el trabajo debe ser mayor o igual a cero");
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            mostrarAdvertencia("Por favor ingrese un tiempo válido para el trabajo");
-            return false;
-        }
-        
-        if (txtRef1Nombre.getText().trim().isEmpty()) {
-            mostrarAdvertencia("Por favor ingrese al menos una referencia personal");
-            return false;
-        }
-        
-        if (txtRef1Telefono.getText().trim().isEmpty()) {
-            mostrarAdvertencia("Por favor ingrese el teléfono de la primera referencia");
-            return false;
-        }
-        
-        if (!chkDni.isSelected()) {
-            mostrarAdvertencia("El DNI del cliente es obligatorio");
-            return false;
-        }
         
         return true;
     }
@@ -362,29 +235,27 @@ public class NuevoClienteController {
             throw new RuntimeException("Error: El DNI debe ser un número válido");
         }
         
+        // Configurar campos básicos del cliente
         cliente.setNombre(txtNombres.getText().trim());
         cliente.setApellido(txtApellidos.getText().trim());
         cliente.setDni(dni);
-        // TODO: Agregar campos faltantes al modelo Cliente
-        // cliente.setFechaNacimiento(dpFechaNacimiento.getValue());
-        // cliente.setSexo(cmbSexo.getValue());
-        // cliente.setEstadoCivil(cmbEstadoCivil.getValue());
         cliente.setTelefono(txtTelefono.getText().trim());
         cliente.setEmail(txtEmail.getText().trim());
         cliente.setDireccion(txtDireccion.getText().trim());
-        // cliente.setOcupacion(txtOcupacion.getText().trim());
-        // cliente.setLugarTrabajo(txtLugarTrabajo.getText().trim());
-        // cliente.setIngresosMensuales(new BigDecimal(txtIngresosMensuales.getText()));
-        // cliente.setTiempoTrabajo(Integer.parseInt(txtTiempoTrabajo.getText()));
-        // cliente.setReferencia1Nombre(txtRef1Nombre.getText().trim());
-        // cliente.setReferencia1Telefono(txtRef1Telefono.getText().trim());
-        // cliente.setReferencia2Nombre(txtRef2Nombre.getText().trim());
-        // cliente.setReferencia2Telefono(txtRef2Telefono.getText().trim());
-        // cliente.setObservaciones(txtObservaciones.getText().trim());
-        cliente.setActivo(true);
-        cliente.setFechaRegistro(DateTimeUtil.today());
         
-        // CORRECCIÓN CRÍTICA: Asignar el ID del asesor que está registrando el cliente
+        // Configurar nuevos campos
+        cliente.setFechaNacimiento(dpFechaNacimiento.getValue());
+        cliente.setSexo(cmbSexo.getValue());
+        cliente.setOcupacion(txtOcupacion.getText().trim());
+        cliente.setLugarTrabajo(txtLugarTrabajo.getText().trim());
+        
+        // Configurar campos por defecto para nuevo cliente
+        cliente.setFechaRegistro(DateTimeUtil.today()); // Fecha actual
+        cliente.setSaldoCapital(BigDecimal.ZERO); // Saldo inicial en 0
+        cliente.setActivo(true); // Estado activo = 1
+        cliente.setEtiquetaCliente(Cliente.EtiquetaCliente.EXCELENTE); // Etiqueta por defecto
+        
+        // Asignar el ID del asesor que está registrando el cliente
         cliente.setIdAsesor(idAsesor);
         logger.info("Cliente será registrado con id_asesor: " + idAsesor);
         
@@ -409,27 +280,12 @@ public class NuevoClienteController {
         txtDni.clear();
         dpFechaNacimiento.setValue(DateTimeUtil.today().minusYears(25));
         cmbSexo.setValue(null);
-        cmbEstadoCivil.setValue(null);
         txtTelefono.clear();
         txtEmail.clear();
         txtDireccion.clear();
         txtOcupacion.clear();
         txtLugarTrabajo.clear();
-        txtIngresosMensuales.clear();
-        txtTiempoTrabajo.clear();
-        txtRef1Nombre.clear();
-        txtRef1Telefono.clear();
-        txtRef2Nombre.clear();
-        txtRef2Telefono.clear();
-        txtObservaciones.clear();
         
-        // Limpiar checkboxes
-        chkDni.setSelected(false);
-        chkComprobanteIngresos.setSelected(false);
-        chkReciboLuz.setSelected(false);
-        chkReciboAgua.setSelected(false);
-        chkReferencias.setSelected(false);
-        chkOtros.setSelected(false);
     }
     
     /**

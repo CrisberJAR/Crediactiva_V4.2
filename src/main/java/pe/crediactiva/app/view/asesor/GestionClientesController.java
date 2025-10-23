@@ -3,8 +3,11 @@ package pe.crediactiva.app.view.asesor;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
@@ -259,11 +262,34 @@ public class GestionClientesController {
     @FXML
     private void handleNuevoCliente() {
         try {
-            // TODO: Implementar formulario de nuevo cliente
-            mostrarInfo("Funcionalidad de nuevo cliente en desarrollo");
+            // Crear una nueva ventana modal para el nuevo cliente
+            Stage nuevoClienteStage = new Stage();
+            
+            // Cargar la pantalla del nuevo cliente
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/asesor/NuevoClienteView.fxml"));
+            Scene scene = new Scene(loader.load());
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            
+            // Configurar la nueva ventana
+            nuevoClienteStage.setTitle("CrediActiva - Nuevo Cliente");
+            nuevoClienteStage.setScene(scene);
+            nuevoClienteStage.setMinWidth(800);
+            nuevoClienteStage.setMinHeight(600);
+            nuevoClienteStage.setResizable(false);
+            
+            // Centrar la ventana
+            nuevoClienteStage.centerOnScreen();
+            
+            // Mostrar la ventana modal
+            nuevoClienteStage.showAndWait();
+            
+            // Refrescar la tabla después de cerrar la ventana
+            cargarClientes();
+            
+            logger.info("Ventana de nuevo cliente cerrada, tabla actualizada");
             
         } catch (Exception e) {
-            logger.error("Error al crear nuevo cliente", e);
+            logger.error("Error al abrir formulario de nuevo cliente", e);
             mostrarError("Error al abrir el formulario de nuevo cliente");
         }
     }

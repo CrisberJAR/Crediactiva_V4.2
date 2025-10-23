@@ -12,9 +12,13 @@ public class Cliente {
     private String apellido;
     private String dni;
     private LocalDate fechaRegistro;
+    private LocalDate fechaNacimiento;
+    private String sexo;
     private String direccion;
     private String telefono;
     private String email;
+    private String ocupacion;
+    private String lugarTrabajo;
     private Long idAsesor;
     private BigDecimal saldoCapital;
     private EtiquetaCliente etiquetaCliente;
@@ -161,6 +165,38 @@ public class Cliente {
     
     public void setAsesor(Asesor asesor) {
         this.asesor = asesor;
+    }
+    
+    public LocalDate getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+    
+    public void setFechaNacimiento(LocalDate fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
+    }
+    
+    public String getSexo() {
+        return sexo;
+    }
+    
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
+    
+    public String getOcupacion() {
+        return ocupacion;
+    }
+    
+    public void setOcupacion(String ocupacion) {
+        this.ocupacion = ocupacion;
+    }
+    
+    public String getLugarTrabajo() {
+        return lugarTrabajo;
+    }
+    
+    public void setLugarTrabajo(String lugarTrabajo) {
+        this.lugarTrabajo = lugarTrabajo;
     }
     
     @Override
