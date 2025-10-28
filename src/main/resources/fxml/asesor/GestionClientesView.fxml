@@ -33,6 +33,7 @@
    <HBox spacing="10.0" alignment="CENTER_LEFT">
       <Button fx:id="btnNuevoCliente" onAction="#handleNuevoCliente" styleClass="primary-button" text="Nuevo Cliente" />
       <Button fx:id="btnVerDetalles" onAction="#handleVerDetalles" styleClass="secondary-button" text="Ver Detalles" />
+      <Button fx:id="btnVerDetallesPrestamosActivos" onAction="#handleVerDetallesPrestamosActivos" styleClass="secondary-button" text="Ver Préstamos Activos" />
       <Button fx:id="btnHistorial" onAction="#handleHistorial" styleClass="secondary-button" text="Ver Historial" />
       <Button fx:id="btnActualizar" onAction="#handleActualizar" text="Actualizar" />
    </HBox>

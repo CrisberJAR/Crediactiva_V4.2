@@ -189,8 +189,11 @@ public class AsesorMainController {
             int clientesActivos = clienteService.obtenerClientesPorAsesor(idAsesor).size();
             actualizarLabelDashboard("lblClientesActivos", String.valueOf(clientesActivos));
             
-            // Préstamos activos del asesor
-            int prestamosActivos = prestamoService.obtenerPrestamosPorAsesor(idAsesor).size();
+            // Préstamos activos del asesor (filtrar solo los que están ACTIVOS)
+            List<Prestamo> todosPrestamos = prestamoService.obtenerPrestamosPorAsesor(idAsesor);
+            int prestamosActivos = (int) todosPrestamos.stream()
+                .filter(prestamo -> prestamo.getEstado() == Prestamo.EstadoPrestamo.ACTIVO)
+                .count();
             actualizarLabelDashboard("lblPrestamosActivos", String.valueOf(prestamosActivos));
             
             // Morosidad (porcentaje de cuotas vencidas del asesor)

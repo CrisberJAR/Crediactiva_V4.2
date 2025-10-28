@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 import pe.crediactiva.app.model.Cliente;
 import pe.crediactiva.app.model.Prestamo;
 import pe.crediactiva.app.model.Pago;
+import pe.crediactiva.app.model.Cronograma;
 import pe.crediactiva.app.service.ClienteService;
 import pe.crediactiva.app.service.PrestamoService;
 import pe.crediactiva.app.service.PagoService;
@@ -72,6 +73,9 @@ public class GestionClientesController {
     
     @FXML
     private Button btnSiguiente;
+    
+    @FXML
+    private Button btnVerDetallesPrestamosActivos;
     
     private ClienteService clienteService;
     private PrestamoService prestamoService;
@@ -548,6 +552,369 @@ public class GestionClientesController {
     }
     
     /**
+     * Maneja la visualización de detalles de préstamos activos del cliente
+     */
+    @FXML
+    private void handleVerDetallesPrestamosActivos() {
+        Cliente clienteSeleccionado = tblClientes.getSelectionModel().getSelectedItem();
+        
+        if (clienteSeleccionado == null) {
+            mostrarAdvertencia("Por favor seleccione un cliente para ver sus préstamos activos");
+            return;
+        }
+        
+        try {
+            // Obtener préstamos activos del cliente
+            List<Prestamo> prestamosActivos = prestamoService.obtenerPrestamosActivosPorCliente(clienteSeleccionado.getIdCliente());
+            
+            if (prestamosActivos.isEmpty()) {
+                mostrarInfo("El cliente " + clienteSeleccionado.getNombre() + " " + clienteSeleccionado.getApellido() + 
+                           " no tiene préstamos activos en este momento.");
+                return;
+            }
+            
+            // Crear una ventana modal para mostrar los detalles de préstamos activos
+            Stage prestamosActivosStage = new Stage();
+            
+            // Crear el contenido de la ventana de préstamos activos
+            VBox contenido = crearVentanaPrestamosActivos(clienteSeleccionado, prestamosActivos);
+            
+            // Crear un ScrollPane para hacer el contenido scrolleable
+            ScrollPane scrollPane = new ScrollPane(contenido);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setStyle("-fx-background-color: #f8fafc;");
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            
+            Scene scene = new Scene(scrollPane, 1000, 700);
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            
+            // Configurar la ventana
+            prestamosActivosStage.setTitle("CrediActiva - Préstamos Activos del Cliente");
+            prestamosActivosStage.setScene(scene);
+            prestamosActivosStage.setResizable(true);
+            prestamosActivosStage.setMinWidth(800);
+            prestamosActivosStage.setMinHeight(500);
+            prestamosActivosStage.centerOnScreen();
+            
+            // Mostrar la ventana modal
+            prestamosActivosStage.showAndWait();
+            
+            logger.info("Ventana de préstamos activos cerrada para cliente: " + clienteSeleccionado.getIdCliente());
+            
+        } catch (Exception e) {
+            logger.error("Error al mostrar préstamos activos del cliente", e);
+            mostrarError("Error al mostrar los préstamos activos del cliente");
+        }
+    }
+    
+    /**
+     * Crea la ventana de préstamos activos del cliente
+     */
+    private VBox crearVentanaPrestamosActivos(Cliente cliente, List<Prestamo> prestamosActivos) {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new javafx.geometry.Insets(30));
+        contenido.setStyle("-fx-background-color: #f8fafc;");
+        contenido.setMinWidth(800);
+        
+        // Título
+        Label titulo = new Label("💰 Préstamos Activos: " + cliente.getNombre() + " " + cliente.getApellido());
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
+        
+        // Resumen de préstamos activos
+        VBox resumen = crearResumenPrestamosActivos(cliente, prestamosActivos);
+        
+        // Detalles de cada préstamo activo
+        VBox detallesPrestamos = new VBox(15);
+        detallesPrestamos.setStyle("-fx-background-color: white; -fx-background-radius: 10px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);");
+        
+        Label tituloDetalles = new Label("📋 Detalles de Préstamos Activos");
+        tituloDetalles.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #374151;");
+        
+        // Crear tabla de préstamos activos
+        TableView<Prestamo> tablaPrestamosActivos = new TableView<>();
+        tablaPrestamosActivos.setPrefHeight(300);
+        tablaPrestamosActivos.setMaxHeight(300);
+        
+        // Configurar columnas de la tabla
+        TableColumn<Prestamo, Long> colIdPrestamo = new TableColumn<>("ID Préstamo");
+        colIdPrestamo.setCellValueFactory(new PropertyValueFactory<>("idPrestamo"));
+        colIdPrestamo.setPrefWidth(100);
+        
+        TableColumn<Prestamo, String> colFechaCreacion = new TableColumn<>("Fecha Creación");
+        colFechaCreacion.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            if (prestamo.getCreadoEn() != null) {
+                return new javafx.beans.property.SimpleStringProperty(
+                    prestamo.getCreadoEn().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                );
+            }
+            return new javafx.beans.property.SimpleStringProperty("-");
+        });
+        colFechaCreacion.setPrefWidth(120);
+        
+        TableColumn<Prestamo, String> colMontoSolicitado = new TableColumn<>("Monto Solicitado");
+        colMontoSolicitado.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                String.format("S/ %.2f", prestamo.getMontoSolicitado())
+            );
+        });
+        colMontoSolicitado.setPrefWidth(130);
+        
+        TableColumn<Prestamo, String> colMontoDesembolsado = new TableColumn<>("Monto Desembolsado");
+        colMontoDesembolsado.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                String.format("S/ %.2f", prestamo.getMontoDesembolsado())
+            );
+        });
+        colMontoDesembolsado.setPrefWidth(140);
+        
+        TableColumn<Prestamo, String> colTasaInteres = new TableColumn<>("Tasa Interés");
+        colTasaInteres.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                String.format("%.2f%%", prestamo.getTasaInteres())
+            );
+        });
+        colTasaInteres.setPrefWidth(100);
+        
+        TableColumn<Prestamo, String> colNumeroCuotas = new TableColumn<>("N° Cuotas");
+        colNumeroCuotas.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            int numeroCuotas = calcularNumeroCuotas(prestamo.getPeriodoMeses(), prestamo.getTipoPago());
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(numeroCuotas));
+        });
+        colNumeroCuotas.setPrefWidth(80);
+        
+        TableColumn<Prestamo, String> colTipoPago = new TableColumn<>("Tipo Pago");
+        colTipoPago.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                prestamo.getTipoPago().toString()
+            );
+        });
+        colTipoPago.setPrefWidth(100);
+        
+        TableColumn<Prestamo, String> colFechaInicio = new TableColumn<>("Fecha Inicio");
+        colFechaInicio.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            if (prestamo.getFechaInicio() != null) {
+                return new javafx.beans.property.SimpleStringProperty(
+                    FechaUtil.formatearFecha(prestamo.getFechaInicio())
+                );
+            }
+            return new javafx.beans.property.SimpleStringProperty("-");
+        });
+        colFechaInicio.setPrefWidth(120);
+        
+        TableColumn<Prestamo, String> colFechaFin = new TableColumn<>("Fecha Fin");
+        colFechaFin.setCellValueFactory(cellData -> {
+            Prestamo prestamo = cellData.getValue();
+            if (prestamo.getFechaFin() != null) {
+                return new javafx.beans.property.SimpleStringProperty(
+                    FechaUtil.formatearFecha(prestamo.getFechaFin())
+                );
+            }
+            return new javafx.beans.property.SimpleStringProperty("-");
+        });
+        colFechaFin.setPrefWidth(120);
+        
+        tablaPrestamosActivos.getColumns().addAll(colIdPrestamo, colFechaCreacion, colMontoSolicitado, 
+                                                 colMontoDesembolsado, colTasaInteres, colNumeroCuotas, 
+                                                 colTipoPago, colFechaInicio, colFechaFin);
+        
+        // Cargar datos en la tabla
+        tablaPrestamosActivos.getItems().addAll(prestamosActivos);
+        
+        detallesPrestamos.getChildren().addAll(tituloDetalles, tablaPrestamosActivos);
+        
+        // Cronograma de pagos pendientes
+        VBox cronogramaPendiente = crearCronogramaPendiente(cliente, prestamosActivos);
+        
+        // Botón de cerrar
+        Button btnCerrar = new Button("Cerrar");
+        btnCerrar.setStyle("-fx-background-color: #6b7280; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5px;");
+        btnCerrar.setOnAction(e -> ((Stage) btnCerrar.getScene().getWindow()).close());
+        
+        // Contenedor para el botón centrado
+        HBox botonContainer = new HBox();
+        botonContainer.setAlignment(javafx.geometry.Pos.CENTER);
+        botonContainer.getChildren().add(btnCerrar);
+        
+        contenido.getChildren().addAll(titulo, resumen, detallesPrestamos, cronogramaPendiente, botonContainer);
+        
+        return contenido;
+    }
+    
+    /**
+     * Crea el resumen de préstamos activos
+     */
+    private VBox crearResumenPrestamosActivos(Cliente cliente, List<Prestamo> prestamosActivos) {
+        VBox seccion = new VBox(15);
+        seccion.setStyle("-fx-background-color: white; -fx-background-radius: 10px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);");
+        
+        Label tituloSeccion = new Label("📊 Resumen de Préstamos Activos");
+        tituloSeccion.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #374151;");
+        
+        GridPane gridResumen = new GridPane();
+        gridResumen.setHgap(30);
+        gridResumen.setVgap(10);
+        
+        try {
+            // Calcular totales
+            BigDecimal totalSolicitado = BigDecimal.ZERO;
+            BigDecimal totalDesembolsado = BigDecimal.ZERO;
+            int totalCuotas = 0;
+            
+            for (Prestamo prestamo : prestamosActivos) {
+                totalSolicitado = totalSolicitado.add(prestamo.getMontoSolicitado());
+                totalDesembolsado = totalDesembolsado.add(prestamo.getMontoDesembolsado());
+                totalCuotas += calcularNumeroCuotas(prestamo.getPeriodoMeses(), prestamo.getTipoPago());
+            }
+            
+            // Obtener información de pagos
+            double totalPagado = prestamoService.obtenerTotalPagadoPorCliente(cliente.getIdCliente());
+            double montoPendiente = prestamoService.obtenerMontoPendientePorCliente(cliente.getIdCliente());
+            
+            gridResumen.add(new Label("Total de Préstamos Activos:"), 0, 0);
+            Label lblTotalPrestamos = new Label(String.valueOf(prestamosActivos.size()));
+            lblTotalPrestamos.setStyle("-fx-font-weight: bold; -fx-text-fill: #10b981;");
+            gridResumen.add(lblTotalPrestamos, 1, 0);
+            
+            gridResumen.add(new Label("Monto Total Solicitado:"), 0, 1);
+            Label lblTotalSolicitado = new Label(String.format("S/ %.2f", totalSolicitado));
+            lblTotalSolicitado.setStyle("-fx-font-weight: bold;");
+            gridResumen.add(lblTotalSolicitado, 1, 1);
+            
+            gridResumen.add(new Label("Monto Total Desembolsado:"), 2, 0);
+            Label lblTotalDesembolsado = new Label(String.format("S/ %.2f", totalDesembolsado));
+            lblTotalDesembolsado.setStyle("-fx-font-weight: bold; -fx-text-fill: #3b82f6;");
+            gridResumen.add(lblTotalDesembolsado, 3, 0);
+            
+            gridResumen.add(new Label("Total de Cuotas:"), 2, 1);
+            Label lblTotalCuotas = new Label(String.valueOf(totalCuotas));
+            lblTotalCuotas.setStyle("-fx-font-weight: bold;");
+            gridResumen.add(lblTotalCuotas, 3, 1);
+            
+            gridResumen.add(new Label("Total Pagado:"), 0, 2);
+            Label lblTotalPagado = new Label(String.format("S/ %.2f", totalPagado));
+            lblTotalPagado.setStyle("-fx-font-weight: bold; -fx-text-fill: #10b981;");
+            gridResumen.add(lblTotalPagado, 1, 2);
+            
+            gridResumen.add(new Label("Monto Pendiente:"), 2, 2);
+            Label lblMontoPendiente = new Label(String.format("S/ %.2f", montoPendiente));
+            lblMontoPendiente.setStyle("-fx-font-weight: bold; -fx-text-fill: #ef4444;");
+            gridResumen.add(lblMontoPendiente, 3, 2);
+            
+        } catch (Exception e) {
+            logger.error("Error al obtener resumen de préstamos activos", e);
+            gridResumen.add(new Label("Error al cargar resumen"), 0, 0);
+        }
+        
+        seccion.getChildren().addAll(tituloSeccion, gridResumen);
+        return seccion;
+    }
+    
+    /**
+     * Crea la sección de cronograma de pagos pendientes
+     */
+    private VBox crearCronogramaPendiente(Cliente cliente, List<Prestamo> prestamosActivos) {
+        VBox seccion = new VBox(15);
+        seccion.setStyle("-fx-background-color: white; -fx-background-radius: 10px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);");
+        
+        Label tituloSeccion = new Label("📅 Cronograma de Pagos Pendientes");
+        tituloSeccion.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #374151;");
+        
+        // Crear tabla de cronograma pendiente
+        TableView<Cronograma> tablaCronograma = new TableView<>();
+        tablaCronograma.setPrefHeight(250);
+        tablaCronograma.setMaxHeight(250);
+        
+        TableColumn<Cronograma, Long> colIdCuota = new TableColumn<>("ID Cuota");
+        colIdCuota.setCellValueFactory(new PropertyValueFactory<>("idCuota"));
+        colIdCuota.setPrefWidth(80);
+        
+        TableColumn<Cronograma, Long> colIdPrestamo = new TableColumn<>("ID Préstamo");
+        colIdPrestamo.setCellValueFactory(new PropertyValueFactory<>("idPrestamo"));
+        colIdPrestamo.setPrefWidth(100);
+        
+        TableColumn<Cronograma, Integer> colNumeroCuota = new TableColumn<>("N° Cuota");
+        colNumeroCuota.setCellValueFactory(new PropertyValueFactory<>("numeroCuota"));
+        colNumeroCuota.setPrefWidth(80);
+        
+        TableColumn<Cronograma, String> colFechaProgramada = new TableColumn<>("Fecha Programada");
+        colFechaProgramada.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                FechaUtil.formatearFecha(cuota.getFechaProgramada())
+            );
+        });
+        colFechaProgramada.setPrefWidth(130);
+        
+        TableColumn<Cronograma, String> colMontoCuota = new TableColumn<>("Monto Cuota");
+        colMontoCuota.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                String.format("S/ %.2f", cuota.getMontoCuota())
+            );
+        });
+        colMontoCuota.setPrefWidth(120);
+        
+        TableColumn<Cronograma, String> colEstado = new TableColumn<>("Estado");
+        colEstado.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue();
+            String estado = cuota.getEstadoCuota().toString();
+            return new javafx.beans.property.SimpleStringProperty(estado);
+        });
+        colEstado.setPrefWidth(100);
+        
+        TableColumn<Cronograma, String> colFechaPago = new TableColumn<>("Fecha Pago");
+        colFechaPago.setCellValueFactory(cellData -> {
+            Cronograma cuota = cellData.getValue();
+            if (cuota.getFechaPagoReal() != null) {
+                return new javafx.beans.property.SimpleStringProperty(
+                    FechaUtil.formatearFecha(cuota.getFechaPagoReal())
+                );
+            }
+            return new javafx.beans.property.SimpleStringProperty("-");
+        });
+        colFechaPago.setPrefWidth(120);
+        
+        TableColumn<Cronograma, String> colMontoPagado = new TableColumn<>("Monto Pagado");
+        colMontoPagado.setCellValueFactory(cellData -> {
+            // El cronograma no tiene monto pagado directamente, se obtiene de los pagos
+            return new javafx.beans.property.SimpleStringProperty("-");
+        });
+        colMontoPagado.setPrefWidth(120);
+        
+        tablaCronograma.getColumns().addAll(colIdCuota, colIdPrestamo, colNumeroCuota, colFechaProgramada, 
+                                          colMontoCuota, colEstado, colFechaPago, colMontoPagado);
+        
+        try {
+            // Obtener todas las cuotas pendientes del cliente
+            List<Cronograma> cuotasPendientes = prestamoService.obtenerCuotasPendientesPorCliente(cliente.getIdCliente());
+            tablaCronograma.getItems().addAll(cuotasPendientes);
+            
+            if (cuotasPendientes.isEmpty()) {
+                Label lblSinDatos = new Label("No hay cuotas pendientes");
+                lblSinDatos.setStyle("-fx-text-fill: #6b7280;");
+                seccion.getChildren().addAll(tituloSeccion, lblSinDatos);
+            } else {
+                seccion.getChildren().addAll(tituloSeccion, tablaCronograma);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error al cargar cronograma pendiente del cliente", e);
+            seccion.getChildren().addAll(tituloSeccion, new Label("Error al cargar cronograma"));
+        }
+        
+        return seccion;
+    }
+    
+    /**
      * Maneja la visualización del historial del cliente
      */
     @FXML
@@ -927,5 +1294,21 @@ public class GestionClientesController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Calcula el número de cuotas según el tipo de pago
+     */
+    private int calcularNumeroCuotas(int periodoMeses, Prestamo.TipoPago tipoPago) {
+        switch (tipoPago) {
+            case DIARIO:
+                return periodoMeses * 26; // 26 días hábiles por mes
+            case SEMANAL:
+                return periodoMeses * 4; // 4 semanas por mes
+            case MENSUAL:
+                return periodoMeses; // 1 cuota por mes
+            default:
+                return periodoMeses * 26;
+        }
     }
 }
